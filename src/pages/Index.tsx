@@ -1,8 +1,11 @@
 import HeroSection from "@/components/HeroSection";
 import ProblemSolutionGrid from "@/components/ProblemSolutionGrid";
 import SpeedSection from "@/components/SpeedSection";
+import TestimonialsSection from "@/components/TestimonialsSection";
+import FAQSection from "@/components/FAQSection";
 import InfiniteMarquee from "@/components/InfiniteMarquee";
 import FinalCTA from "@/components/FinalCTA";
+import GuaranteeSection from "@/components/GuaranteeSection";
 import Footer from "@/components/Footer";
 
 const Index = () => {
@@ -11,6 +14,8 @@ const Index = () => {
       <HeroSection />
       <ProblemSolutionGrid />
       <SpeedSection />
+      <TestimonialsSection />
+      <FAQSection />
       
       {/* Genre Wall Section - El Muro de Géneros */}
       <section className="relative py-16 md:py-24 bg-background">
@@ -26,6 +31,7 @@ const Index = () => {
       </section>
 
       <FinalCTA />
+      <GuaranteeSection />
       <Footer />
     </main>
   );
