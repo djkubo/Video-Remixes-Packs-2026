@@ -4,13 +4,13 @@ import { Button } from "@/components/ui/button";
 
 const HeroSection = () => {
   return (
-    <section className="relative min-h-screen overflow-hidden">
+    <section className="relative min-h-screen overflow-hidden bg-background">
       {/* Background with radial gradient */}
       <div className="hero-gradient absolute inset-0" />
       
       {/* Subtle grid pattern */}
       <div 
-        className="absolute inset-0 opacity-[0.03]"
+        className="absolute inset-0 opacity-[0.02]"
         style={{
           backgroundImage: `linear-gradient(hsl(0 0% 50%) 1px, transparent 1px),
                            linear-gradient(90deg, hsl(0 0% 50%) 1px, transparent 1px)`,
@@ -32,43 +32,38 @@ const HeroSection = () => {
           </span>
         </motion.div>
 
-        {/* Main Heading */}
-        <motion.h1
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="max-w-5xl font-display text-4xl font-bold leading-tight tracking-tight md:text-6xl lg:text-7xl"
-        >
+        {/* Main Heading - Using animate-fade-in-up */}
+        <h1 className="animate-fade-in-up max-w-6xl font-display text-5xl font-bold leading-none tracking-tight md:text-7xl lg:text-8xl">
           LA LIBRERÍA MÁS GRANDE Y ORGANIZADA PARA EL{" "}
-          <span className="text-gradient-red">DJ LATINO PROFESIONAL</span>
-        </motion.h1>
+          <span className="text-gradient-red">DJ LATINO</span>
+        </h1>
 
         {/* Subtitle */}
         <motion.p
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="mt-6 max-w-2xl text-lg text-muted-foreground md:text-xl"
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="mt-8 max-w-2xl font-sans text-lg text-muted-foreground md:text-xl"
         >
           +50,000 Audios, Videos y Karaokes con Organización Premium.{" "}
-          <span className="text-foreground">Olvida la basura, descarga solo Hits.</span>
+          <span className="text-foreground font-medium">Olvida la basura, descarga solo Hits.</span>
         </motion.p>
 
-        {/* CTA Button */}
+        {/* CTA Button - With animate-pulse-glow and shadow-glow-intense */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="mt-10"
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="mt-12"
         >
           <Button
             asChild
             size="lg"
-            className="group h-14 px-8 text-lg font-semibold shadow-glow transition-all duration-300 hover:shadow-glow-intense"
+            className="group h-16 px-10 text-lg font-bold shadow-glow-intense animate-pulse-glow transition-transform duration-300 hover:scale-105"
           >
             <a href="https://videoremixespacks.com/plan">
-              VER PLANES Y PRUEBA GRATIS (7 DÍAS)
-              <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+              VER PLANES Y PRUEBA GRATIS
+              <ArrowRight className="ml-3 h-5 w-5 transition-transform group-hover:translate-x-1" />
             </a>
           </Button>
         </motion.div>
@@ -77,8 +72,8 @@ const HeroSection = () => {
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          className="mt-16 flex flex-wrap items-center justify-center gap-8 md:gap-16"
+          transition={{ duration: 0.6, delay: 0.5 }}
+          className="mt-20 flex flex-wrap items-center justify-center gap-10 md:gap-20"
         >
           {[
             { value: "50K+", label: "Archivos" },
@@ -86,17 +81,17 @@ const HeroSection = () => {
             { value: "1TB", label: "Sincronización" },
           ].map((stat) => (
             <div key={stat.label} className="text-center">
-              <div className="font-display text-3xl font-bold text-primary md:text-4xl">
+              <div className="font-display text-4xl font-bold text-primary md:text-5xl">
                 {stat.value}
               </div>
-              <div className="mt-1 text-sm text-muted-foreground">{stat.label}</div>
+              <div className="mt-2 font-sans text-sm text-muted-foreground uppercase tracking-wider">{stat.label}</div>
             </div>
           ))}
         </motion.div>
       </div>
 
       {/* Bottom gradient fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-background to-transparent" />
     </section>
   );
 };

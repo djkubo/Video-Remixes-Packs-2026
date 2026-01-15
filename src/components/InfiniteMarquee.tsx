@@ -15,25 +15,22 @@ const genres = [
 ];
 
 const InfiniteMarquee = memo(() => {
-  // Double the array for seamless loop
-  const doubledGenres = [...genres, ...genres];
+  // Quadruple the array for seamless loop
+  const repeatedGenres = [...genres, ...genres, ...genres, ...genres];
 
   return (
-    <section className="relative w-full overflow-hidden py-12 md:py-16">
+    <section className="relative w-full overflow-hidden py-8 md:py-12 bg-background">
       {/* Fade edges */}
-      <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-24 bg-gradient-to-r from-background to-transparent" />
-      <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-24 bg-gradient-to-l from-background to-transparent" />
+      <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-32 bg-gradient-to-r from-background to-transparent" />
+      <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-32 bg-gradient-to-l from-background to-transparent" />
       
-      {/* Marquee container */}
+      {/* First row - Marquee */}
       <div className="flex w-full">
         <div className="marquee-track">
-          {doubledGenres.map((genre, index) => (
+          {repeatedGenres.map((genre, index) => (
             <span
-              key={`${genre}-${index}`}
-              className="mx-4 whitespace-nowrap font-display text-2xl font-bold uppercase tracking-wide text-muted-foreground/40 transition-colors duration-300 hover:text-primary md:mx-6 md:text-4xl lg:text-5xl"
-              style={{
-                textShadow: "0 0 40px transparent",
-              }}
+              key={`row1-${genre}-${index}`}
+              className="mx-6 whitespace-nowrap font-display text-5xl font-bold uppercase tracking-wide text-white/10 transition-all duration-500 hover:text-primary/50 md:mx-8 md:text-6xl lg:text-7xl"
             >
               {genre}
             </span>
@@ -42,18 +39,18 @@ const InfiniteMarquee = memo(() => {
       </div>
       
       {/* Second row - reverse direction */}
-      <div className="mt-6 flex w-full">
+      <div className="mt-4 flex w-full">
         <div 
           className="marquee-track"
           style={{ 
             animationDirection: "reverse",
-            animationDuration: "80s"
+            animationDuration: "90s"
           }}
         >
-          {doubledGenres.reverse().map((genre, index) => (
+          {[...repeatedGenres].reverse().map((genre, index) => (
             <span
-              key={`reverse-${genre}-${index}`}
-              className="mx-4 whitespace-nowrap font-display text-xl font-semibold uppercase tracking-wide text-muted-foreground/30 transition-colors duration-300 hover:text-primary/80 md:mx-6 md:text-3xl lg:text-4xl"
+              key={`row2-${genre}-${index}`}
+              className="mx-6 whitespace-nowrap font-display text-4xl font-bold uppercase tracking-wide text-white/5 transition-all duration-500 hover:text-primary/30 md:mx-8 md:text-5xl lg:text-6xl"
             >
               {genre}
             </span>

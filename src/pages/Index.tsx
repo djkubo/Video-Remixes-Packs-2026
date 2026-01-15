@@ -12,13 +12,13 @@ const Index = () => {
       <ProblemSolutionGrid />
       <SpeedSection />
       
-      {/* Genre Wall Section */}
-      <section className="relative py-12 md:py-20">
+      {/* Genre Wall Section - El Muro de Géneros */}
+      <section className="relative py-16 md:py-24 bg-background">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="mb-2 font-display text-3xl font-bold md:text-4xl">
+          <h2 className="mb-3 font-display text-4xl font-bold md:text-5xl lg:text-6xl">
             EL MURO DE GÉNEROS
           </h2>
-          <p className="mb-8 text-muted-foreground">
+          <p className="mb-10 font-sans text-lg text-muted-foreground">
             +60 géneros musicales. Todo lo que necesitas en un solo lugar.
           </p>
         </div>
