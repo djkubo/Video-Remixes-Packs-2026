@@ -1,13 +1,13 @@
 import { motion } from "framer-motion";
-import { Check, ArrowRight, Shield, Clock, Percent } from "lucide-react";
+import { Check, ArrowRight, Shield, Clock, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const FinalCTA = () => {
   const benefits = [
-    { icon: Clock, text: "Prueba de 7 Días (100GB Gratis)" },
-    { icon: Percent, text: "Planes desde $35/mes" },
-    { icon: Shield, text: "Ahorro con Plan Anual" },
-    { icon: Check, text: "Cancela cuando quieras" },
+    { icon: Clock, text: "7 Días Gratis (100GB para probar)" },
+    { icon: Zap, text: "Descarga masiva vía FTP" },
+    { icon: Shield, text: "Cancela cuando quieras, sin preguntas" },
+    { icon: Check, text: "Archivos Clean, listos para mezclar" },
   ];
 
   return (
@@ -28,12 +28,12 @@ const FinalCTA = () => {
             <div className="relative z-10 text-center">
               {/* Heading */}
               <h2 className="font-display text-3xl font-bold md:text-4xl lg:text-5xl">
-                PRUÉBALO GRATIS.{" "}
-                <span className="text-gradient-red">SIN RIESGO.</span>
+                EL TIEMPO ES TU ACTIVO MÁS CARO.{" "}
+                <span className="text-gradient-red">DEJA DE PERDERLO.</span>
               </h2>
 
-              <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-                Obtén acceso inmediato a la biblioteca más completa de remixes y videos para DJs profesionales.
+              <p className="mx-auto mt-4 max-w-xl text-muted-foreground font-sans text-lg">
+                Únete al Hub Definitivo del DJ Latino. Una sola suscripción. Todo el contenido que necesitas.
               </p>
 
               {/* Benefits grid */}
@@ -46,7 +46,7 @@ const FinalCTA = () => {
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
                       <benefit.icon className="h-5 w-5 text-primary" />
                     </div>
-                    <span className="font-medium">{benefit.text}</span>
+                    <span className="font-sans font-medium">{benefit.text}</span>
                   </div>
                 ))}
               </div>
@@ -65,8 +65,8 @@ const FinalCTA = () => {
                 </Button>
               </div>
 
-              <p className="mt-6 text-sm text-muted-foreground">
-                Sin compromisos • Cancela en cualquier momento • Soporte 24/7
+              <p className="mt-6 text-sm text-muted-foreground font-sans">
+                Somos tu socio experto • FTP / Air Explorer • 320kbps / 1080p
               </p>
             </div>
           </div>

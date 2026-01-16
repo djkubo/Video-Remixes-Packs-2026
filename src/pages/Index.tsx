@@ -1,10 +1,13 @@
 import HeroSection from "@/components/HeroSection";
-import ProblemSolutionGrid from "@/components/ProblemSolutionGrid";
+import AggregatorSection from "@/components/AggregatorSection";
+import DJTodoterrenoSection from "@/components/DJTodoterrenoSection";
 import SpeedSection from "@/components/SpeedSection";
 import TestimonialsSection from "@/components/TestimonialsSection";
 import FAQSection from "@/components/FAQSection";
 import InfiniteMarquee from "@/components/InfiniteMarquee";
+import PricingSection from "@/components/PricingSection";
 import FinalCTA from "@/components/FinalCTA";
+import TrustBar from "@/components/TrustBar";
 import GuaranteeSection from "@/components/GuaranteeSection";
 import Footer from "@/components/Footer";
 
@@ -12,7 +15,8 @@ const Index = () => {
   return (
     <main className="min-h-screen bg-background">
       <HeroSection />
-      <ProblemSolutionGrid />
+      <AggregatorSection />
+      <DJTodoterrenoSection />
       <SpeedSection />
       <TestimonialsSection />
       <FAQSection />
@@ -30,7 +34,9 @@ const Index = () => {
         <InfiniteMarquee />
       </section>
 
+      <PricingSection />
       <FinalCTA />
+      <TrustBar />
       <GuaranteeSection />
       <Footer />
     </main>

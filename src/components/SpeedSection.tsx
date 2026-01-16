@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Zap, Server, Cloud, Download } from "lucide-react";
+import { Zap, Server, Cloud, Download, Moon } from "lucide-react";
 
 const SpeedSection = () => {
   return (
@@ -8,60 +8,84 @@ const SpeedSection = () => {
       <div className="absolute inset-0 bg-gradient-to-b from-background-carbon via-background to-background-carbon" />
       
       <div className="container relative z-10 mx-auto px-4">
-        <div className="mx-auto max-w-4xl">
+        <div className="mx-auto max-w-5xl">
           {/* Main content - Glass card */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="rounded-2xl bg-card/50 backdrop-blur-md border border-white/10 p-8 md:p-14"
+            className="rounded-2xl bg-card/50 backdrop-blur-md border border-primary/20 p-8 md:p-14 shadow-glow"
           >
-            <div className="flex flex-col items-center text-center md:flex-row md:text-left">
-              {/* Icon - Big */}
-              <div className="mb-8 flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-primary/10 md:mb-0 md:mr-10">
-                <Zap className="h-12 w-12 text-primary" />
-              </div>
+            {/* Header */}
+            <div className="text-center mb-10">
+              <motion.span
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                className="inline-block mb-4 px-4 py-1 rounded-full bg-primary/10 border border-primary/30 text-primary text-sm font-medium"
+              >
+                SINCRONIZACIÓN MASIVA
+              </motion.span>
+              
+              <h2 className="font-display text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold">
+                VETE A DORMIR Y DESPIERTA CON{" "}
+                <span className="text-primary">500GB DE MÚSICA NUEVA</span>{" "}
+                EN TU DISCO DURO.
+              </h2>
+            </div>
 
-              {/* Text content */}
-              <div className="flex-1">
-                <h2 className="font-display text-4xl font-bold md:text-5xl lg:text-6xl">
-                  SINCRONIZA <span className="text-primary">1TB EN MINUTOS</span>
-                </h2>
-                <p className="mt-4 font-sans text-lg text-muted-foreground md:text-xl">
-                  Conexión directa FTP / Air Explorer. Arrastra y suelta. Sin límites de velocidad.
+            {/* Feature Highlight */}
+            <div className="flex flex-col md:flex-row items-center justify-center gap-8 mb-12">
+              {/* Big Icon */}
+              <div className="flex h-28 w-28 shrink-0 items-center justify-center rounded-2xl bg-primary/10 border border-primary/30">
+                <Zap className="h-14 w-14 text-primary" />
+              </div>
+              
+              <div className="text-center md:text-left">
+                <h3 className="font-display text-2xl md:text-3xl font-bold">
+                  Conexión FTP Directa
+                </h3>
+                <p className="mt-2 font-sans text-lg text-muted-foreground">
+                  Compatible con FileZilla y Air Explorer. Arrastra, suelta y sincroniza 
+                  <span className="text-primary font-semibold"> 1TB en minutos</span>.
                 </p>
               </div>
             </div>
 
-            {/* Features grid */}
-            <div className="mt-12 grid gap-6 sm:grid-cols-3">
+            {/* Features grid - Bigger icons */}
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {[
                 {
                   icon: Server,
                   title: "Servidores Premium",
-                  description: "Infraestructura de alta velocidad"
+                  description: "Infraestructura de alta velocidad sin throttling"
                 },
                 {
                   icon: Cloud,
                   title: "Air Explorer",
-                  description: "Integración directa con la nube"
+                  description: "Sincronización directa con tu nube favorita"
                 },
                 {
                   icon: Download,
                   title: "Sin Límites",
-                  description: "Descarga todo lo que necesites"
+                  description: "Descarga masiva. Sin caps. Sin restricciones."
+                },
+                {
+                  icon: Moon,
+                  title: "Mientras Duermes",
+                  description: "Programa tus descargas y despierta listo"
                 }
-              ].map((feature) => (
+              ].map((feature, index) => (
                 <motion.div
                   key={feature.title}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.4 }}
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
                   className="flex flex-col items-center rounded-xl bg-secondary/40 border border-white/5 p-6 text-center transition-all duration-300 hover:bg-secondary/60 hover:border-primary/20 hover:scale-105"
                 >
-                  <feature.icon className="mb-4 h-10 w-10 text-primary" />
+                  <feature.icon className="mb-4 h-12 w-12 text-primary" />
                   <h3 className="font-display text-lg font-bold">{feature.title}</h3>
                   <p className="mt-2 font-sans text-sm text-muted-foreground">{feature.description}</p>
                 </motion.div>

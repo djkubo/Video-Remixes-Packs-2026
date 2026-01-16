@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ArrowRight, Play } from "lucide-react";
+import { ArrowRight, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const HeroSection = () => {
@@ -19,7 +19,7 @@ const HeroSection = () => {
       />
 
       <div className="container relative z-10 mx-auto flex min-h-screen flex-col items-center justify-center px-4 py-20 text-center">
-        {/* Badge */}
+        {/* Badge - Air Explorer Compatible */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -27,29 +27,30 @@ const HeroSection = () => {
           className="mb-8"
         >
           <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-medium text-primary">
-            <Play className="h-3 w-3 fill-current" />
-            +50,000 Archivos Profesionales
+            <Rocket className="h-4 w-4" />
+            Tecnología Air Explorer Compatible
           </span>
         </motion.div>
 
-        {/* Main Heading - Using animate-fade-in-up */}
-        <h1 className="animate-fade-in-up max-w-6xl font-display text-5xl font-bold leading-none tracking-tight md:text-7xl lg:text-8xl">
-          LA LIBRERÍA MÁS GRANDE Y ORGANIZADA PARA EL{" "}
-          <span className="text-gradient-red">DJ LATINO</span>
+        {/* Main Heading - Brand Core 2026 */}
+        <h1 className="animate-fade-in-up max-w-6xl font-display text-4xl font-bold leading-none tracking-tight sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl">
+          EL HUB DEFINITIVO DEL DJ LATINO:{" "}
+          <span className="text-gradient-red">TU LIBRERÍA LISTA EN MINUTOS, NO EN DÍAS.</span>
         </h1>
 
-        {/* Subtitle */}
+        {/* Subtitle - Value Proposition */}
         <motion.p
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="mt-8 max-w-2xl font-sans text-lg text-muted-foreground md:text-xl"
+          className="mt-8 max-w-3xl font-sans text-lg text-muted-foreground md:text-xl"
         >
-          +50,000 Audios, Videos y Karaokes con Organización Premium.{" "}
-          <span className="text-foreground font-medium">Olvida la basura, descarga solo Hits.</span>
+          Ahorra miles de dólares en suscripciones. Centralizamos los éxitos de todos los pools, 
+          los organizamos por género y te permitimos bajarlos{" "}
+          <span className="text-foreground font-semibold">masivamente vía FTP.</span>
         </motion.p>
 
-        {/* CTA Button - With animate-pulse-glow and shadow-glow-intense */}
+        {/* CTA Button */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -68,7 +69,7 @@ const HeroSection = () => {
           </Button>
         </motion.div>
 
-        {/* Stats row */}
+        {/* Stats row - Updated */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -76,9 +77,9 @@ const HeroSection = () => {
           className="mt-20 flex flex-wrap items-center justify-center gap-10 md:gap-20"
         >
           {[
-            { value: "50K+", label: "Archivos" },
-            { value: "60+", label: "Géneros" },
-            { value: "1TB", label: "Sincronización" },
+            { value: "50K+", label: "Archivos Clean" },
+            { value: "60+", label: "Géneros Organizados" },
+            { value: "FTP", label: "Descarga Masiva" },
           ].map((stat) => (
             <div key={stat.label} className="text-center">
               <div className="font-display text-4xl font-bold text-primary md:text-5xl">
