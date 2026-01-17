@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-forwarded-for, x-real-ip',
 };
 
 const PIXEL_ID = "592329516660534";
@@ -16,6 +16,28 @@ async function hashData(data: string): Promise<string> {
   const hashBuffer = await crypto.subtle.digest("SHA-256", dataBuffer);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Get client IP from request headers
+function getClientIP(req: Request): string {
+  // Try various headers that might contain the real IP
+  const forwardedFor = req.headers.get('x-forwarded-for');
+  if (forwardedFor) {
+    return forwardedFor.split(',')[0].trim();
+  }
+  
+  const realIP = req.headers.get('x-real-ip');
+  if (realIP) {
+    return realIP;
+  }
+  
+  const cfConnectingIP = req.headers.get('cf-connecting-ip');
+  if (cfConnectingIP) {
+    return cfConnectingIP;
+  }
+  
+  // Fallback - this might not be available in all cases
+  return "0.0.0.0";
 }
 
 serve(async (req) => {
@@ -48,50 +70,64 @@ serve(async (req) => {
 
     console.log(`Processing Facebook CAPI event: ${event_name}`);
 
-    // Hash user data for privacy
-    const hashedUserData: Record<string, string> = {};
+    // Get client IP from request
+    const clientIP = getClientIP(req);
+
+    // Hash user data for privacy - these fields require hashing
+    const hashedUserData: Record<string, any> = {};
     
     if (user_data.email) {
-      hashedUserData.em = await hashData(user_data.email);
+      hashedUserData.em = [await hashData(user_data.email)];
     }
     if (user_data.phone) {
-      hashedUserData.ph = await hashData(user_data.phone);
+      hashedUserData.ph = [await hashData(user_data.phone)];
     }
     if (user_data.first_name) {
-      hashedUserData.fn = await hashData(user_data.first_name);
+      hashedUserData.fn = [await hashData(user_data.first_name)];
     }
     if (user_data.last_name) {
-      hashedUserData.ln = await hashData(user_data.last_name);
+      hashedUserData.ln = [await hashData(user_data.last_name)];
     }
     if (user_data.city) {
-      hashedUserData.ct = await hashData(user_data.city);
+      hashedUserData.ct = [await hashData(user_data.city)];
     }
     if (user_data.state) {
-      hashedUserData.st = await hashData(user_data.state);
+      hashedUserData.st = [await hashData(user_data.state)];
     }
     if (user_data.zip) {
-      hashedUserData.zp = await hashData(user_data.zip);
+      hashedUserData.zp = [await hashData(user_data.zip)];
     }
     if (user_data.country) {
-      hashedUserData.country = await hashData(user_data.country);
+      hashedUserData.country = [await hashData(user_data.country)];
     }
+    
+    // External ID - REQUIRED for matching when no other PII is available
     if (user_data.external_id) {
-      hashedUserData.external_id = await hashData(user_data.external_id);
+      hashedUserData.external_id = [await hashData(user_data.external_id)];
     }
     
     // Pass through non-hashed data
-    if (user_data.client_ip_address) {
-      hashedUserData.client_ip_address = user_data.client_ip_address;
-    }
+    // Client IP is critical for matching
+    hashedUserData.client_ip_address = clientIP !== "0.0.0.0" ? clientIP : undefined;
+    
     if (user_data.client_user_agent) {
       hashedUserData.client_user_agent = user_data.client_user_agent;
     }
+    
+    // Facebook cookies - important for matching
     if (user_data.fbc) {
       hashedUserData.fbc = user_data.fbc;
     }
     if (user_data.fbp) {
       hashedUserData.fbp = user_data.fbp;
     }
+
+    // Remove undefined values
+    Object.keys(hashedUserData).forEach(key => {
+      if (hashedUserData[key] === undefined || hashedUserData[key] === null) {
+        delete hashedUserData[key];
+      }
+    });
 
     // Build the event payload
     const eventPayload = {

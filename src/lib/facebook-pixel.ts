@@ -8,6 +8,19 @@ const generateEventId = (): string => {
   return `${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
 };
 
+// Generate or retrieve external_id (persistent visitor ID)
+const getExternalId = (): string => {
+  const storageKey = 'fb_external_id';
+  let externalId = localStorage.getItem(storageKey);
+  
+  if (!externalId) {
+    externalId = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}_${Math.random().toString(36).substring(2, 15)}`;
+    localStorage.setItem(storageKey, externalId);
+  }
+  
+  return externalId;
+};
+
 // Get Facebook browser cookies
 const getFbCookies = () => {
   const cookies = document.cookie.split(';').reduce((acc, cookie) => {
@@ -65,6 +78,18 @@ const sendToCAPI = async (
 ) => {
   try {
     const { fbc, fbp } = getFbCookies();
+    const externalId = getExternalId();
+
+    // Build user_data with required fields for Facebook matching
+    const userDataPayload: Record<string, any> = {
+      client_user_agent: navigator.userAgent,
+      external_id: externalId, // Required fallback for matching
+      ...userData,
+    };
+
+    // Only add cookies if they exist
+    if (fbc) userDataPayload.fbc = fbc;
+    if (fbp) userDataPayload.fbp = fbp;
 
     const payload = {
       event_name: eventName,
@@ -72,12 +97,7 @@ const sendToCAPI = async (
       event_time: Math.floor(Date.now() / 1000),
       event_source_url: window.location.href,
       action_source: "website",
-      user_data: {
-        client_user_agent: navigator.userAgent,
-        fbc,
-        fbp,
-        ...userData,
-      },
+      user_data: userDataPayload,
       custom_data: customData,
     };
 
