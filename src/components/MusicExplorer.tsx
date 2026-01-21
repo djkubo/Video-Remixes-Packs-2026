@@ -10,6 +10,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 // Sample music data - in production this would come from an API
 const sampleTracks = [
@@ -24,6 +26,8 @@ const sampleTracks = [
 ];
 
 const MusicExplorer = () => {
+  const { t, language } = useLanguage();
+  const { convertPrice } = useCurrency();
   const [searchQuery, setSearchQuery] = useState("");
   const [playingId, setPlayingId] = useState<number | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -72,11 +76,11 @@ const MusicExplorer = () => {
           className="mb-12 text-center"
         >
           <h2 className="mb-4 font-display text-3xl font-bold md:text-4xl lg:text-5xl">
-            Transparencia Total:{" "}
-            <span className="text-gradient-red">Mira lo que hay dentro antes de pagar</span>
+            {t("explorer.title")}{" "}
+            <span className="text-gradient-red">{t("explorer.titleHighlight")}</span>
           </h2>
           <p className="mx-auto max-w-2xl text-muted-foreground">
-            Busca cualquier artista, escucha el preview y comprueba la calidad antes de suscribirte.
+            {t("explorer.subtitle")}
           </p>
         </motion.div>
 
@@ -92,7 +96,7 @@ const MusicExplorer = () => {
             <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="Buscar artista, título o género..."
+              placeholder={t("explorer.search")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="h-14 bg-card/50 pl-12 text-lg backdrop-blur-sm border-border/50 focus:border-primary"
@@ -111,12 +115,12 @@ const MusicExplorer = () => {
           {/* Header */}
           <div className="grid grid-cols-12 gap-4 border-b border-border/30 bg-card/30 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground md:px-6">
             <div className="col-span-1"></div>
-            <div className="col-span-5 md:col-span-4">Título</div>
-            <div className="col-span-3 hidden md:block">Género</div>
+            <div className="col-span-5 md:col-span-4">{language === "es" ? "Título" : "Title"}</div>
+            <div className="col-span-3 hidden md:block">{language === "es" ? "Género" : "Genre"}</div>
             <div className="col-span-2 hidden md:block">
               <Clock className="h-4 w-4" />
             </div>
-            <div className="col-span-6 md:col-span-2 text-right">Acción</div>
+            <div className="col-span-6 md:col-span-2 text-right">{language === "es" ? "Acción" : "Action"}</div>
           </div>
 
           {/* Tracks */}
@@ -189,7 +193,7 @@ const MusicExplorer = () => {
             {filteredTracks.length === 0 && (
               <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                 <Music2 className="mb-4 h-12 w-12 opacity-50" />
-                <p>No se encontraron resultados para "{searchQuery}"</p>
+                <p>{t("explorer.noResults")} "{searchQuery}"</p>
               </div>
             )}
           </div>
@@ -203,7 +207,7 @@ const MusicExplorer = () => {
           transition={{ duration: 0.5, delay: 0.3 }}
           className="mt-6 text-center text-sm text-muted-foreground"
         >
-          Mostrando {filteredTracks.length} de 50,000+ archivos disponibles
+          {t("explorer.showing")} {filteredTracks.length} {t("explorer.of")} 50,000+ {t("explorer.tracks")}
         </motion.p>
       </div>
 
@@ -215,11 +219,10 @@ const MusicExplorer = () => {
               <Download className="h-8 w-8 text-primary" />
             </div>
             <DialogTitle className="text-2xl font-bold">
-              🔒 Archivo Exclusivo para Miembros PRO
+              🔒 {t("explorer.modalTitle")}
             </DialogTitle>
             <DialogDescription className="mt-4 text-base text-muted-foreground">
-              Activa tu cuenta hoy para descargar este archivo y{" "}
-              <span className="font-semibold text-foreground">1TB más</span> a máxima velocidad.
+              {t("explorer.modalDesc")}
             </DialogDescription>
           </DialogHeader>
 
@@ -237,14 +240,14 @@ const MusicExplorer = () => {
               className="h-14 bg-gradient-to-r from-primary via-red-600 to-orange-500 text-lg font-bold shadow-lg transition-transform hover:scale-105"
             >
               <a href="https://videoremixespacks.com/plan">
-                Activar Cuenta Ahora ($35)
+                {t("explorer.modalCta")} ({convertPrice(35)})
               </a>
             </Button>
             <button
               onClick={() => setShowModal(false)}
               className="text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
-              Seguir explorando gratis
+              {t("explorer.modalClose")}
             </button>
           </div>
         </DialogContent>

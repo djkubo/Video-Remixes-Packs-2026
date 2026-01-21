@@ -1,23 +1,26 @@
 import { motion } from "framer-motion";
 import { FolderCheck, MonitorPlay, HeadphonesIcon } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const TrustBar = () => {
+  const { t } = useLanguage();
+
   const rules = [
     {
       icon: FolderCheck,
-      title: "Organización Suprema",
-      description: "Por género, BPM y año."
+      title: t("trustbar.rule1.title"),
+      description: t("trustbar.rule1.desc"),
     },
     {
       icon: MonitorPlay,
-      title: "Calidad Profesional",
-      description: "MP3 320kbps + Video 1080p."
+      title: t("trustbar.rule2.title"),
+      description: t("trustbar.rule2.desc"),
     },
     {
       icon: HeadphonesIcon,
-      title: "Archivos Clean",
-      description: "Sin logos. Sin marcas."
-    }
+      title: t("trustbar.rule3.title"),
+      description: t("trustbar.rule3.desc"),
+    },
   ];
 
   return (
@@ -31,14 +34,14 @@ const TrustBar = () => {
           className="text-center mb-10"
         >
           <h3 className="font-bebas text-xl md:text-2xl tracking-widest text-muted-foreground">
-            NUESTRAS REGLAS DE ORO
+            {t("trustbar.title")}
           </h3>
         </motion.div>
 
         <div className="grid gap-5 sm:grid-cols-3 max-w-4xl mx-auto">
           {rules.map((rule, index) => (
             <motion.div
-              key={rule.title}
+              key={index}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -49,7 +52,9 @@ const TrustBar = () => {
                 <rule.icon className="h-6 w-6 text-primary" strokeWidth={1.5} />
               </div>
               <div>
-                <h4 className="font-display text-base font-bold tracking-wide text-foreground">{rule.title}</h4>
+                <h4 className="font-display text-base font-bold tracking-wide text-foreground">
+                  {rule.title}
+                </h4>
                 <p className="font-sans text-sm text-muted-foreground">{rule.description}</p>
               </div>
             </motion.div>

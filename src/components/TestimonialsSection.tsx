@@ -1,23 +1,6 @@
 import { motion } from "framer-motion";
 import { Star } from "lucide-react";
-
-const testimonials = [
-  {
-    name: "DJ Alex Mix",
-    location: "Miami",
-    text: "Bro, la organización por BPM me salvó la vida en la boda de ayer. Calidad impecable.",
-  },
-  {
-    name: "Carlos DJ",
-    location: "CDMX",
-    text: "He probado 5 pools y este es el único que descargas 1TB real sin errores. Air Explorer vuela.",
-  },
-  {
-    name: "DJ Tona",
-    location: "Residente",
-    text: "Los videos intro/outro vienen limpios sin logos. Mis pantallas se ven pro. 10/10.",
-  },
-];
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const StarRating = () => (
   <div className="mb-3 flex gap-1">
@@ -31,6 +14,26 @@ const StarRating = () => (
 );
 
 const TestimonialsSection = () => {
+  const { t } = useLanguage();
+
+  const testimonials = [
+    {
+      name: t("testimonialCard1.name"),
+      location: t("testimonialCard1.location"),
+      text: t("testimonialCard1.text"),
+    },
+    {
+      name: t("testimonialCard2.name"),
+      location: t("testimonialCard2.location"),
+      text: t("testimonialCard2.text"),
+    },
+    {
+      name: t("testimonialCard3.name"),
+      location: t("testimonialCard3.location"),
+      text: t("testimonialCard3.text"),
+    },
+  ];
+
   return (
     <section className="relative py-16 md:py-24 bg-background-carbon">
       <div className="container mx-auto px-4">
@@ -42,10 +45,10 @@ const TestimonialsSection = () => {
           className="mb-12 text-center"
         >
           <h2 className="mb-3 font-display text-4xl font-bold md:text-5xl lg:text-6xl">
-            LO QUE DICEN LOS DJS
+            {t("testimonialCard.title")}
           </h2>
           <p className="font-sans text-lg text-muted-foreground">
-            Profesionales que ya transformaron su flujo de trabajo
+            {t("testimonialCard.subtitle")}
           </p>
         </motion.div>
 
@@ -57,7 +60,7 @@ const TestimonialsSection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.15 }}
               viewport={{ once: true }}
-              className="group rounded-2xl bg-card/50 backdrop-blur-md border border-white/10 p-6 transition-all duration-300 hover:border-primary/30 hover:shadow-glow"
+              className="group rounded-2xl bg-card/50 backdrop-blur-md border border-border/50 p-6 transition-all duration-300 hover:border-primary/30 hover:shadow-glow"
             >
               <StarRating />
               <p className="mb-4 font-sans text-base text-foreground/90 italic">
