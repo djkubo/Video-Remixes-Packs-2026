@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useDataLayer } from "@/hooks/useDataLayer";
 
 interface CountryData {
   country_code: string;
@@ -65,6 +66,7 @@ export default function ExitIntentPopup() {
   const { t, language } = useLanguage();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { trackFormSubmit, trackClick } = useDataLayer();
 
   // Detect user's country based on IP
   useEffect(() => {
@@ -196,6 +198,9 @@ export default function ExitIntentPopup() {
       }
 
       console.log("Lead created:", lead);
+      
+      // Track form submission
+      trackFormSubmit("exit_intent_popup");
 
       // Sync with ManyChat via edge function
       try {

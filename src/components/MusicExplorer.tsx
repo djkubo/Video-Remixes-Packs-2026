@@ -24,6 +24,7 @@ import {
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useDataLayer } from "@/hooks/useDataLayer";
 
 interface FolderType {
   id: string;
@@ -45,6 +46,7 @@ interface Track {
 const MusicExplorer = () => {
   const { t, language } = useLanguage();
   const { convertPrice } = useCurrency();
+  const { trackClick } = useDataLayer();
   
   const [loading, setLoading] = useState(true);
   const [folders, setFolders] = useState<FolderType[]>([]);
@@ -452,6 +454,7 @@ const MusicExplorer = () => {
               asChild
               size="lg"
               className="h-14 bg-gradient-to-r from-primary via-red-600 to-orange-500 text-lg font-bold shadow-lg transition-transform hover:scale-105"
+              onClick={() => trackClick(t("explorer.modalCta"))}
             >
               <a href="https://videoremixespacks.com/plan" target="_blank" rel="noopener noreferrer">
                 {t("explorer.modalCta")}

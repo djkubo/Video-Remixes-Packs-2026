@@ -3,10 +3,12 @@ import { Check, ArrowRight, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { useDataLayer } from "@/hooks/useDataLayer";
 
 const PricingSection = () => {
   const { t, language } = useLanguage();
   const { convertPrice, currency } = useCurrency();
+  const { trackClick } = useDataLayer();
 
   const plans = [
     {
@@ -152,6 +154,7 @@ const PricingSection = () => {
                       ? "btn-gold-glow"
                       : "bg-secondary hover:bg-secondary/80 text-foreground"
                   }`}
+                  onClick={() => trackClick(plan.cta)}
                 >
                   <a href="https://videoremixespacks.com/plan">
                     {plan.highlighted && <Crown className="mr-2 h-5 w-5" />}

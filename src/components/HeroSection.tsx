@@ -3,12 +3,14 @@ import { Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useDataLayer } from "@/hooks/useDataLayer";
 import logoWhite from "@/assets/logo-white.png";
 import logoDark from "@/assets/logo-dark.png";
 
 const HeroSection = () => {
   const { t } = useLanguage();
   const { theme } = useTheme();
+  const { trackClick } = useDataLayer();
 
   return (
     <section className="relative min-h-screen overflow-hidden bg-background">
@@ -109,6 +111,7 @@ const HeroSection = () => {
             asChild
             size="lg"
             className="btn-primary-glow group h-16 gap-3 px-10 text-lg font-bold"
+            onClick={() => trackClick(t("hero.cta"))}
           >
             <a href="https://videoremixespacks.com/plan" target="_blank" rel="noopener noreferrer">
               <Zap className="h-5 w-5" />

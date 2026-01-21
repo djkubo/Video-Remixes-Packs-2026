@@ -4,13 +4,21 @@ import { motion } from "framer-motion";
 import { CheckCircle2, MessageCircle, ArrowLeft, Disc3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useDataLayer } from "@/hooks/useDataLayer";
 
 export default function ThankYou() {
   const { language } = useLanguage();
+  const { trackEvent } = useDataLayer();
 
   useEffect(() => {
     // Scroll to top on mount
     window.scrollTo(0, 0);
+    
+    // Track successful lead conversion
+    trackEvent("lead_conversion", {
+      page: "thank_you",
+      source: "exit_intent",
+    });
   }, []);
 
   return (
