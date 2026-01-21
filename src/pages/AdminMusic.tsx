@@ -543,24 +543,37 @@ export default function AdminMusic() {
     setUploadStatus("Analizando archivos...");
 
     try {
-      // Group files by folder
+      // Group files by their immediate parent folder (the genre folder)
       const folderMap = new Map<string, File[]>();
       const rootFiles: File[] = [];
 
+      // First pass: determine the base path (the selected folder)
+      let baseFolderDepth = 0;
+      const firstFile = Array.from(bulkUploadFiles)[0];
+      if (firstFile) {
+        const firstPath = (firstFile as any).webkitRelativePath || firstFile.name;
+        const firstParts = firstPath.split("/");
+        // If structure is "COPIA/Bachata/song.mp3", base depth is 1 (skip COPIA)
+        // If structure is "Bachata/song.mp3", base depth is 0
+        if (firstParts.length > 2) {
+          baseFolderDepth = 1; // Skip the selected parent folder
+        }
+      }
+
       for (const file of Array.from(bulkUploadFiles)) {
-        // webkitRelativePath contains the full path like "Bachata/song.mp3"
         const relativePath = (file as any).webkitRelativePath || file.name;
         const pathParts = relativePath.split("/");
         
-        if (pathParts.length > 1) {
-          // File is inside a folder
-          const folderName = pathParts[0];
+        // Get the genre folder name (accounting for base depth)
+        if (pathParts.length > baseFolderDepth + 1) {
+          // File is inside a subfolder
+          const folderName = pathParts[baseFolderDepth];
           if (!folderMap.has(folderName)) {
             folderMap.set(folderName, []);
           }
           folderMap.get(folderName)!.push(file);
-        } else {
-          // File is at root level
+        } else if (pathParts.length > baseFolderDepth) {
+          // File is at the immediate level (no subfolder)
           rootFiles.push(file);
         }
       }
