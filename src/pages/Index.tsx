@@ -7,6 +7,7 @@ import SpeedSection from "@/components/SpeedSection";
 import TestimonialsSection from "@/components/TestimonialsSection";
 import FAQSection from "@/components/FAQSection";
 import InfiniteMarquee from "@/components/InfiniteMarquee";
+import TrustSecuritySection from "@/components/TrustSecuritySection";
 import PricingSection from "@/components/PricingSection";
 import FinalCTA from "@/components/FinalCTA";
 import TrustBar from "@/components/TrustBar";
@@ -38,6 +39,7 @@ const Index = () => {
         <InfiniteMarquee />
       </section>
 
+      <TrustSecuritySection />
       <PricingSection />
       <FinalCTA />
       <TrustBar />
