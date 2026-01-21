@@ -34,7 +34,11 @@ import {
   EyeOff,
   GripVertical,
   FolderUp,
+  CheckSquare,
+  Square,
+  Trash,
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -272,6 +276,12 @@ export default function AdminMusic() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState("");
   const [editingTrack, setEditingTrack] = useState<Track | null>(null);
+
+  // Selection states
+  const [selectedFolders, setSelectedFolders] = useState<Set<string>>(new Set());
+  const [selectedTracks, setSelectedTracks] = useState<Set<string>>(new Set());
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -851,6 +861,120 @@ export default function AdminMusic() {
     }
   };
 
+  // Selection helpers
+  const toggleFolderSelection = (id: string) => {
+    setSelectedFolders(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleTrackSelection = (id: string) => {
+    setSelectedTracks(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAllFolders = () => {
+    if (selectedFolders.size === folders.length) {
+      setSelectedFolders(new Set());
+    } else {
+      setSelectedFolders(new Set(folders.map(f => f.id)));
+    }
+  };
+
+  const selectAllTracks = () => {
+    if (selectedTracks.size === tracks.length) {
+      setSelectedTracks(new Set());
+    } else {
+      setSelectedTracks(new Set(tracks.map(t => t.id)));
+    }
+  };
+
+  const bulkDelete = async () => {
+    setBulkDeleting(true);
+    try {
+      // Delete selected tracks first (including storage files)
+      if (selectedTracks.size > 0) {
+        const tracksToDelete = tracks.filter(t => selectedTracks.has(t.id));
+        const filePaths = tracksToDelete
+          .map(t => {
+            const urlParts = t.file_url.split("/music/");
+            return urlParts[1] ? decodeURIComponent(urlParts[1]) : null;
+          })
+          .filter(Boolean) as string[];
+
+        if (filePaths.length > 0) {
+          await supabase.storage.from("music").remove(filePaths);
+        }
+
+        const { error } = await supabase
+          .from("tracks")
+          .delete()
+          .in("id", Array.from(selectedTracks));
+        if (error) throw error;
+      }
+
+      // Delete selected folders
+      if (selectedFolders.size > 0) {
+        // First delete all tracks in these folders
+        const { data: folderTracks } = await supabase
+          .from("tracks")
+          .select("id, file_url")
+          .in("folder_id", Array.from(selectedFolders));
+
+        if (folderTracks && folderTracks.length > 0) {
+          const filePaths = folderTracks
+            .map(t => {
+              const urlParts = t.file_url.split("/music/");
+              return urlParts[1] ? decodeURIComponent(urlParts[1]) : null;
+            })
+            .filter(Boolean) as string[];
+
+          if (filePaths.length > 0) {
+            await supabase.storage.from("music").remove(filePaths);
+          }
+
+          await supabase
+            .from("tracks")
+            .delete()
+            .in("folder_id", Array.from(selectedFolders));
+        }
+
+        const { error } = await supabase
+          .from("folders")
+          .delete()
+          .in("id", Array.from(selectedFolders));
+        if (error) throw error;
+      }
+
+      toast({
+        title: "Eliminación completa",
+        description: `${selectedFolders.size} carpetas y ${selectedTracks.size} tracks eliminados`,
+      });
+      setSelectedFolders(new Set());
+      setSelectedTracks(new Set());
+      setShowBulkDeleteConfirm(false);
+      loadContent();
+    } catch (error) {
+      console.error("Error in bulk delete:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo completar la eliminación",
+        variant: "destructive",
+      });
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
+
+  const hasSelection = selectedFolders.size > 0 || selectedTracks.size > 0;
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -899,7 +1023,7 @@ export default function AdminMusic() {
         </nav>
 
         {/* Actions */}
-        <div className="flex flex-wrap gap-3 mb-8">
+        <div className="flex flex-wrap items-center gap-3 mb-8">
           <Button onClick={() => setShowNewFolder(true)}>
             <FolderPlus className="w-4 h-4 mr-2" />
             Nueva Carpeta
@@ -912,17 +1036,41 @@ export default function AdminMusic() {
             <FolderUp className="w-4 h-4 mr-2" />
             Importar Carpetas
           </Button>
+          
+          {hasSelection && (
+            <Button
+              variant="destructive"
+              onClick={() => setShowBulkDeleteConfirm(true)}
+              className="ml-auto"
+            >
+              <Trash className="w-4 h-4 mr-2" />
+              Eliminar ({selectedFolders.size + selectedTracks.size})
+            </Button>
+          )}
         </div>
 
         {/* Folders Grid with Drag & Drop */}
         {folders.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              Carpetas
-              <span className="text-xs text-muted-foreground font-normal">
-                (arrastra para reordenar)
-              </span>
-            </h2>
+            <div className="flex items-center gap-4 mb-4">
+              <button
+                onClick={selectAllFolders}
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {selectedFolders.size === folders.length && folders.length > 0 ? (
+                  <CheckSquare className="w-4 h-4 text-primary" />
+                ) : (
+                  <Square className="w-4 h-4" />
+                )}
+                Seleccionar todas
+              </button>
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                Carpetas ({folders.length})
+                <span className="text-xs text-muted-foreground font-normal">
+                  (arrastra para reordenar)
+                </span>
+              </h2>
+            </div>
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
@@ -934,22 +1082,35 @@ export default function AdminMusic() {
               >
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {folders.map((folder) => (
-                    <SortableFolder
-                      key={folder.id}
-                      folder={folder}
-                      onNavigate={() => setCurrentFolderId(folder.id)}
-                      onToggleVisibility={() =>
-                        toggleVisibility("folder", folder.id, folder.is_visible)
-                      }
-                      onDelete={() => {
-                        setDeleteTarget({
-                          type: "folder",
-                          id: folder.id,
-                          name: folder.name,
-                        });
-                        setShowDeleteConfirm(true);
-                      }}
-                    />
+                    <div key={folder.id} className="relative">
+                      <div
+                        className="absolute top-2 left-2 z-10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFolderSelection(folder.id);
+                        }}
+                      >
+                        <Checkbox
+                          checked={selectedFolders.has(folder.id)}
+                          className="bg-background"
+                        />
+                      </div>
+                      <SortableFolder
+                        folder={folder}
+                        onNavigate={() => setCurrentFolderId(folder.id)}
+                        onToggleVisibility={() =>
+                          toggleVisibility("folder", folder.id, folder.is_visible)
+                        }
+                        onDelete={() => {
+                          setDeleteTarget({
+                            type: "folder",
+                            id: folder.id,
+                            name: folder.name,
+                          });
+                          setShowDeleteConfirm(true);
+                        }}
+                      />
+                    </div>
                   ))}
                 </div>
               </SortableContext>
@@ -960,12 +1121,25 @@ export default function AdminMusic() {
         {/* Tracks List with Drag & Drop */}
         {tracks.length > 0 && (
           <div>
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              Tracks ({tracks.length})
-              <span className="text-xs text-muted-foreground font-normal">
-                (arrastra para reordenar)
-              </span>
-            </h2>
+            <div className="flex items-center gap-4 mb-4">
+              <button
+                onClick={selectAllTracks}
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {selectedTracks.size === tracks.length && tracks.length > 0 ? (
+                  <CheckSquare className="w-4 h-4 text-primary" />
+                ) : (
+                  <Square className="w-4 h-4" />
+                )}
+                Seleccionar todos
+              </button>
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                Tracks ({tracks.length})
+                <span className="text-xs text-muted-foreground font-normal">
+                  (arrastra para reordenar)
+                </span>
+              </h2>
+            </div>
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
@@ -977,25 +1151,39 @@ export default function AdminMusic() {
               >
                 <div className="bg-card rounded-xl border border-border overflow-hidden">
                   {tracks.map((track) => (
-                    <SortableTrack
+                    <div
                       key={track.id}
-                      track={track}
-                      onEdit={() => {
-                        setEditingTrack(track);
-                        setShowEditTrack(true);
-                      }}
-                      onToggleVisibility={() =>
-                        toggleVisibility("track", track.id, track.is_visible)
-                      }
-                      onDelete={() => {
-                        setDeleteTarget({
-                          type: "track",
-                          id: track.id,
-                          name: track.title,
-                        });
-                        setShowDeleteConfirm(true);
-                      }}
-                    />
+                      className="flex items-center"
+                    >
+                      <div
+                        className="pl-4 cursor-pointer"
+                        onClick={() => toggleTrackSelection(track.id)}
+                      >
+                        <Checkbox
+                          checked={selectedTracks.has(track.id)}
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <SortableTrack
+                          track={track}
+                          onEdit={() => {
+                            setEditingTrack(track);
+                            setShowEditTrack(true);
+                          }}
+                          onToggleVisibility={() =>
+                            toggleVisibility("track", track.id, track.is_visible)
+                          }
+                          onDelete={() => {
+                            setDeleteTarget({
+                              type: "track",
+                              id: track.id,
+                              name: track.title,
+                            });
+                            setShowDeleteConfirm(true);
+                          }}
+                        />
+                      </div>
+                    </div>
                   ))}
                 </div>
               </SortableContext>
@@ -1319,6 +1507,44 @@ export default function AdminMusic() {
               className="bg-destructive text-destructive-foreground"
             >
               Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Delete Confirmation */}
+      <AlertDialog open={showBulkDeleteConfirm} onOpenChange={setShowBulkDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar selección?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminarán permanentemente:
+              <ul className="mt-2 space-y-1 text-left">
+                {selectedFolders.size > 0 && (
+                  <li>• {selectedFolders.size} carpeta(s) y todo su contenido</li>
+                )}
+                {selectedTracks.size > 0 && (
+                  <li>• {selectedTracks.size} track(s)</li>
+                )}
+              </ul>
+              <p className="mt-3 font-medium text-destructive">Esta acción no se puede deshacer.</p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={bulkDelete}
+              disabled={bulkDeleting}
+              className="bg-destructive text-destructive-foreground"
+            >
+              {bulkDeleting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Eliminando...
+                </>
+              ) : (
+                "Eliminar todo"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
