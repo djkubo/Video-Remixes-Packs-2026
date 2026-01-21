@@ -17,11 +17,11 @@ const GuaranteeSection = () => {
           </div>
           <div>
             <h3 className="mb-2 font-display text-xl font-bold text-foreground md:text-2xl">
-              GARANTÍA DE CALIDAD DE PISTA
+              SIN CONTRATOS. SIN COMPROMISOS.
             </h3>
             <p className="font-sans text-sm text-muted-foreground md:text-base">
-              Si el audio no revienta las bocinas como esperas, cancelas sin costo. 
-              Sin preguntas, sin complicaciones. Tu satisfacción es nuestra prioridad.
+              Cancela cuando quieras desde tu panel. Un clic y listo. 
+              Sin llamadas, sin emails, sin letras chiquitas.
             </p>
           </div>
         </motion.div>

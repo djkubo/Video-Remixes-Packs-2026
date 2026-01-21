@@ -30,7 +30,7 @@ const SpeedSection = () => {
               
               <h2 className="font-display text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold">
                 VETE A DORMIR Y DESPIERTA CON{" "}
-                <span className="text-primary">500GB DE MÚSICA NUEVA</span>{" "}
+                <span className="text-primary">TU LIBRERÍA ACTUALIZADA</span>{" "}
                 EN TU DISCO DURO.
               </h2>
             </div>
