@@ -8,24 +8,29 @@ import {
 
 const faqs = [
   {
-    question: "¿Cómo funciona la Prueba Gratis?",
+    question: "¿Qué diferencia a VideoRemixesPacks de otros pools?",
     answer:
-      "Tienes 7 días y 100GB para descargar todo lo que quieras. Si no te gusta, cancelas con un clic desde tu panel. Sin preguntas, sin compromisos.",
+      "Somos un agregador. Nosotros pagamos las membresías de múltiples pools, filtramos el contenido, corregimos los tags y te lo entregamos limpio en un solo lugar. Tú pagas una sola suscripción y accedes a todo.",
   },
   {
-    question: "¿Puedo usar gestores de descarga?",
+    question: "¿Cómo funciona la descarga masiva?",
     answer:
-      "Sí, soportamos FileZilla y Air Explorer para descarga masiva. Te damos acceso FTP directo para sincronizar tu librería completa en minutos.",
+      "Te damos acceso FTP directo. Conectas FileZilla o Air Explorer, seleccionas las carpetas que quieres y descargas todo de golpe. Puedes sincronizar hasta 1TB mensual mientras duermes.",
   },
   {
-    question: "¿La música tiene sellos o voces?",
+    question: "¿La música tiene sellos o voces de otros pools?",
     answer:
       "No. Todo es Clean/Intro-Outro listo para mezclar. Sin logos de otros pools, sin marcas de agua. Archivos profesionales listos para tu set.",
   },
   {
-    question: "¿Funciona con Serato/VirtualDJ?",
+    question: "¿Funciona con Serato/VirtualDJ/Rekordbox?",
     answer:
       "Sí, son archivos MP3 320kbps y MP4 1080p universales. Compatibles con cualquier software de DJ: Serato, VirtualDJ, Rekordbox, Traktor.",
+  },
+  {
+    question: "¿Puedo cancelar cuando quiera?",
+    answer:
+      "Sí. Sin contratos forzosos, sin letras chiquitas. Cancelas desde tu panel con un clic y listo. No hay permanencia mínima.",
   },
 ];
 

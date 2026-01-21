@@ -6,17 +6,17 @@ const TrustBar = () => {
     {
       icon: FolderCheck,
       title: "Organización Suprema",
-      description: "Nunca verás una carpeta 'Varios'."
+      description: "Por género, BPM y año. Nunca 'Varios'."
     },
     {
       icon: MonitorPlay,
-      title: "Calidad Visual",
-      description: "Solo HD/Full HD. Cero Rips."
+      title: "Calidad Profesional",
+      description: "MP3 320kbps + Video 1080p."
     },
     {
       icon: HeadphonesIcon,
-      title: "Soporte Anti-Estrés",
-      description: "Tutoriales incluidos."
+      title: "Archivos Clean",
+      description: "Sin logos. Sin marcas de agua."
     }
   ];
 

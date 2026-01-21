@@ -4,10 +4,10 @@ import { Button } from "@/components/ui/button";
 
 const FinalCTA = () => {
   const benefits = [
-    { icon: Clock, text: "7 Días Gratis (100GB para probar)" },
-    { icon: Zap, text: "Descarga masiva vía FTP" },
-    { icon: Shield, text: "Cancela cuando quieras, sin preguntas" },
+    { icon: Zap, text: "Descarga masiva vía FTP (hasta 1TB/mes)" },
     { icon: Check, text: "Archivos Clean, listos para mezclar" },
+    { icon: Shield, text: "Cancela cuando quieras, sin preguntas" },
+    { icon: Clock, text: "Updates semanales con lo más nuevo" },
   ];
 
   return (
@@ -28,12 +28,12 @@ const FinalCTA = () => {
             <div className="relative z-10 text-center">
               {/* Heading */}
               <h2 className="font-display text-3xl font-bold md:text-4xl lg:text-5xl">
-                EL TIEMPO ES TU ACTIVO MÁS CARO.{" "}
-                <span className="text-gradient-red">DEJA DE PERDERLO.</span>
+                ¿LISTO PARA DEJAR DE BUSCAR{" "}
+                <span className="text-gradient-red">EN 5 POOLS DIFERENTES?</span>
               </h2>
 
               <p className="mx-auto mt-4 max-w-xl text-muted-foreground font-sans text-lg">
-                Únete al Hub Definitivo del DJ Latino. Una sola suscripción. Todo el contenido que necesitas.
+                Únete al Hub Definitivo del DJ Latino. Una sola suscripción. Todo el contenido que necesitas. Desde $35/mes.
               </p>
 
               {/* Benefits grid */}
