@@ -2,8 +2,14 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useTheme } from "@/contexts/ThemeContext";
+import logoWhite from "@/assets/logo-white.png";
+import logoDark from "@/assets/logo-dark.png";
 
 const MobileStickyBar = () => {
+  const { t } = useLanguage();
+  const { theme } = useTheme();
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -31,17 +37,24 @@ const MobileStickyBar = () => {
           
           {/* Bar content */}
           <div className="flex items-center justify-between gap-3 bg-background/98 px-4 py-3 backdrop-blur-xl border-t border-primary/30">
-            <p className="text-sm text-muted-foreground font-sans">
-              ¿Listo para empezar?
-            </p>
+            <div className="flex items-center gap-2 min-w-0">
+              <img
+                src={theme === "dark" ? logoWhite : logoDark}
+                alt="VRP"
+                className="h-7 w-auto object-contain flex-shrink-0"
+              />
+              <p className="text-sm text-muted-foreground font-sans truncate">
+                {t("mobile.ready")}
+              </p>
+            </div>
             <Button
               asChild
               size="sm"
-              className="btn-primary-glow h-11 gap-2 px-5 font-bold text-sm"
+              className="btn-primary-glow h-11 gap-2 px-5 font-bold text-sm flex-shrink-0"
             >
               <a href="https://videoremixespacks.com/plan">
                 <Zap className="h-4 w-4" />
-                Ver Planes
+                {t("mobile.cta")}
               </a>
             </Button>
           </div>

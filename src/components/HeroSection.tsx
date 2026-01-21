@@ -2,9 +2,13 @@ import { motion } from "framer-motion";
 import { Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useTheme } from "@/contexts/ThemeContext";
+import logoWhite from "@/assets/logo-white.png";
+import logoDark from "@/assets/logo-dark.png";
 
 const HeroSection = () => {
   const { t } = useLanguage();
+  const { theme } = useTheme();
 
   return (
     <section className="relative min-h-screen overflow-hidden bg-background">
@@ -36,11 +40,25 @@ const HeroSection = () => {
       <div className="absolute inset-0 hero-gradient" />
 
       <div className="container relative z-10 mx-auto flex min-h-screen flex-col items-center justify-center px-4 py-20 text-center">
+        {/* Logo */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="mb-6"
+        >
+          <img
+            src={theme === "dark" ? logoWhite : logoDark}
+            alt="VideoRemixesPacks"
+            className="h-20 md:h-28 w-auto object-contain mx-auto"
+          />
+        </motion.div>
+
         {/* Anti-Confusion Badge */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
           className="mb-8"
         >
           <span className="inline-flex items-center gap-2 rounded-full border-2 border-primary/60 bg-primary/20 px-5 py-2.5 text-sm font-bold uppercase tracking-wider text-primary-foreground dark:text-white backdrop-blur-sm">
@@ -56,7 +74,7 @@ const HeroSection = () => {
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
           className="max-w-5xl font-display text-5xl font-extrabold leading-none tracking-tight text-foreground dark:text-white text-shadow sm:text-6xl md:text-7xl lg:text-8xl"
         >
           {t("hero.title")}{" "}
