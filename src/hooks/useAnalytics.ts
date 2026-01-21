@@ -2,6 +2,15 @@ import { useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 
+// UTM parameter interface
+interface UTMParams {
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  utm_term: string | null;
+  utm_content: string | null;
+}
+
 // Generate a unique visitor ID (persisted in localStorage)
 const getVisitorId = (): string => {
   const key = "vrp_visitor_id";
@@ -22,6 +31,104 @@ const getSessionId = (): string => {
     sessionStorage.setItem(key, id);
   }
   return id;
+};
+
+// Capture and persist UTM parameters
+const getUTMParams = (): UTMParams => {
+  const key = "vrp_utm_params";
+  
+  // Check if we have UTM params in current URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const currentUTM: UTMParams = {
+    utm_source: urlParams.get("utm_source"),
+    utm_medium: urlParams.get("utm_medium"),
+    utm_campaign: urlParams.get("utm_campaign"),
+    utm_term: urlParams.get("utm_term"),
+    utm_content: urlParams.get("utm_content"),
+  };
+  
+  // If we have new UTM params, save them
+  if (currentUTM.utm_source) {
+    sessionStorage.setItem(key, JSON.stringify(currentUTM));
+    return currentUTM;
+  }
+  
+  // Otherwise, try to get from session storage (persists during session)
+  const stored = sessionStorage.getItem(key);
+  if (stored) {
+    try {
+      return JSON.parse(stored) as UTMParams;
+    } catch {
+      return currentUTM;
+    }
+  }
+  
+  // Try to detect source from referrer if no UTM params
+  const referrer = document.referrer;
+  if (referrer) {
+    const ref = new URL(referrer);
+    const host = ref.hostname.toLowerCase();
+    
+    // Map common referrers to sources
+    let detectedSource: string | null = null;
+    let detectedMedium: string | null = null;
+    
+    if (host.includes("facebook.com") || host.includes("fb.com")) {
+      detectedSource = "facebook";
+      detectedMedium = "social";
+    } else if (host.includes("instagram.com")) {
+      detectedSource = "instagram";
+      detectedMedium = "social";
+    } else if (host.includes("tiktok.com")) {
+      detectedSource = "tiktok";
+      detectedMedium = "social";
+    } else if (host.includes("twitter.com") || host.includes("x.com")) {
+      detectedSource = "twitter";
+      detectedMedium = "social";
+    } else if (host.includes("youtube.com")) {
+      detectedSource = "youtube";
+      detectedMedium = "social";
+    } else if (host.includes("whatsapp.com") || host.includes("wa.me")) {
+      detectedSource = "whatsapp";
+      detectedMedium = "messaging";
+    } else if (host.includes("t.me") || host.includes("telegram.org")) {
+      detectedSource = "telegram";
+      detectedMedium = "messaging";
+    } else if (host.includes("google.")) {
+      detectedSource = "google";
+      detectedMedium = "organic";
+    } else if (host.includes("bing.com")) {
+      detectedSource = "bing";
+      detectedMedium = "organic";
+    } else if (host.includes("mail.") || host.includes("outlook.") || host.includes("gmail.")) {
+      detectedSource = "email";
+      detectedMedium = "email";
+    } else if (!host.includes(window.location.hostname)) {
+      detectedSource = host.replace("www.", "");
+      detectedMedium = "referral";
+    }
+    
+    if (detectedSource) {
+      const autoUTM: UTMParams = {
+        utm_source: detectedSource,
+        utm_medium: detectedMedium,
+        utm_campaign: null,
+        utm_term: null,
+        utm_content: null,
+      };
+      sessionStorage.setItem(key, JSON.stringify(autoUTM));
+      return autoUTM;
+    }
+  }
+  
+  // Default: direct traffic
+  return {
+    utm_source: "direct",
+    utm_medium: "none",
+    utm_campaign: null,
+    utm_term: null,
+    utm_content: null,
+  };
 };
 
 // Detect country from timezone (lightweight, no API call)
@@ -57,6 +164,13 @@ export const useAnalytics = () => {
   const visitorId = useRef<string>("");
   const sessionId = useRef<string>("");
   const countryCode = useRef<string>("");
+  const utmParams = useRef<UTMParams>({
+    utm_source: null,
+    utm_medium: null,
+    utm_campaign: null,
+    utm_term: null,
+    utm_content: null,
+  });
   const eventQueue = useRef<AnalyticsEvent[]>([]);
   const isProcessing = useRef(false);
 
@@ -64,6 +178,7 @@ export const useAnalytics = () => {
     visitorId.current = getVisitorId();
     sessionId.current = getSessionId();
     countryCode.current = detectCountryFromTimezone();
+    utmParams.current = getUTMParams();
   }, []);
 
   const processQueue = useCallback(async () => {
@@ -83,6 +198,11 @@ export const useAnalytics = () => {
         user_agent: navigator.userAgent,
         referrer: document.referrer || null,
         country_code: countryCode.current,
+        utm_source: utmParams.current.utm_source,
+        utm_medium: utmParams.current.utm_medium,
+        utm_campaign: utmParams.current.utm_campaign,
+        utm_term: utmParams.current.utm_term,
+        utm_content: utmParams.current.utm_content,
       }));
 
       const { error } = await supabase.from("analytics_events").insert(records);
@@ -116,6 +236,11 @@ export const useAnalytics = () => {
           user_agent: navigator.userAgent,
           referrer: document.referrer || null,
           country_code: countryCode.current,
+          utm_source: utmParams.current.utm_source,
+          utm_medium: utmParams.current.utm_medium,
+          utm_campaign: utmParams.current.utm_campaign,
+          utm_term: utmParams.current.utm_term,
+          utm_content: utmParams.current.utm_content,
         }));
         
         // Fallback: try to send synchronously

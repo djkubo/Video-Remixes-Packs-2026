@@ -71,7 +71,7 @@ interface AnalyticsSummary {
 
 export default function AdminDashboard() {
   const [dateRange, setDateRange] = useState("7");
-  const [activeTab, setActiveTab] = useState<"overview" | "leads" | "events">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "sources" | "leads" | "events">("overview");
 
   const startDate = startOfDay(subDays(new Date(), parseInt(dateRange)));
   const endDate = endOfDay(new Date());
@@ -249,6 +249,55 @@ export default function AdminDashboard() {
     },
   });
 
+  // Fetch traffic sources breakdown
+  const { data: sourceBreakdown } = useQuery({
+    queryKey: ["admin-sources", dateRange],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("analytics_events")
+        .select("utm_source, utm_medium, utm_campaign, visitor_id")
+        .gte("created_at", startDate.toISOString())
+        .lte("created_at", endDate.toISOString());
+
+      // Group by source
+      const bySource: Record<string, Set<string>> = {};
+      const byMedium: Record<string, Set<string>> = {};
+      const byCampaign: Record<string, Set<string>> = {};
+
+      data?.forEach((event) => {
+        const source = event.utm_source || "direct";
+        const medium = event.utm_medium || "none";
+        const campaign = event.utm_campaign || "(sin campaña)";
+
+        if (!bySource[source]) bySource[source] = new Set();
+        bySource[source].add(event.visitor_id || "");
+
+        if (!byMedium[medium]) byMedium[medium] = new Set();
+        byMedium[medium].add(event.visitor_id || "");
+
+        if (event.utm_campaign) {
+          if (!byCampaign[campaign]) byCampaign[campaign] = new Set();
+          byCampaign[campaign].add(event.visitor_id || "");
+        }
+      });
+
+      return {
+        sources: Object.entries(bySource)
+          .map(([name, visitors]) => ({ name, value: visitors.size }))
+          .sort((a, b) => b.value - a.value)
+          .slice(0, 10),
+        mediums: Object.entries(byMedium)
+          .map(([name, visitors]) => ({ name, value: visitors.size }))
+          .sort((a, b) => b.value - a.value)
+          .slice(0, 10),
+        campaigns: Object.entries(byCampaign)
+          .map(([name, visitors]) => ({ name, value: visitors.size }))
+          .sort((a, b) => b.value - a.value)
+          .slice(0, 10),
+      };
+    },
+  });
+
   const handleRefresh = () => {
     refetchLeads();
     refetchAnalytics();
@@ -307,16 +356,17 @@ export default function AdminDashboard() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b">
+      <div className="flex gap-2 border-b overflow-x-auto">
         {[
           { id: "overview", label: "Resumen" },
+          { id: "sources", label: "Fuentes" },
           { id: "leads", label: `Leads (${leads?.length || 0})` },
           { id: "events", label: "Eventos" },
-        ].map(tab => (
+        ].map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as typeof activeTab)}
-            className={`px-4 py-2 font-medium transition-colors border-b-2 -mb-px ${
+            className={`px-4 py-2 font-medium transition-colors border-b-2 -mb-px whitespace-nowrap ${
               activeTab === tab.id
                 ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:text-foreground"
@@ -519,6 +569,172 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
           </div>
+        </div>
+      )}
+
+      {/* Sources Tab */}
+      {activeTab === "sources" && (
+        <div className="space-y-6">
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Traffic Sources */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Filter className="w-5 h-5" />
+                  Fuentes de Tráfico (utm_source)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {sourceBreakdown?.sources.map((source, index) => {
+                    const total = sourceBreakdown.sources.reduce((a, b) => a + b.value, 0);
+                    const percent = total > 0 ? (source.value / total) * 100 : 0;
+                    return (
+                      <div key={source.name} className="space-y-1">
+                        <div className="flex justify-between text-sm">
+                          <span className="font-medium capitalize flex items-center gap-2">
+                            <span
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                            />
+                            {source.name}
+                          </span>
+                          <span className="text-muted-foreground">
+                            {source.value} ({percent.toFixed(1)}%)
+                          </span>
+                        </div>
+                        <div className="h-2 bg-muted rounded-full overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all"
+                            style={{
+                              width: `${percent}%`,
+                              backgroundColor: COLORS[index % COLORS.length],
+                            }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {!sourceBreakdown?.sources.length && (
+                    <p className="text-muted-foreground text-center py-8">
+                      Sin datos de fuentes
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Traffic Mediums */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Medios (utm_medium)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={sourceBreakdown?.mediums || []}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) =>
+                          `${name} (${(percent * 100).toFixed(0)}%)`
+                        }
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {sourceBreakdown?.mediums?.map((_, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={COLORS[index % COLORS.length]}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Campaigns */}
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle>Campañas (utm_campaign)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {sourceBreakdown?.campaigns.length ? (
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={sourceBreakdown.campaigns}>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                        <XAxis
+                          dataKey="name"
+                          className="text-xs"
+                          angle={-45}
+                          textAnchor="end"
+                          height={80}
+                        />
+                        <YAxis className="text-xs" />
+                        <Tooltip />
+                        <Bar
+                          dataKey="value"
+                          fill="hsl(var(--primary))"
+                          radius={[4, 4, 0, 0]}
+                          name="Visitantes"
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-center py-8">
+                    Sin campañas activas. Usa utm_campaign en tus enlaces.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* UTM Guide */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Cómo usar parámetros UTM</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4 text-sm">
+                <p className="text-muted-foreground">
+                  Agrega estos parámetros a tus enlaces para rastrear de dónde viene el tráfico:
+                </p>
+                <div className="bg-muted p-4 rounded-lg font-mono text-xs overflow-x-auto">
+                  <code>
+                    https://tudominio.com/?utm_source=instagram&utm_medium=social&utm_campaign=lanzamiento
+                  </code>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="space-y-1">
+                    <p className="font-medium">utm_source</p>
+                    <p className="text-muted-foreground">
+                      Origen: whatsapp, instagram, tiktok, email, facebook
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="font-medium">utm_medium</p>
+                    <p className="text-muted-foreground">
+                      Medio: social, paid, email, messaging, organic
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="font-medium">utm_campaign</p>
+                    <p className="text-muted-foreground">
+                      Nombre de campaña: lanzamiento, promo_navidad, etc.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
 

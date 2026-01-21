@@ -46,6 +46,11 @@ export type Database = {
           referrer: string | null
           session_id: string | null
           user_agent: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
           visitor_id: string | null
         }
         Insert: {
@@ -58,6 +63,11 @@ export type Database = {
           referrer?: string | null
           session_id?: string | null
           user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
           visitor_id?: string | null
         }
         Update: {
@@ -70,6 +80,11 @@ export type Database = {
           referrer?: string | null
           session_id?: string | null
           user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
           visitor_id?: string | null
         }
         Relationships: []
