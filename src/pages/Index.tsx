@@ -14,10 +14,16 @@ import TrustBar from "@/components/TrustBar";
 import GuaranteeSection from "@/components/GuaranteeSection";
 import Footer from "@/components/Footer";
 import MobileStickyBar from "@/components/MobileStickyBar";
+import SettingsToggle from "@/components/SettingsToggle";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Index = () => {
+  const { t } = useLanguage();
+
   return (
     <main className="min-h-screen bg-background pb-16 md:pb-0">
+      <SettingsToggle />
+      
       {/* 1. HERO - Captura atención */}
       <HeroSection />
       
@@ -40,10 +46,10 @@ const Index = () => {
       <section className="relative py-16 md:py-24 bg-background">
         <div className="container mx-auto px-4 text-center">
           <h2 className="mb-3 font-display text-4xl font-bold md:text-5xl lg:text-6xl">
-            +60 GÉNEROS MUSICALES
+            {t("genres.title")}
           </h2>
           <p className="mb-10 font-sans text-lg text-muted-foreground">
-            De Cumbia Wepa a Afro House. Todo lo que necesitas en un solo lugar.
+            {t("genres.subtitle")}
           </p>
         </div>
         <InfiniteMarquee />

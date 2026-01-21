@@ -1,13 +1,18 @@
 import { motion } from "framer-motion";
 import { Check, ArrowRight, Shield, Clock, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 const FinalCTA = () => {
+  const { t, language } = useLanguage();
+  const { convertPrice } = useCurrency();
+
   const benefits = [
-    { icon: Zap, text: "Descarga masiva vía FTP (hasta 1TB/mes)" },
-    { icon: Check, text: "Archivos Clean, listos para mezclar" },
-    { icon: Shield, text: "Cancela cuando quieras, sin preguntas" },
-    { icon: Clock, text: "Updates semanales con lo más nuevo" },
+    { icon: Zap, text: t("cta.benefit1") },
+    { icon: Check, text: t("cta.benefit2") },
+    { icon: Shield, text: t("cta.benefit3") },
+    { icon: Clock, text: t("cta.benefit4") },
   ];
 
   return (
@@ -27,12 +32,12 @@ const FinalCTA = () => {
             <div className="relative z-10 text-center">
               {/* Heading */}
               <h2 className="font-display text-display-sm md:text-display-md font-extrabold">
-                ¿LISTO PARA DEJAR DE BUSCAR{" "}
-                <span className="text-gradient-red">EN 5 POOLS?</span>
+                {t("cta.title")}{" "}
+                <span className="text-gradient-red">{t("cta.titleHighlight")}</span>
               </h2>
 
               <p className="mx-auto mt-6 max-w-xl text-muted-foreground font-sans text-lg">
-                Una sola suscripción. Todo el contenido que necesitas. Desde <span className="text-foreground font-bold">$35/mes</span>.
+                {t("cta.subtitle")} <span className="text-foreground font-bold">{convertPrice(35)}/{language === "es" ? "mes" : "month"}</span>.
               </p>
 
               {/* Benefits grid */}
@@ -58,14 +63,14 @@ const FinalCTA = () => {
                   className="btn-primary-glow animate-pulse-glow group h-16 w-full max-w-md px-10 text-lg font-bold sm:w-auto"
                 >
                   <a href="https://videoremixespacks.com/plan">
-                    QUIERO MI ACCESO AHORA
+                    {t("cta.button")}
                     <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                   </a>
                 </Button>
               </div>
 
               <p className="mt-8 font-bebas text-sm tracking-widest text-muted-foreground">
-                FTP / AIR EXPLORER • 320KBPS / 1080P • SOPORTE INCLUIDO
+                FTP / AIR EXPLORER • 320KBPS / 1080P • {language === "es" ? "SOPORTE INCLUIDO" : "SUPPORT INCLUDED"}
               </p>
             </div>
           </div>

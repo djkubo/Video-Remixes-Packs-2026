@@ -1,28 +1,31 @@
 import { motion } from "framer-motion";
 import { DollarSign, Trash2, Tag, Gift } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const AggregatorSection = () => {
+  const { t } = useLanguage();
+
   const features = [
     {
       icon: DollarSign,
-      title: "Pagamos los Pools",
-      description: "Nosotros nos suscribimos a múltiples fuentes. Tú pagas solo una."
+      title: t("aggregator.feat1.title"),
+      description: t("aggregator.feat1.desc"),
     },
     {
       icon: Trash2,
-      title: "Filtramos la Basura",
-      description: "Solo los éxitos. Cero relleno. Cero versiones inútiles."
+      title: t("aggregator.feat2.title"),
+      description: t("aggregator.feat2.desc"),
     },
     {
       icon: Tag,
-      title: "Corregimos los Tags",
-      description: "Metadata perfecta: Artista, Título, BPM, Género."
+      title: t("aggregator.feat3.title"),
+      description: t("aggregator.feat3.desc"),
     },
     {
       icon: Gift,
-      title: "Entrega Limpia",
-      description: "Sin logos, sin marcas de agua. Archivos profesionales."
-    }
+      title: t("aggregator.feat4.title"),
+      description: t("aggregator.feat4.desc"),
+    },
   ];
 
   return (
@@ -44,17 +47,16 @@ const AggregatorSection = () => {
                 viewport={{ once: true }}
                 className="badge-primary mb-6"
               >
-                MODELO AGREGADOR
+                {t("aggregator.badge")}
               </motion.span>
               
               <h2 className="font-display text-display-sm md:text-display-md font-extrabold">
-                NOSOTROS PAGAMOS LOS POOLS{" "}
-                <span className="text-gradient-red">POR TI.</span>
+                {t("aggregator.title")}{" "}
+                <span className="text-gradient-red">{t("aggregator.titleHighlight")}</span>
               </h2>
               
               <p className="mt-6 max-w-2xl mx-auto font-sans text-lg text-muted-foreground">
-                No pagues 5 membresías. Paga solo una. Nosotros hacemos el trabajo sucio 
-                y te lo entregamos en bandeja de plata.
+                {t("aggregator.subtitle")}
               </p>
             </div>
 

@@ -1,28 +1,31 @@
 import { motion } from "framer-motion";
 import { Zap, Server, Cloud, Download, Clock } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const SpeedSection = () => {
+  const { t } = useLanguage();
+
   const features = [
     {
       icon: Server,
-      title: "Servidores Premium",
-      description: "Alta velocidad sin throttling"
+      title: t("speed.feat1.title"),
+      description: t("speed.feat1.desc"),
     },
     {
       icon: Cloud,
-      title: "Air Explorer",
-      description: "Sincroniza con tu nube"
+      title: t("speed.feat2.title"),
+      description: t("speed.feat2.desc"),
     },
     {
       icon: Download,
-      title: "Sin Límites",
-      description: "Descarga masiva. Sin caps."
+      title: t("speed.feat3.title"),
+      description: t("speed.feat3.desc"),
     },
     {
       icon: Clock,
-      title: "Mientras Duermes",
-      description: "Programa y despierta listo"
-    }
+      title: t("speed.feat4.title"),
+      description: t("speed.feat4.desc"),
+    },
   ];
 
   return (
@@ -46,17 +49,17 @@ const SpeedSection = () => {
                 viewport={{ once: true }}
                 className="badge-primary mb-6"
               >
-                SINCRONIZACIÓN MASIVA
+                {t("speed.badge")}
               </motion.span>
               
               <h2 className="font-display text-display-sm md:text-display-md font-extrabold leading-tight">
-                DESCARGA{" "}
-                <span className="text-gradient-red">1TB EN MINUTOS</span>{" "}
-                CON FTP.
+                {t("speed.title1")}{" "}
+                <span className="text-gradient-red">{t("speed.title2")}</span>{" "}
+                {t("speed.title3")}
               </h2>
               
               <p className="mt-6 max-w-2xl mx-auto font-sans text-lg text-muted-foreground">
-                Conecta FileZilla o Air Explorer. Sincroniza tu librería completa mientras duermes.
+                {t("speed.subtitle")}
               </p>
             </div>
 
@@ -68,10 +71,10 @@ const SpeedSection = () => {
               
               <div className="text-center md:text-left">
                 <h3 className="font-display text-2xl md:text-3xl font-bold">
-                  Conexión FTP Directa
+                  {t("speed.ftpTitle")}
                 </h3>
                 <p className="mt-2 font-sans text-lg text-muted-foreground">
-                  Arrastra, suelta y sincroniza. Así de fácil.
+                  {t("speed.ftpDesc")}
                 </p>
               </div>
             </div>
