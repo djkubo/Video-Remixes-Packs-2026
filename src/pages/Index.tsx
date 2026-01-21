@@ -17,9 +17,13 @@ import MobileStickyBar from "@/components/MobileStickyBar";
 import SettingsToggle from "@/components/SettingsToggle";
 import ExitIntentPopup from "@/components/ExitIntentPopup";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useEngagementTracking } from "@/hooks/useEngagementTracking";
 
 const Index = () => {
   const { t } = useLanguage();
+  
+  // Initialize engagement tracking (scroll depth, time on page, video plays)
+  useEngagementTracking();
 
   return (
     <>
