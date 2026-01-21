@@ -6,7 +6,7 @@ const DJTodoterrenoSection = () => {
     { icon: Music, name: "Cumbia Wepa", color: "text-primary" },
     { icon: Disc, name: "Afro House", color: "text-primary" },
     { icon: Mic2, name: "Karaoke HD", color: "text-primary" },
-    { icon: PartyPopper, name: "Christmas Dembow", color: "text-primary" },
+    { icon: PartyPopper, name: "Reggaeton Old School", color: "text-primary" },
   ];
 
   return (
@@ -47,7 +47,7 @@ const DJTodoterrenoSection = () => {
               </p>
               
               <p className="mt-4 font-sans text-lg text-muted-foreground">
-                Desde "Cumbia Lagunera" hasta "Christmas Dembow".{" "}
+                Desde "Cumbia Lagunera" hasta "Reggaeton Old School".{" "}
                 <span className="text-foreground font-bold">Nunca más digas "no la tengo".</span>
               </p>
             </div>
