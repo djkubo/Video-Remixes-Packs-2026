@@ -73,27 +73,35 @@ const PricingSection = () => {
               transition={{ duration: 0.5, delay: index * 0.15 }}
               className={`group relative rounded-3xl transition-all duration-500 ${
                 plan.highlighted
-                  ? "md:scale-105 md:-my-4"
-                  : ""
+                  ? "scale-[1.02] md:scale-105 md:-my-6 z-10"
+                  : "opacity-90"
               }`}
             >
+              {/* Animated golden border for highlighted */}
+              {plan.highlighted && (
+                <div className="absolute -inset-[2px] rounded-3xl bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-400 opacity-80 blur-[1px] animate-pulse" />
+              )}
+
               {/* Card */}
               <div
                 className={`relative h-full overflow-hidden rounded-3xl p-8 md:p-10 ${
                   plan.highlighted
-                    ? "border-2 border-primary bg-gradient-to-br from-primary/20 via-card/80 to-card/60 shadow-[0_0_60px_rgba(175,28,28,0.3)]"
+                    ? "border-2 border-yellow-500/60 bg-gradient-to-br from-yellow-500/10 via-amber-500/5 to-card/90 shadow-[0_0_80px_rgba(234,179,8,0.25)]"
                     : "border border-white/10 bg-card/40 backdrop-blur-md"
                 }`}
               >
-                {/* Glow effect for highlighted */}
+                {/* Multi-layer glow effect for highlighted */}
                 {plan.highlighted && (
-                  <div className="absolute -inset-px -z-10 rounded-3xl bg-gradient-to-br from-primary/40 via-orange-500/20 to-transparent blur-xl" />
+                  <>
+                    <div className="absolute -inset-px -z-10 rounded-3xl bg-gradient-to-br from-yellow-500/30 via-amber-500/10 to-transparent blur-xl" />
+                    <div className="absolute inset-0 -z-10 rounded-3xl bg-gradient-to-t from-primary/20 to-transparent" />
+                  </>
                 )}
 
                 {/* Badge */}
                 {plan.badge && (
                   <div className="absolute -top-px left-0 right-0 flex justify-center">
-                    <span className="inline-flex items-center gap-2 rounded-b-xl bg-gradient-to-r from-primary via-red-500 to-orange-500 px-6 py-2 text-sm font-bold text-white shadow-lg">
+                    <span className="inline-flex items-center gap-2 rounded-b-xl bg-gradient-to-r from-yellow-500 via-amber-500 to-yellow-400 px-6 py-2.5 text-sm font-black uppercase tracking-wide text-black shadow-lg shadow-yellow-500/30">
                       {plan.badge}
                     </span>
                   </div>
@@ -152,12 +160,12 @@ const PricingSection = () => {
                   size="lg"
                   className={`w-full h-14 text-base font-bold transition-all duration-300 hover:scale-[1.02] ${
                     plan.highlighted
-                      ? "bg-gradient-to-r from-primary via-red-600 to-orange-500 shadow-lg shadow-primary/30 hover:shadow-primary/50"
+                      ? "bg-gradient-to-r from-yellow-500 via-amber-500 to-yellow-400 text-black shadow-xl shadow-yellow-500/40 hover:shadow-yellow-500/60 hover:from-yellow-400 hover:to-amber-400"
                       : "bg-secondary text-foreground hover:bg-secondary/80"
                   }`}
                 >
                   <a href="https://videoremixespacks.com/plan">
-                    {plan.highlighted && <Zap className="mr-2 h-5 w-5" />}
+                    {plan.highlighted && <Crown className="mr-2 h-5 w-5" />}
                     {plan.cta}
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </a>
