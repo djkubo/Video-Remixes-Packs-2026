@@ -15,6 +15,7 @@ import GuaranteeSection from "@/components/GuaranteeSection";
 import Footer from "@/components/Footer";
 import MobileStickyBar from "@/components/MobileStickyBar";
 import SettingsToggle from "@/components/SettingsToggle";
+import ExitIntentPopup from "@/components/ExitIntentPopup";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const Index = () => {
@@ -93,6 +94,7 @@ const Index = () => {
 
         <Footer />
         <MobileStickyBar />
+        <ExitIntentPopup />
       </main>
     </>
   );
