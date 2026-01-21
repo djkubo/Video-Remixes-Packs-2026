@@ -1,6 +1,23 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  rectSortingStrategy,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import {
   FolderPlus,
   Upload,
@@ -13,9 +30,9 @@ import {
   Loader2,
   FolderOpen,
   Save,
-  X,
   Eye,
   EyeOff,
+  GripVertical,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +63,7 @@ interface Folder {
   slug: string;
   parent_id: string | null;
   is_visible: boolean;
+  sort_order: number;
   created_at: string;
 }
 
@@ -59,6 +77,170 @@ interface Track {
   bpm: number | null;
   genre: string | null;
   is_visible: boolean;
+  sort_order: number;
+}
+
+// Sortable Folder Component
+function SortableFolder({
+  folder,
+  onNavigate,
+  onToggleVisibility,
+  onDelete,
+}: {
+  folder: Folder;
+  onNavigate: () => void;
+  onToggleVisibility: () => void;
+  onDelete: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: folder.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`relative group p-4 rounded-xl border ${
+        folder.is_visible
+          ? "bg-card border-border"
+          : "bg-muted/50 border-dashed border-muted-foreground/30"
+      } hover:border-primary transition-colors`}
+    >
+      {/* Drag handle */}
+      <div
+        {...attributes}
+        {...listeners}
+        className="absolute top-2 left-2 p-1 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
+      >
+        <GripVertical className="w-4 h-4 text-muted-foreground" />
+      </div>
+
+      {/* Clickable area */}
+      <div className="cursor-pointer" onClick={onNavigate}>
+        <FolderOpen className="w-10 h-10 text-primary mb-2" />
+        <p className="font-medium truncate">{folder.name}</p>
+      </div>
+
+      {/* Actions overlay */}
+      <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleVisibility();
+          }}
+          className="p-1 rounded bg-background/80 hover:bg-background"
+        >
+          {folder.is_visible ? (
+            <Eye className="w-3 h-3" />
+          ) : (
+            <EyeOff className="w-3 h-3" />
+          )}
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          className="p-1 rounded bg-background/80 hover:bg-destructive hover:text-destructive-foreground"
+        >
+          <Trash2 className="w-3 h-3" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Sortable Track Component
+function SortableTrack({
+  track,
+  onEdit,
+  onToggleVisibility,
+  onDelete,
+}: {
+  track: Track;
+  onEdit: () => void;
+  onToggleVisibility: () => void;
+  onDelete: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: track.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-4 px-4 py-3 border-b border-border/50 last:border-b-0 hover:bg-muted/50 transition-colors ${
+        !track.is_visible ? "opacity-50" : ""
+      }`}
+    >
+      {/* Drag handle */}
+      <div
+        {...attributes}
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing p-1"
+      >
+        <GripVertical className="w-4 h-4 text-muted-foreground" />
+      </div>
+
+      <Music className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+      <div className="flex-1 min-w-0">
+        <p className="font-medium truncate">{track.title}</p>
+        <p className="text-sm text-muted-foreground truncate">{track.artist}</p>
+      </div>
+      <div className="flex items-center gap-2">
+        {track.bpm && (
+          <span className="text-xs text-muted-foreground">{track.bpm} BPM</span>
+        )}
+        {track.genre && (
+          <span className="text-xs px-2 py-1 bg-secondary rounded-full">
+            {track.genre}
+          </span>
+        )}
+        <button
+          onClick={onToggleVisibility}
+          className="p-2 rounded hover:bg-muted"
+        >
+          {track.is_visible ? (
+            <Eye className="w-4 h-4" />
+          ) : (
+            <EyeOff className="w-4 h-4" />
+          )}
+        </button>
+        <button onClick={onEdit} className="p-2 rounded hover:bg-muted">
+          <Edit2 className="w-4 h-4" />
+        </button>
+        <button
+          onClick={onDelete}
+          className="p-2 rounded hover:bg-destructive hover:text-destructive-foreground"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
 }
 
 export default function AdminMusic() {
@@ -68,23 +250,39 @@ export default function AdminMusic() {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [breadcrumbs, setBreadcrumbs] = useState<{ id: string; name: string }[]>([]);
-  
+
   // Modals
   const [showNewFolder, setShowNewFolder] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
   const [showEditTrack, setShowEditTrack] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<{ type: 'folder' | 'track'; id: string; name: string } | null>(null);
-  
+  const [deleteTarget, setDeleteTarget] = useState<{
+    type: "folder" | "track";
+    id: string;
+    name: string;
+  } | null>(null);
+
   // Form states
   const [newFolderName, setNewFolderName] = useState("");
   const [uploadFiles, setUploadFiles] = useState<FileList | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [editingTrack, setEditingTrack] = useState<Track | null>(null);
-  
+
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   // Check auth
   useEffect(() => {
@@ -99,8 +297,8 @@ export default function AdminMusic() {
     };
     checkAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT') {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
         navigate("/admin/login");
       }
     });
@@ -117,29 +315,42 @@ export default function AdminMusic() {
   const loadContent = async () => {
     try {
       // Load subfolders
-      const { data: foldersData, error: foldersError } = await supabase
+      let foldersQuery = supabase
         .from("folders")
         .select("*")
-        .eq("parent_id", currentFolderId ?? null)
         .order("sort_order", { ascending: true });
 
+      if (currentFolderId) {
+        foldersQuery = foldersQuery.eq("parent_id", currentFolderId);
+      } else {
+        foldersQuery = foldersQuery.is("parent_id", null);
+      }
+
+      const { data: foldersData, error: foldersError } = await foldersQuery;
       if (foldersError) throw foldersError;
       setFolders(foldersData || []);
 
       // Load tracks in current folder
-      const { data: tracksData, error: tracksError } = await supabase
+      let tracksQuery = supabase
         .from("tracks")
         .select("*")
-        .eq("folder_id", currentFolderId ?? null)
         .order("sort_order", { ascending: true });
 
+      if (currentFolderId) {
+        tracksQuery = tracksQuery.eq("folder_id", currentFolderId);
+      } else {
+        tracksQuery = tracksQuery.is("folder_id", null);
+      }
+
+      const { data: tracksData, error: tracksError } = await tracksQuery;
       if (tracksError) throw tracksError;
       setTracks(tracksData || []);
 
       // Load breadcrumbs
       if (currentFolderId) {
-        const { data: pathData } = await supabase
-          .rpc("get_folder_path", { folder_id: currentFolderId });
+        const { data: pathData } = await supabase.rpc("get_folder_path", {
+          folder_id: currentFolderId,
+        });
         setBreadcrumbs(pathData || []);
       } else {
         setBreadcrumbs([]);
@@ -151,6 +362,58 @@ export default function AdminMusic() {
         description: "No se pudo cargar el contenido",
         variant: "destructive",
       });
+    }
+  };
+
+  // Handle folder drag end
+  const handleFolderDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = folders.findIndex((f) => f.id === active.id);
+    const newIndex = folders.findIndex((f) => f.id === over.id);
+
+    const newFolders = arrayMove(folders, oldIndex, newIndex);
+    setFolders(newFolders);
+
+    // Update sort_order in database
+    try {
+      for (let i = 0; i < newFolders.length; i++) {
+        await supabase
+          .from("folders")
+          .update({ sort_order: i })
+          .eq("id", newFolders[i].id);
+      }
+      toast({ title: "Orden actualizado" });
+    } catch (error) {
+      console.error("Error updating order:", error);
+      loadContent(); // Revert on error
+    }
+  };
+
+  // Handle track drag end
+  const handleTrackDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = tracks.findIndex((t) => t.id === active.id);
+    const newIndex = tracks.findIndex((t) => t.id === over.id);
+
+    const newTracks = arrayMove(tracks, oldIndex, newIndex);
+    setTracks(newTracks);
+
+    // Update sort_order in database
+    try {
+      for (let i = 0; i < newTracks.length; i++) {
+        await supabase
+          .from("tracks")
+          .update({ sort_order: i })
+          .eq("id", newTracks[i].id);
+      }
+      toast({ title: "Orden actualizado" });
+    } catch (error) {
+      console.error("Error updating order:", error);
+      loadContent(); // Revert on error
     }
   };
 
@@ -173,6 +436,7 @@ export default function AdminMusic() {
         name: newFolderName.trim(),
         slug: generateSlug(newFolderName),
         parent_id: currentFolderId,
+        sort_order: folders.length,
       });
 
       if (error) throw error;
@@ -202,24 +466,22 @@ export default function AdminMusic() {
 
     try {
       for (const file of Array.from(uploadFiles)) {
-        // Generate unique path
         const fileExt = file.name.split(".").pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-        const filePath = currentFolderId ? `${currentFolderId}/${fileName}` : fileName;
+        const filePath = currentFolderId
+          ? `${currentFolderId}/${fileName}`
+          : fileName;
 
-        // Upload to storage
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from("music")
           .upload(filePath, file);
 
         if (uploadError) throw uploadError;
 
-        // Get public URL
         const { data: urlData } = supabase.storage
           .from("music")
           .getPublicUrl(filePath);
 
-        // Parse filename for metadata (format: Artist - Title.mp3)
         const baseName = file.name.replace(/\.[^/.]+$/, "");
         let artist = "Unknown Artist";
         let title = baseName;
@@ -230,7 +492,6 @@ export default function AdminMusic() {
           title = parts.slice(1).join(" - ").trim();
         }
 
-        // Insert track record
         const { error: insertError } = await supabase.from("tracks").insert({
           title,
           artist,
@@ -239,6 +500,7 @@ export default function AdminMusic() {
           file_url: urlData.publicUrl,
           file_size_bytes: file.size,
           file_format: fileExt?.toLowerCase() || "mp3",
+          sort_order: tracks.length + uploaded,
         });
 
         if (insertError) throw insertError;
@@ -309,10 +571,8 @@ export default function AdminMusic() {
           .eq("id", deleteTarget.id);
         if (error) throw error;
       } else {
-        // Get track to delete file from storage
         const track = tracks.find((t) => t.id === deleteTarget.id);
         if (track) {
-          // Delete from storage (get path from URL)
           const urlParts = track.file_url.split("/music/");
           if (urlParts[1]) {
             await supabase.storage.from("music").remove([urlParts[1]]);
@@ -339,9 +599,13 @@ export default function AdminMusic() {
     }
   };
 
-  const toggleVisibility = async (type: 'folder' | 'track', id: string, currentVisibility: boolean) => {
+  const toggleVisibility = async (
+    type: "folder" | "track",
+    id: string,
+    currentVisibility: boolean
+  ) => {
     try {
-      const table = type === 'folder' ? 'folders' : 'tracks';
+      const table = type === "folder" ? "folders" : "tracks";
       const { error } = await supabase
         .from(table)
         .update({ is_visible: !currentVisibility })
@@ -413,117 +677,92 @@ export default function AdminMusic() {
           </Button>
         </div>
 
-        {/* Folders Grid */}
+        {/* Folders Grid with Drag & Drop */}
         {folders.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-lg font-semibold mb-4">Carpetas</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {folders.map((folder) => (
-                <motion.div
-                  key={folder.id}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className={`relative group p-4 rounded-xl border ${
-                    folder.is_visible 
-                      ? "bg-card border-border" 
-                      : "bg-muted/50 border-dashed border-muted-foreground/30"
-                  } cursor-pointer hover:border-primary transition-colors`}
-                  onClick={() => setCurrentFolderId(folder.id)}
-                >
-                  <FolderOpen className="w-10 h-10 text-primary mb-2" />
-                  <p className="font-medium truncate">{folder.name}</p>
-                  
-                  {/* Actions overlay */}
-                  <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleVisibility('folder', folder.id, folder.is_visible);
-                      }}
-                      className="p-1 rounded bg-background/80 hover:bg-background"
-                    >
-                      {folder.is_visible ? (
-                        <Eye className="w-3 h-3" />
-                      ) : (
-                        <EyeOff className="w-3 h-3" />
-                      )}
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDeleteTarget({ type: 'folder', id: folder.id, name: folder.name });
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              Carpetas
+              <span className="text-xs text-muted-foreground font-normal">
+                (arrastra para reordenar)
+              </span>
+            </h2>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleFolderDragEnd}
+            >
+              <SortableContext
+                items={folders.map((f) => f.id)}
+                strategy={rectSortingStrategy}
+              >
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                  {folders.map((folder) => (
+                    <SortableFolder
+                      key={folder.id}
+                      folder={folder}
+                      onNavigate={() => setCurrentFolderId(folder.id)}
+                      onToggleVisibility={() =>
+                        toggleVisibility("folder", folder.id, folder.is_visible)
+                      }
+                      onDelete={() => {
+                        setDeleteTarget({
+                          type: "folder",
+                          id: folder.id,
+                          name: folder.name,
+                        });
                         setShowDeleteConfirm(true);
                       }}
-                      className="p-1 rounded bg-background/80 hover:bg-destructive hover:text-destructive-foreground"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
           </div>
         )}
 
-        {/* Tracks List */}
+        {/* Tracks List with Drag & Drop */}
         {tracks.length > 0 && (
           <div>
-            <h2 className="text-lg font-semibold mb-4">Tracks ({tracks.length})</h2>
-            <div className="bg-card rounded-xl border border-border overflow-hidden">
-              {tracks.map((track, index) => (
-                <motion.div
-                  key={track.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.02 }}
-                  className={`flex items-center gap-4 px-4 py-3 border-b border-border/50 last:border-b-0 hover:bg-muted/50 transition-colors ${
-                    !track.is_visible ? "opacity-50" : ""
-                  }`}
-                >
-                  <Music className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{track.title}</p>
-                    <p className="text-sm text-muted-foreground truncate">{track.artist}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {track.bpm && (
-                      <span className="text-xs text-muted-foreground">{track.bpm} BPM</span>
-                    )}
-                    {track.genre && (
-                      <span className="text-xs px-2 py-1 bg-secondary rounded-full">{track.genre}</span>
-                    )}
-                    <button
-                      onClick={() => toggleVisibility('track', track.id, track.is_visible)}
-                      className="p-2 rounded hover:bg-muted"
-                    >
-                      {track.is_visible ? (
-                        <Eye className="w-4 h-4" />
-                      ) : (
-                        <EyeOff className="w-4 h-4" />
-                      )}
-                    </button>
-                    <button
-                      onClick={() => {
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              Tracks ({tracks.length})
+              <span className="text-xs text-muted-foreground font-normal">
+                (arrastra para reordenar)
+              </span>
+            </h2>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleTrackDragEnd}
+            >
+              <SortableContext
+                items={tracks.map((t) => t.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="bg-card rounded-xl border border-border overflow-hidden">
+                  {tracks.map((track) => (
+                    <SortableTrack
+                      key={track.id}
+                      track={track}
+                      onEdit={() => {
                         setEditingTrack(track);
                         setShowEditTrack(true);
                       }}
-                      className="p-2 rounded hover:bg-muted"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        setDeleteTarget({ type: 'track', id: track.id, name: track.title });
+                      onToggleVisibility={() =>
+                        toggleVisibility("track", track.id, track.is_visible)
+                      }
+                      onDelete={() => {
+                        setDeleteTarget({
+                          type: "track",
+                          id: track.id,
+                          name: track.title,
+                        });
                         setShowDeleteConfirm(true);
                       }}
-                      className="p-2 rounded hover:bg-destructive hover:text-destructive-foreground"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
           </div>
         )}
 
@@ -532,7 +771,9 @@ export default function AdminMusic() {
           <div className="text-center py-16 text-muted-foreground">
             <FolderOpen className="w-16 h-16 mx-auto mb-4 opacity-50" />
             <p>Esta carpeta está vacía</p>
-            <p className="text-sm">Crea una carpeta o sube archivos para comenzar</p>
+            <p className="text-sm">
+              Crea una carpeta o sube archivos para comenzar
+            </p>
           </div>
         )}
       </main>
@@ -574,7 +815,8 @@ export default function AdminMusic() {
           <DialogHeader>
             <DialogTitle>Subir Archivos</DialogTitle>
             <DialogDescription>
-              Sube archivos MP3 a la carpeta actual. El formato debe ser "Artista - Título.mp3"
+              Sube archivos MP3 a la carpeta actual. El formato debe ser
+              "Artista - Título.mp3"
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -605,10 +847,17 @@ export default function AdminMusic() {
               </div>
             )}
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowUpload(false)} disabled={uploading}>
+              <Button
+                variant="outline"
+                onClick={() => setShowUpload(false)}
+                disabled={uploading}
+              >
                 Cancelar
               </Button>
-              <Button onClick={uploadTracks} disabled={!uploadFiles || uploading}>
+              <Button
+                onClick={uploadTracks}
+                disabled={!uploadFiles || uploading}
+              >
                 {uploading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -638,14 +887,18 @@ export default function AdminMusic() {
                 <Label>Título</Label>
                 <Input
                   value={editingTrack.title}
-                  onChange={(e) => setEditingTrack({ ...editingTrack, title: e.target.value })}
+                  onChange={(e) =>
+                    setEditingTrack({ ...editingTrack, title: e.target.value })
+                  }
                 />
               </div>
               <div>
                 <Label>Artista</Label>
                 <Input
                   value={editingTrack.artist}
-                  onChange={(e) => setEditingTrack({ ...editingTrack, artist: e.target.value })}
+                  onChange={(e) =>
+                    setEditingTrack({ ...editingTrack, artist: e.target.value })
+                  }
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -653,7 +906,12 @@ export default function AdminMusic() {
                   <Label>Género</Label>
                   <Input
                     value={editingTrack.genre || ""}
-                    onChange={(e) => setEditingTrack({ ...editingTrack, genre: e.target.value })}
+                    onChange={(e) =>
+                      setEditingTrack({
+                        ...editingTrack,
+                        genre: e.target.value,
+                      })
+                    }
                     placeholder="Reggaeton"
                   />
                 </div>
@@ -662,13 +920,21 @@ export default function AdminMusic() {
                   <Input
                     type="number"
                     value={editingTrack.bpm || ""}
-                    onChange={(e) => setEditingTrack({ ...editingTrack, bpm: parseInt(e.target.value) || null })}
+                    onChange={(e) =>
+                      setEditingTrack({
+                        ...editingTrack,
+                        bpm: parseInt(e.target.value) || null,
+                      })
+                    }
                     placeholder="100"
                   />
                 </div>
               </div>
               <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setShowEditTrack(false)}>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowEditTrack(false)}
+                >
                   Cancelar
                 </Button>
                 <Button onClick={updateTrack}>
@@ -685,16 +951,22 @@ export default function AdminMusic() {
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar {deleteTarget?.type === 'folder' ? 'carpeta' : 'track'}?</AlertDialogTitle>
+            <AlertDialogTitle>
+              ¿Eliminar{" "}
+              {deleteTarget?.type === "folder" ? "carpeta" : "track"}?
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              {deleteTarget?.type === 'folder'
+              {deleteTarget?.type === "folder"
                 ? "Se eliminarán todas las subcarpetas y tracks dentro de esta carpeta."
                 : `Se eliminará "${deleteTarget?.name}" permanentemente.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={deleteItem} className="bg-destructive text-destructive-foreground">
+            <AlertDialogAction
+              onClick={deleteItem}
+              className="bg-destructive text-destructive-foreground"
+            >
               Eliminar
             </AlertDialogAction>
           </AlertDialogFooter>
