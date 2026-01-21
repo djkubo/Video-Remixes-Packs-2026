@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Music, Loader2, Lock } from "lucide-react";
+import { Music, Loader2, Lock, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,10 +12,11 @@ export default function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!email || !password) {
@@ -27,23 +28,50 @@ export default function AdminLogin() {
       return;
     }
 
+    if (password.length < 6) {
+      toast({
+        title: "Error",
+        description: "La contraseña debe tener al menos 6 caracteres",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      if (isSignUp) {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/admin/music`,
+          },
+        });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({ title: "Bienvenido", description: "Sesión iniciada correctamente" });
-      navigate("/admin/music");
+        toast({ 
+          title: "Cuenta creada", 
+          description: "Ya puedes iniciar sesión" 
+        });
+        setIsSignUp(false);
+      } else {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) throw error;
+
+        toast({ title: "Bienvenido", description: "Sesión iniciada correctamente" });
+        navigate("/admin/music");
+      }
     } catch (error: any) {
-      console.error("Login error:", error);
+      console.error("Auth error:", error);
       toast({
-        title: "Error de autenticación",
-        description: error.message || "Credenciales inválidas",
+        title: "Error",
+        description: error.message || "Error de autenticación",
         variant: "destructive",
       });
     } finally {
@@ -64,12 +92,16 @@ export default function AdminLogin() {
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
               <Music className="w-8 h-8 text-primary" />
             </div>
-            <h1 className="text-2xl font-bold">Admin Panel</h1>
-            <p className="text-muted-foreground">Acceso a la biblioteca de música</p>
+            <h1 className="text-2xl font-bold">
+              {isSignUp ? "Crear Cuenta Admin" : "Admin Panel"}
+            </h1>
+            <p className="text-muted-foreground">
+              {isSignUp ? "Regístrate para acceder" : "Acceso a la biblioteca de música"}
+            </p>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleLogin} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <Label htmlFor="email">Email</Label>
               <Input
@@ -100,7 +132,12 @@ export default function AdminLogin() {
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Ingresando...
+                  {isSignUp ? "Registrando..." : "Ingresando..."}
+                </>
+              ) : isSignUp ? (
+                <>
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Crear Cuenta
                 </>
               ) : (
                 <>
@@ -110,6 +147,19 @@ export default function AdminLogin() {
               )}
             </Button>
           </form>
+
+          {/* Toggle */}
+          <div className="mt-6 text-center">
+            <button
+              type="button"
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="text-sm text-muted-foreground hover:text-primary transition-colors"
+            >
+              {isSignUp 
+                ? "¿Ya tienes cuenta? Inicia sesión" 
+                : "¿Primera vez? Crear cuenta"}
+            </button>
+          </div>
         </div>
       </motion.div>
     </div>
