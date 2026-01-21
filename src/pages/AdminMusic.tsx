@@ -1113,15 +1113,15 @@ export default function AdminMusic() {
       </Dialog>
 
       {/* Bulk Upload Folders Dialog */}
-      <Dialog open={showBulkUpload} onOpenChange={setShowBulkUpload}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
+      <Dialog open={showBulkUpload} onOpenChange={(open) => !uploading && setShowBulkUpload(open)}>
+        <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle>Importar Carpetas con Contenido</DialogTitle>
             <DialogDescription>
-              Selecciona una carpeta con subcarpetas de música. Cada subcarpeta se convertirá en una categoría y sus archivos de audio se importarán automáticamente.
+              Selecciona una carpeta con subcarpetas de música. Cada subcarpeta se convertirá en una categoría.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 overflow-y-auto flex-1 pr-1">
             <div>
               <Label>Seleccionar carpeta</Label>
               <Input
