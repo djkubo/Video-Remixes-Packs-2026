@@ -6,14 +6,14 @@ const GuaranteeSection = () => {
   const { t } = useLanguage();
 
   return (
-    <section className="relative py-16 md:py-20 bg-background-carbon">
+    <section className="relative py-16 md:py-20 bg-muted/30 dark:bg-background-carbon">
       <div className="container mx-auto">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
           viewport={{ once: true }}
-          className="mx-auto flex max-w-2xl flex-col items-center rounded-2xl border border-primary/30 bg-card/40 backdrop-blur-md p-8 text-center shadow-glow md:flex-row md:gap-6 md:text-left"
+          className="mx-auto flex max-w-2xl flex-col items-center rounded-2xl border border-primary/30 bg-card dark:bg-card/60 backdrop-blur-md p-8 text-center shadow-lg dark:shadow-glow md:flex-row md:gap-6 md:text-left"
         >
           <div className="mb-4 flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-primary/20 md:mb-0">
             <ShieldCheck className="h-8 w-8 text-primary" strokeWidth={1.5} />

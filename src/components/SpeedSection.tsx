@@ -39,7 +39,7 @@ const SpeedSection = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="glow-border bg-gradient-to-b from-card-elevated to-card p-8 md:p-14"
+            className="glow-border bg-card dark:bg-gradient-to-b dark:from-card-elevated dark:to-card p-8 md:p-14"
           >
             {/* Header */}
             <div className="text-center mb-12">
@@ -52,7 +52,7 @@ const SpeedSection = () => {
                 {t("speed.badge")}
               </motion.span>
               
-              <h2 className="font-display text-display-sm md:text-display-md font-extrabold leading-tight">
+              <h2 className="font-display text-display-sm md:text-display-md font-extrabold leading-tight text-foreground">
                 {t("speed.title1")}{" "}
                 <span className="text-gradient-red">{t("speed.title2")}</span>{" "}
                 {t("speed.title3")}
@@ -88,10 +88,10 @@ const SpeedSection = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.4, delay: index * 0.1 }}
-                  className="group flex flex-col items-center rounded-2xl bg-secondary/40 border border-border/50 p-6 text-center transition-smooth hover:bg-secondary/60 hover:border-primary/30"
+                  className="group flex flex-col items-center rounded-2xl bg-muted/50 dark:bg-secondary/40 border border-border transition-all duration-300 hover:bg-muted dark:hover:bg-secondary/60 hover:border-primary/30 p-6 text-center hover:shadow-md dark:hover:shadow-none"
                 >
-                  <feature.icon className="mb-4 h-10 w-10 text-primary group-hover:scale-110 transition-smooth" strokeWidth={1.5} />
-                  <h3 className="font-display text-lg font-bold tracking-wide">{feature.title}</h3>
+                  <feature.icon className="mb-4 h-10 w-10 text-primary group-hover:scale-110 transition-all duration-300" strokeWidth={1.5} />
+                  <h3 className="font-display text-lg font-bold tracking-wide text-foreground">{feature.title}</h3>
                   <p className="mt-2 font-sans text-sm text-muted-foreground">{feature.description}</p>
                 </motion.div>
               ))}

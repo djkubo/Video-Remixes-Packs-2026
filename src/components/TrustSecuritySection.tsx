@@ -59,7 +59,7 @@ const TrustSecuritySection = () => {
             <ShieldCheck className="h-4 w-4" />
             {t("trust.badge")}
           </span>
-          <h2 className="font-display text-display-sm md:text-display-md font-extrabold">
+          <h2 className="font-display text-display-sm md:text-display-md font-extrabold text-foreground">
             {t("trust.title")}{" "}
             <span className="text-gradient-red">{t("trust.titleHighlight")}</span>
           </h2>
@@ -76,7 +76,7 @@ const TrustSecuritySection = () => {
           {paymentMethods.map((method) => (
             <div
               key={method.name}
-              className="flex items-center justify-center rounded-xl bg-card/50 border border-border/50 px-6 py-4 backdrop-blur-sm transition-smooth hover:border-primary/30 hover:bg-card"
+              className="flex items-center justify-center rounded-xl bg-card border border-border px-6 py-4 backdrop-blur-sm transition-all duration-300 hover:border-primary/30 hover:bg-muted dark:hover:bg-card/80 hover:shadow-md dark:hover:shadow-none"
             >
               <span className="font-bebas text-xl tracking-wider text-muted-foreground">
                 {method.logo}
@@ -93,7 +93,7 @@ const TrustSecuritySection = () => {
           transition={{ duration: 0.5, delay: 0.2 }}
           className="mx-auto mb-16 max-w-lg"
         >
-          <div className="rounded-2xl bg-card p-6 shadow-card border border-border">
+          <div className="rounded-2xl bg-card p-6 shadow-lg dark:shadow-card border border-border">
             {/* WhatsApp Header */}
             <div className="mb-4 flex items-center gap-3 border-b border-border pb-4">
               <div className="h-11 w-11 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-lg">
@@ -166,7 +166,7 @@ const TrustSecuritySection = () => {
           transition={{ duration: 0.5, delay: 0.3 }}
           className="text-center"
         >
-          <div className="inline-flex items-center gap-3 rounded-full border border-border/50 bg-card/50 px-6 py-4 backdrop-blur-sm">
+          <div className="inline-flex items-center gap-3 rounded-full border border-border bg-card px-6 py-4 backdrop-blur-sm shadow-md dark:shadow-none">
             <Check className="h-5 w-5 text-success" />
             <p className="text-muted-foreground font-sans">
               <span className="font-semibold text-foreground">{t("trust.cancel")}</span>{" "}

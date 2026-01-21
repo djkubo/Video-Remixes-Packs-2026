@@ -16,16 +16,20 @@ const SettingsToggle = () => {
   return (
     <>
       {/* Floating Settings Button */}
-      <motion.button
+      <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 1 }}
-        onClick={() => setIsOpen(true)}
-        className="fixed top-4 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-card/80 backdrop-blur-xl border border-border/50 shadow-lg transition-all hover:bg-card hover:border-primary/50 hover:shadow-glow"
-        aria-label="Settings"
+        className="fixed top-4 right-4 z-50"
       >
-        <Settings className="h-5 w-5 text-foreground" />
-      </motion.button>
+        <button
+          onClick={() => setIsOpen(true)}
+          className="flex h-12 w-12 items-center justify-center rounded-full bg-card/90 dark:bg-card/80 backdrop-blur-xl border border-border shadow-lg transition-all hover:bg-card hover:border-primary/50 hover:shadow-xl dark:hover:shadow-glow"
+          aria-label="Settings"
+        >
+          <Settings className="h-5 w-5 text-foreground" />
+        </button>
+      </motion.div>
 
       {/* Settings Panel */}
       <AnimatePresence>

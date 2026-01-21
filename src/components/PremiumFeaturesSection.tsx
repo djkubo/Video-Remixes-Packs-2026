@@ -1,27 +1,30 @@
 import { motion } from "framer-motion";
 import { CloudLightning, FolderCheck, ShieldCheck } from "lucide-react";
-
-const features = [
-  {
-    icon: CloudLightning,
-    title: "Descarga Masiva FTP",
-    description: "Conecta Air Explorer o FileZilla. Baja todo de golpe mientras duermes.",
-  },
-  {
-    icon: FolderCheck,
-    title: "Organización Perfecta",
-    description: "Todo etiquetado por género, BPM y año. Cero carpetas basura.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Calidad Garantizada",
-    description: "MP3 320kbps + Video 1080p. Si no sirve para tocar, no lo subimos.",
-  },
-];
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const PremiumFeaturesSection = () => {
+  const { t } = useLanguage();
+
+  const features = [
+    {
+      icon: CloudLightning,
+      title: t("premium.feat1.title"),
+      description: t("premium.feat1.desc"),
+    },
+    {
+      icon: FolderCheck,
+      title: t("premium.feat2.title"),
+      description: t("premium.feat2.desc"),
+    },
+    {
+      icon: ShieldCheck,
+      title: t("premium.feat3.title"),
+      description: t("premium.feat3.desc"),
+    },
+  ];
+
   return (
-    <section className="relative py-24 md:py-32 bg-background-carbon overflow-hidden">
+    <section className="relative py-24 md:py-32 bg-muted/20 dark:bg-background-carbon overflow-hidden">
       <div className="absolute inset-0 hero-gradient opacity-30" />
 
       <div className="container relative z-10 mx-auto">
@@ -34,14 +37,14 @@ const PremiumFeaturesSection = () => {
           className="mb-16 text-center"
         >
           <span className="badge-primary mb-6">
-            Tecnología Premium
+            {t("premium.badge")}
           </span>
-          <h2 className="font-display text-display-sm md:text-display-md font-extrabold">
-            Herramientas{" "}
-            <span className="text-gradient-red">Profesionales</span>
+          <h2 className="font-display text-display-sm md:text-display-md font-extrabold text-foreground">
+            {t("premium.title")}{" "}
+            <span className="text-gradient-red">{t("premium.titleHighlight")}</span>
           </h2>
           <p className="mx-auto mt-6 max-w-xl text-lg text-muted-foreground">
-            Diseñadas para DJs que valoran su tiempo.
+            {t("premium.subtitle")}
           </p>
         </motion.div>
 
@@ -59,13 +62,13 @@ const PremiumFeaturesSection = () => {
               <div className="glass-card-hover h-full p-8">
                 {/* Icon */}
                 <div className="relative mb-6">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/15 group-hover:bg-primary/25 transition-smooth">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 dark:bg-primary/15 group-hover:bg-primary/20 transition-all duration-300">
                     <feature.icon className="h-8 w-8 text-primary" strokeWidth={1.5} />
                   </div>
                 </div>
 
                 {/* Content */}
-                <h3 className="mb-3 font-display text-xl font-bold tracking-wide md:text-2xl">
+                <h3 className="mb-3 font-display text-xl font-bold tracking-wide text-foreground md:text-2xl">
                   {feature.title}
                 </h3>
                 <p className="text-muted-foreground leading-relaxed">
