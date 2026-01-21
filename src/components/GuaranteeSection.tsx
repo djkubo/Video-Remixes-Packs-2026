@@ -1,7 +1,10 @@
 import { motion } from "framer-motion";
 import { ShieldCheck } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const GuaranteeSection = () => {
+  const { t } = useLanguage();
+
   return (
     <section className="relative py-16 md:py-20 bg-background-carbon">
       <div className="container mx-auto">
@@ -17,11 +20,10 @@ const GuaranteeSection = () => {
           </div>
           <div>
             <h3 className="mb-2 font-display text-xl font-bold text-foreground md:text-2xl tracking-wide">
-              SIN CONTRATOS. SIN COMPROMISOS.
+              {t("guarantee.title")}
             </h3>
             <p className="font-sans text-sm text-muted-foreground md:text-base leading-relaxed">
-              Cancela cuando quieras desde tu panel. Un clic y listo. 
-              Sin llamadas, sin emails, sin letras chiquitas.
+              {t("guarantee.desc")}
             </p>
           </div>
         </motion.div>

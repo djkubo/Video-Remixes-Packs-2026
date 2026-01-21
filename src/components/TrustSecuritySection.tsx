@@ -1,27 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, CheckCheck, ShieldCheck, CreditCard } from "lucide-react";
-
-const testimonials = [
-  {
-    id: 1,
-    message: "Bro, me salvaste el evento, la calidad está increíble. 🔥",
-    time: "14:32",
-    name: "DJ Carlos",
-  },
-  {
-    id: 2,
-    message: "Al fin un pool que tiene cumbias y wepas bien organizados. 🙌",
-    time: "18:45",
-    name: "DJ Memo",
-  },
-  {
-    id: 3,
-    message: "Descargué 200GB en una noche con Air Explorer. Esto es otro nivel. 💪",
-    time: "22:15",
-    name: "DJ Andrés",
-  },
-];
+import { Check, CheckCheck, ShieldCheck } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const paymentMethods = [
   { name: "Stripe", logo: "Stripe" },
@@ -31,14 +11,36 @@ const paymentMethods = [
 ];
 
 const TrustSecuritySection = () => {
+  const { t } = useLanguage();
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
+
+  const testimonials = [
+    {
+      id: 1,
+      message: t("testimonial1.message"),
+      time: "14:32",
+      name: t("testimonial1.name"),
+    },
+    {
+      id: 2,
+      message: t("testimonial2.message"),
+      time: "18:45",
+      name: t("testimonial2.name"),
+    },
+    {
+      id: 3,
+      message: t("testimonial3.message"),
+      time: "22:15",
+      name: t("testimonial3.name"),
+    },
+  ];
 
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
     }, 4000);
     return () => clearInterval(interval);
-  }, []);
+  }, [testimonials.length]);
 
   return (
     <section className="relative py-24 md:py-32 bg-background overflow-hidden">
@@ -55,11 +57,11 @@ const TrustSecuritySection = () => {
         >
           <span className="inline-flex items-center gap-2 rounded-full border border-success/40 bg-success/15 px-4 py-2 text-sm font-semibold text-success mb-6">
             <ShieldCheck className="h-4 w-4" />
-            Pagos 100% Seguros
+            {t("trust.badge")}
           </span>
           <h2 className="font-display text-display-sm md:text-display-md font-extrabold">
-            Miles de DJs{" "}
-            <span className="text-gradient-red">Confían en Nosotros</span>
+            {t("trust.title")}{" "}
+            <span className="text-gradient-red">{t("trust.titleHighlight")}</span>
           </h2>
         </motion.div>
 
@@ -98,8 +100,8 @@ const TrustSecuritySection = () => {
                 🎧
               </div>
               <div>
-                <p className="font-semibold text-foreground">DJs Satisfechos</p>
-                <p className="text-xs text-muted-foreground">+1,500 miembros activos</p>
+                <p className="font-semibold text-foreground">{t("trust.group")}</p>
+                <p className="text-xs text-muted-foreground">{t("trust.members")}</p>
               </div>
             </div>
 
@@ -167,8 +169,8 @@ const TrustSecuritySection = () => {
           <div className="inline-flex items-center gap-3 rounded-full border border-border/50 bg-card/50 px-6 py-4 backdrop-blur-sm">
             <Check className="h-5 w-5 text-success" />
             <p className="text-muted-foreground font-sans">
-              <span className="font-semibold text-foreground">Cancela cuando quieras.</span>{" "}
-              Sin contratos ni letras chiquitas.
+              <span className="font-semibold text-foreground">{t("trust.cancel")}</span>{" "}
+              {t("trust.noContracts")}
             </p>
           </div>
         </motion.div>

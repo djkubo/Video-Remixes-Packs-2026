@@ -9,32 +9,32 @@ interface Translations {
   };
 }
 
-// Centralized translations
+// Centralized translations - Professional English copy
 export const translations: Translations = {
   // Hero Section
   "hero.badge": {
     es: "ACCESO 100% DIGITAL & INMEDIATO",
-    en: "100% DIGITAL & INSTANT ACCESS",
+    en: "100% DIGITAL • INSTANT ACCESS",
   },
   "hero.title": {
     es: "El Hub Definitivo del",
-    en: "The Ultimate Hub for the",
+    en: "The Ultimate",
   },
   "hero.titleHighlight": {
     es: "DJ Latino",
-    en: "Latin DJ",
+    en: "Latin DJ Hub",
   },
   "hero.subtitle": {
     es: "Deja de pagar 4 membresías. Centralizamos los mejores pools en un solo lugar.",
-    en: "Stop paying for 4 memberships. We centralize the best pools in one place.",
+    en: "Stop paying for 4 separate memberships. We aggregate the best pools into one destination.",
   },
   "hero.subtitleBold": {
     es: "1TB de Descarga Masiva vía FTP.",
-    en: "1TB Bulk Download via FTP.",
+    en: "1TB Bulk Downloads via FTP.",
   },
   "hero.cta": {
     es: "Ver Planes y Precios",
-    en: "See Plans & Pricing",
+    en: "View Plans & Pricing",
   },
   "hero.stat1": { es: "Archivos Clean", en: "Clean Files" },
   "hero.stat2": { es: "Géneros", en: "Genres" },
@@ -43,30 +43,30 @@ export const translations: Translations = {
   // Aggregator Section
   "aggregator.badge": { es: "MODELO AGREGADOR", en: "AGGREGATOR MODEL" },
   "aggregator.title": { es: "NOSOTROS PAGAMOS LOS POOLS", en: "WE PAY FOR THE POOLS" },
-  "aggregator.titleHighlight": { es: "POR TI.", en: "FOR YOU." },
+  "aggregator.titleHighlight": { es: "POR TI.", en: "SO YOU DON'T HAVE TO." },
   "aggregator.subtitle": {
     es: "No pagues 5 membresías. Paga solo una. Nosotros hacemos el trabajo sucio y te lo entregamos en bandeja de plata.",
-    en: "Don't pay for 5 memberships. Pay just one. We do the dirty work and deliver it on a silver platter.",
+    en: "Why pay for 5 memberships when you can pay for one? We do the heavy lifting and deliver everything ready to use.",
   },
-  "aggregator.feat1.title": { es: "Pagamos los Pools", en: "We Pay for Pools" },
+  "aggregator.feat1.title": { es: "Pagamos los Pools", en: "We Pay for the Pools" },
   "aggregator.feat1.desc": {
     es: "Nosotros nos suscribimos a múltiples fuentes. Tú pagas solo una.",
-    en: "We subscribe to multiple sources. You pay for just one.",
+    en: "We subscribe to multiple sources. You only pay once.",
   },
-  "aggregator.feat2.title": { es: "Filtramos la Basura", en: "We Filter the Junk" },
+  "aggregator.feat2.title": { es: "Filtramos la Basura", en: "We Filter Out the Junk" },
   "aggregator.feat2.desc": {
     es: "Solo los éxitos. Cero relleno. Cero versiones inútiles.",
-    en: "Only the hits. Zero filler. Zero useless versions.",
+    en: "Only the hits. No filler. No useless remixes.",
   },
-  "aggregator.feat3.title": { es: "Corregimos los Tags", en: "We Fix the Tags" },
+  "aggregator.feat3.title": { es: "Corregimos los Tags", en: "We Fix the Metadata" },
   "aggregator.feat3.desc": {
     es: "Metadata perfecta: Artista, Título, BPM, Género.",
-    en: "Perfect metadata: Artist, Title, BPM, Genre.",
+    en: "Perfect tags: Artist, Title, BPM, Genre.",
   },
   "aggregator.feat4.title": { es: "Entrega Limpia", en: "Clean Delivery" },
   "aggregator.feat4.desc": {
     es: "Sin logos, sin marcas de agua. Archivos profesionales.",
-    en: "No logos, no watermarks. Professional files.",
+    en: "No pool logos, no watermarks. Professional files.",
   },
 
   // DJ Todoterreno
@@ -74,57 +74,57 @@ export const translations: Translations = {
   "dj.titleHighlight": { es: "TOCA DE TODO.", en: "PLAYS EVERYTHING." },
   "dj.question": {
     es: "¿Te piden",
-    en: "Do they ask for",
+    en: "Crowd requests",
   },
   "dj.covered": { es: "Lo tenemos cubierto.", en: "We've got you covered." },
   "dj.never": {
     es: 'Nunca más digas "no la tengo".',
-    en: 'Never say "I don\'t have it" again.',
+    en: 'Never say "I don\'t have that track" again.',
   },
   "dj.from": {
     es: "Desde Cumbia Lagunera hasta Reggaeton Old School.",
-    en: "From Cumbia Lagunera to Old School Reggaeton.",
+    en: "From Regional Mexican to Old School Reggaeton and everything in between.",
   },
 
   // Speed Section
   "speed.badge": { es: "SINCRONIZACIÓN MASIVA", en: "BULK SYNC" },
   "speed.title1": { es: "DESCARGA", en: "DOWNLOAD" },
   "speed.title2": { es: "1TB EN MINUTOS", en: "1TB IN MINUTES" },
-  "speed.title3": { es: "CON FTP.", en: "WITH FTP." },
+  "speed.title3": { es: "CON FTP.", en: "VIA FTP." },
   "speed.subtitle": {
     es: "Conecta FileZilla o Air Explorer. Sincroniza tu librería completa mientras duermes.",
-    en: "Connect FileZilla or Air Explorer. Sync your entire library while you sleep.",
+    en: "Connect FileZilla or Air Explorer. Sync your entire library overnight.",
   },
   "speed.ftpTitle": { es: "Conexión FTP Directa", en: "Direct FTP Connection" },
-  "speed.ftpDesc": { es: "Arrastra, suelta y sincroniza. Así de fácil.", en: "Drag, drop, and sync. That simple." },
+  "speed.ftpDesc": { es: "Arrastra, suelta y sincroniza. Así de fácil.", en: "Drag, drop, and sync. It's that simple." },
   "speed.feat1.title": { es: "Servidores Premium", en: "Premium Servers" },
-  "speed.feat1.desc": { es: "Alta velocidad sin throttling", en: "High speed without throttling" },
-  "speed.feat2.title": { es: "Air Explorer", en: "Air Explorer" },
-  "speed.feat2.desc": { es: "Sincroniza con tu nube", en: "Sync with your cloud" },
-  "speed.feat3.title": { es: "Sin Límites", en: "No Limits" },
+  "speed.feat1.desc": { es: "Alta velocidad sin throttling", en: "High-speed, no throttling" },
+  "speed.feat2.title": { es: "Air Explorer", en: "Air Explorer Ready" },
+  "speed.feat2.desc": { es: "Sincroniza con tu nube", en: "Sync directly to your cloud" },
+  "speed.feat3.title": { es: "Sin Límites", en: "Unlimited Downloads" },
   "speed.feat3.desc": { es: "Descarga masiva. Sin caps.", en: "Bulk download. No caps." },
-  "speed.feat4.title": { es: "Mientras Duermes", en: "While You Sleep" },
-  "speed.feat4.desc": { es: "Programa y despierta listo", en: "Schedule and wake up ready" },
+  "speed.feat4.title": { es: "Mientras Duermes", en: "Overnight Sync" },
+  "speed.feat4.desc": { es: "Programa y despierta listo", en: "Schedule it and wake up ready" },
 
   // Premium Features
   "premium.badge": { es: "Tecnología Premium", en: "Premium Technology" },
   "premium.title": { es: "Herramientas", en: "Professional" },
   "premium.titleHighlight": { es: "Profesionales", en: "Tools" },
-  "premium.subtitle": { es: "Diseñadas para DJs que valoran su tiempo.", en: "Designed for DJs who value their time." },
+  "premium.subtitle": { es: "Diseñadas para DJs que valoran su tiempo.", en: "Built for DJs who value their time." },
   "premium.feat1.title": { es: "Descarga Masiva FTP", en: "FTP Bulk Download" },
   "premium.feat1.desc": {
     es: "Conecta Air Explorer o FileZilla. Baja todo de golpe mientras duermes.",
-    en: "Connect Air Explorer or FileZilla. Download everything at once while you sleep.",
+    en: "Connect Air Explorer or FileZilla. Download everything overnight while you sleep.",
   },
   "premium.feat2.title": { es: "Organización Perfecta", en: "Perfect Organization" },
   "premium.feat2.desc": {
     es: "Todo etiquetado por género, BPM y año. Cero carpetas basura.",
-    en: "Everything tagged by genre, BPM and year. Zero junk folders.",
+    en: "Everything tagged by genre, BPM, and year. No messy folders.",
   },
   "premium.feat3.title": { es: "Calidad Garantizada", en: "Guaranteed Quality" },
   "premium.feat3.desc": {
     es: "MP3 320kbps + Video 1080p. Si no sirve para tocar, no lo subimos.",
-    en: "MP3 320kbps + Video 1080p. If it's not good for playing, we don't upload it.",
+    en: "MP3 320kbps + 1080p Video. If it's not gig-ready, we don't upload it.",
   },
 
   // Genres Section
@@ -139,9 +139,51 @@ export const translations: Translations = {
   "trust.title": { es: "Miles de DJs", en: "Thousands of DJs" },
   "trust.titleHighlight": { es: "Confían en Nosotros", en: "Trust Us" },
   "trust.members": { es: "+1,500 miembros activos", en: "+1,500 active members" },
-  "trust.group": { es: "DJs Satisfechos", en: "Satisfied DJs" },
+  "trust.group": { es: "DJs Satisfechos", en: "Happy DJs" },
   "trust.cancel": { es: "Cancela cuando quieras.", en: "Cancel anytime." },
-  "trust.noContracts": { es: "Sin contratos ni letras chiquitas.", en: "No contracts or fine print." },
+  "trust.noContracts": { es: "Sin contratos ni letras chiquitas.", en: "No contracts. No hidden fees." },
+
+  // Testimonials - TrustSecuritySection (WhatsApp style)
+  "testimonial1.message": {
+    es: "Bro, me salvaste el evento, la calidad está increíble. 🔥",
+    en: "Man, you saved my gig! The quality is incredible. 🔥",
+  },
+  "testimonial1.name": { es: "DJ Carlos", en: "DJ Carlos" },
+  "testimonial2.message": {
+    es: "Al fin un pool que tiene cumbias y wepas bien organizados. 🙌",
+    en: "Finally a pool with proper Latin music organization. 🙌",
+  },
+  "testimonial2.name": { es: "DJ Memo", en: "DJ Memo" },
+  "testimonial3.message": {
+    es: "Descargué 200GB en una noche con Air Explorer. Esto es otro nivel. 💪",
+    en: "Downloaded 200GB overnight with Air Explorer. This is next level. 💪",
+  },
+  "testimonial3.name": { es: "DJ Andrés", en: "DJ Andrés" },
+
+  // Testimonials - TestimonialsSection (Cards)
+  "testimonialCard.title": { es: "LO QUE DICEN LOS DJS", en: "WHAT DJS ARE SAYING" },
+  "testimonialCard.subtitle": {
+    es: "Profesionales que ya transformaron su flujo de trabajo",
+    en: "Professionals who transformed their workflow",
+  },
+  "testimonialCard1.text": {
+    es: "Bro, la organización por BPM me salvó la vida en la boda de ayer. Calidad impecable.",
+    en: "The BPM organization saved me at yesterday's wedding. Flawless quality.",
+  },
+  "testimonialCard1.name": { es: "DJ Alex Mix", en: "DJ Alex Mix" },
+  "testimonialCard1.location": { es: "Miami", en: "Miami" },
+  "testimonialCard2.text": {
+    es: "He probado 5 pools y este es el único que descargas 1TB real sin errores. Air Explorer vuela.",
+    en: "I've tried 5 pools and this is the only one where I can download 1TB without errors. Air Explorer flies.",
+  },
+  "testimonialCard2.name": { es: "Carlos DJ", en: "Carlos DJ" },
+  "testimonialCard2.location": { es: "CDMX", en: "Mexico City" },
+  "testimonialCard3.text": {
+    es: "Los videos intro/outro vienen limpios sin logos. Mis pantallas se ven pro. 10/10.",
+    en: "The intro/outro videos come clean without logos. My screens look pro. 10/10.",
+  },
+  "testimonialCard3.name": { es: "DJ Tona", en: "DJ Tona" },
+  "testimonialCard3.location": { es: "Residente", en: "Resident DJ" },
 
   // Pricing
   "pricing.badge": { es: "Precios Transparentes", en: "Transparent Pricing" },
@@ -156,7 +198,8 @@ export const translations: Translations = {
   "pricing.monthlyPrice": { es: "USD / mes", en: "USD / month" },
   "pricing.annualPrice": { es: "USD / año", en: "USD / year" },
   "pricing.bestValue": { es: "🔥 MEJOR VALOR", en: "🔥 BEST VALUE" },
-  "pricing.equivalent": { es: "Equivale a $16.25/mes", en: "Equivalent to $16.25/month" },
+  "pricing.equivalent": { es: "Equivale a", en: "Only" },
+  "pricing.perMonth": { es: "/mes", en: "/month" },
   "pricing.feat1": { es: "1TB Descargas mensuales", en: "1TB Monthly Downloads" },
   "pricing.feat2": { es: "Acceso FTP completo", en: "Full FTP Access" },
   "pricing.feat3": { es: "Updates Semanales", en: "Weekly Updates" },
@@ -164,40 +207,94 @@ export const translations: Translations = {
   "pricing.feat5": { es: "Acceso FTP Prioritario", en: "Priority FTP Access" },
   "pricing.feat6": { es: "Soporte VIP por WhatsApp", en: "VIP WhatsApp Support" },
   "pricing.ctaMonthly": { es: "Elegir Plan Mensual", en: "Choose Monthly Plan" },
-  "pricing.ctaAnnual": { es: "Quiero el Plan ELITE", en: "I Want ELITE Plan" },
+  "pricing.ctaAnnual": { es: "Quiero el Plan ELITE", en: "Get ELITE Plan" },
+  "pricing.currencyNote": {
+    es: "Precios mostrados en",
+    en: "Prices shown in",
+  },
+  "pricing.currencyNoteSuffix": {
+    es: "El cargo final será en USD.",
+    en: "Final charge will be in USD.",
+  },
 
   // Trust Bar
   "trustbar.title": { es: "NUESTRAS REGLAS DE ORO", en: "OUR GOLDEN RULES" },
   "trustbar.rule1.title": { es: "Organización Suprema", en: "Supreme Organization" },
-  "trustbar.rule1.desc": { es: "Por género, BPM y año.", en: "By genre, BPM and year." },
+  "trustbar.rule1.desc": { es: "Por género, BPM y año.", en: "By genre, BPM, and year." },
   "trustbar.rule2.title": { es: "Calidad Profesional", en: "Professional Quality" },
-  "trustbar.rule2.desc": { es: "MP3 320kbps + Video 1080p.", en: "MP3 320kbps + Video 1080p." },
+  "trustbar.rule2.desc": { es: "MP3 320kbps + Video 1080p.", en: "MP3 320kbps + 1080p Video." },
   "trustbar.rule3.title": { es: "Archivos Clean", en: "Clean Files" },
   "trustbar.rule3.desc": { es: "Sin logos. Sin marcas.", en: "No logos. No watermarks." },
 
   // FAQ
-  "faq.title": { es: "PREGUNTAS", en: "FREQUENTLY" },
-  "faq.titleHighlight": { es: "FRECUENTES", en: "ASKED QUESTIONS" },
+  "faq.title": { es: "PREGUNTAS", en: "FREQUENTLY ASKED" },
+  "faq.titleHighlight": { es: "FRECUENTES", en: "QUESTIONS" },
+  "faq.subtitle": {
+    es: "Todo lo que necesitas saber antes de empezar",
+    en: "Everything you need to know before getting started",
+  },
+  "faq1.question": {
+    es: "¿Qué diferencia a VideoRemixesPacks de otros pools?",
+    en: "What makes VideoRemixesPacks different from other pools?",
+  },
+  "faq1.answer": {
+    es: "Somos un agregador. Nosotros pagamos las membresías de múltiples pools, filtramos el contenido, corregimos los tags y te lo entregamos limpio en un solo lugar. Tú pagas una sola suscripción y accedes a todo.",
+    en: "We're an aggregator. We pay for multiple pool memberships, filter the content, fix the metadata, and deliver it clean in one place. You pay one subscription and get access to everything.",
+  },
+  "faq2.question": {
+    es: "¿Cómo funciona la descarga masiva?",
+    en: "How does bulk downloading work?",
+  },
+  "faq2.answer": {
+    es: "Te damos acceso FTP directo. Conectas FileZilla o Air Explorer, seleccionas las carpetas que quieres y descargas todo de golpe. Puedes sincronizar hasta 1TB mensual mientras duermes.",
+    en: "We give you direct FTP access. Connect FileZilla or Air Explorer, select the folders you want, and download everything at once. You can sync up to 1TB monthly while you sleep.",
+  },
+  "faq3.question": {
+    es: "¿La música tiene sellos o voces de otros pools?",
+    en: "Do the files have pool logos or voice tags?",
+  },
+  "faq3.answer": {
+    es: "No. Todo es Clean/Intro-Outro listo para mezclar. Sin logos de otros pools, sin marcas de agua. Archivos profesionales listos para tu set.",
+    en: "No. Everything is Clean/Intro-Outro ready to mix. No pool logos, no watermarks. Professional files ready for your set.",
+  },
+  "faq4.question": {
+    es: "¿Funciona con Serato/VirtualDJ/Rekordbox?",
+    en: "Does it work with Serato/VirtualDJ/Rekordbox?",
+  },
+  "faq4.answer": {
+    es: "Sí, son archivos MP3 320kbps y MP4 1080p universales. Compatibles con cualquier software de DJ: Serato, VirtualDJ, Rekordbox, Traktor.",
+    en: "Yes, these are standard MP3 320kbps and MP4 1080p files. Compatible with any DJ software: Serato, VirtualDJ, Rekordbox, Traktor.",
+  },
+  "faq5.question": {
+    es: "¿Puedo cancelar cuando quiera?",
+    en: "Can I cancel anytime?",
+  },
+  "faq5.answer": {
+    es: "Sí. Sin contratos forzosos, sin letras chiquitas. Cancelas desde tu panel con un clic y listo. No hay permanencia mínima.",
+    en: "Yes. No forced contracts, no fine print. Cancel from your dashboard with one click. No minimum commitment.",
+  },
 
   // Final CTA
-  "cta.title": { es: "¿LISTO PARA DEJAR DE BUSCAR", en: "READY TO STOP SEARCHING" },
+  "cta.title": { es: "¿LISTO PARA DEJAR DE BUSCAR", en: "READY TO STOP HUNTING" },
   "cta.titleHighlight": { es: "EN 5 POOLS?", en: "ACROSS 5 POOLS?" },
-  "cta.subtitle": { es: "Una sola suscripción. Todo el contenido que necesitas. Desde", en: "One subscription. All the content you need. From" },
-  "cta.button": { es: "QUIERO MI ACCESO AHORA", en: "I WANT MY ACCESS NOW" },
+  "cta.subtitle": { es: "Una sola suscripción. Todo el contenido que necesitas. Desde", en: "One subscription. All the content you need. Starting at" },
+  "cta.button": { es: "QUIERO MI ACCESO AHORA", en: "GET MY ACCESS NOW" },
   "cta.benefit1": { es: "Descarga masiva vía FTP (hasta 1TB/mes)", en: "Bulk download via FTP (up to 1TB/month)" },
   "cta.benefit2": { es: "Archivos Clean, listos para mezclar", en: "Clean files, ready to mix" },
   "cta.benefit3": { es: "Cancela cuando quieras, sin preguntas", en: "Cancel anytime, no questions asked" },
-  "cta.benefit4": { es: "Updates semanales con lo más nuevo", en: "Weekly updates with the latest" },
+  "cta.benefit4": { es: "Updates semanales con lo más nuevo", en: "Weekly updates with the latest tracks" },
+  "cta.support": { es: "SOPORTE INCLUIDO", en: "SUPPORT INCLUDED" },
+  "cta.perMonth": { es: "/mes", en: "/mo" },
 
   // Guarantee
   "guarantee.title": { es: "SIN CONTRATOS. SIN COMPROMISOS.", en: "NO CONTRACTS. NO COMMITMENTS." },
   "guarantee.desc": {
     es: "Cancela cuando quieras desde tu panel. Un clic y listo. Sin llamadas, sin emails, sin letras chiquitas.",
-    en: "Cancel anytime from your dashboard. One click and done. No calls, no emails, no fine print.",
+    en: "Cancel anytime from your dashboard. One click and you're done. No calls, no emails, no fine print.",
   },
 
   // Footer
-  "footer.plans": { es: "Ver Planes", en: "See Plans" },
+  "footer.plans": { es: "Ver Planes", en: "View Plans" },
   "footer.main": { es: "Sitio Principal", en: "Main Site" },
   "footer.rights": { es: "Todos los derechos reservados.", en: "All rights reserved." },
 
@@ -206,8 +303,28 @@ export const translations: Translations = {
   "settings.language": { es: "English", en: "Español" },
 
   // Mobile bar
-  "mobile.ready": { es: "¿Listo para empezar?", en: "Ready to start?" },
-  "mobile.cta": { es: "Ver Planes", en: "See Plans" },
+  "mobile.ready": { es: "¿Listo para empezar?", en: "Ready to get started?" },
+  "mobile.cta": { es: "Ver Planes", en: "View Plans" },
+
+  // Music Explorer
+  "explorer.title": { es: "TRANSPARENCIA TOTAL:", en: "FULL TRANSPARENCY:" },
+  "explorer.titleHighlight": { es: "Mira lo que hay dentro antes de pagar", en: "See What's Inside Before You Pay" },
+  "explorer.subtitle": {
+    es: "Busca cualquier artista, escucha el preview y comprueba la calidad antes de suscribirte.",
+    en: "Search any artist, preview the quality, and verify before subscribing.",
+  },
+  "explorer.search": { es: "Buscar artista, título o género...", en: "Search artist, title, or genre..." },
+  "explorer.noResults": { es: "No se encontraron resultados para", en: "No results found for" },
+  "explorer.showing": { es: "Mostrando", en: "Showing" },
+  "explorer.of": { es: "de", en: "of" },
+  "explorer.tracks": { es: "archivos disponibles", en: "available files" },
+  "explorer.modalTitle": { es: "Archivo Exclusivo para Miembros PRO", en: "PRO Members Only" },
+  "explorer.modalDesc": {
+    es: "Activa tu cuenta hoy para descargar este archivo y 1TB más a máxima velocidad.",
+    en: "Activate your account today to download this file and 1TB more at full speed.",
+  },
+  "explorer.modalCta": { es: "Activar Cuenta Ahora", en: "Activate Account Now" },
+  "explorer.modalClose": { es: "Seguir explorando gratis", en: "Continue browsing free" },
 };
 
 interface LanguageContextType {
