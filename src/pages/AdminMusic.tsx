@@ -281,6 +281,7 @@ export default function AdminMusic() {
   const [selectedFolders, setSelectedFolders] = useState<Set<string>>(new Set());
   const [selectedTracks, setSelectedTracks] = useState<Set<string>>(new Set());
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [showCleanAllConfirm, setShowCleanAllConfirm] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
 
   const { toast } = useToast();
@@ -898,11 +899,12 @@ export default function AdminMusic() {
 
   const bulkDelete = async () => {
     setBulkDeleting(true);
+    const DELETE_BATCH_SIZE = 50; // Supabase works better with smaller batches
+
     try {
       // Helper to safely remove storage files in batches
       const safeRemoveFiles = async (filePaths: string[]) => {
         if (filePaths.length === 0) return;
-        // Process in batches of 100 (Supabase limit)
         const BATCH_SIZE = 100;
         for (let i = 0; i < filePaths.length; i += BATCH_SIZE) {
           const batch = filePaths.slice(i, i + BATCH_SIZE);
@@ -914,6 +916,15 @@ export default function AdminMusic() {
         }
       };
 
+      // Helper to delete DB records in batches
+      const deleteInBatches = async (table: "tracks" | "folders", ids: string[]) => {
+        for (let i = 0; i < ids.length; i += DELETE_BATCH_SIZE) {
+          const batch = ids.slice(i, i + DELETE_BATCH_SIZE);
+          const { error } = await supabase.from(table).delete().in("id", batch);
+          if (error) console.warn(`Error deleting ${table} batch:`, error);
+        }
+      };
+
       // Delete selected tracks first (including storage files)
       if (selectedTracks.size > 0) {
         const tracksToDelete = tracks.filter(t => selectedTracks.has(t.id));
@@ -921,62 +932,45 @@ export default function AdminMusic() {
           .map(t => {
             try {
               const urlParts = t.file_url.split("/music/");
-              if (urlParts[1]) {
-                return decodeURIComponent(urlParts[1]);
-              }
+              if (urlParts[1]) return decodeURIComponent(urlParts[1]);
             } catch { }
             return null;
           })
           .filter((p): p is string => p !== null && p.length > 0);
 
         await safeRemoveFiles(filePaths);
-
-        const { error } = await supabase
-          .from("tracks")
-          .delete()
-          .in("id", Array.from(selectedTracks));
-        if (error) throw error;
+        await deleteInBatches("tracks", Array.from(selectedTracks));
       }
 
       // Delete selected folders and their contents
       if (selectedFolders.size > 0) {
         const folderIds = Array.from(selectedFolders);
         
-        // Get all tracks in these folders
-        const { data: folderTracks } = await supabase
-          .from("tracks")
-          .select("id, file_url")
-          .in("folder_id", folderIds);
-
-        if (folderTracks && folderTracks.length > 0) {
-          const filePaths = folderTracks
-            .map(t => {
-              try {
-                const urlParts = t.file_url.split("/music/");
-                if (urlParts[1]) {
-                  return decodeURIComponent(urlParts[1]);
-                }
-              } catch { }
-              return null;
-            })
-            .filter((p): p is string => p !== null && p.length > 0);
-
-          await safeRemoveFiles(filePaths);
-
-          // Delete tracks from DB
-          const { error: tracksError } = await supabase
+        // Get all tracks in these folders (in batches to handle large sets)
+        for (const folderId of folderIds) {
+          const { data: folderTracks } = await supabase
             .from("tracks")
-            .delete()
-            .in("folder_id", folderIds);
-          if (tracksError) console.warn("Error deleting folder tracks:", tracksError);
+            .select("id, file_url")
+            .eq("folder_id", folderId);
+
+          if (folderTracks && folderTracks.length > 0) {
+            const filePaths = folderTracks
+              .map(t => {
+                try {
+                  const urlParts = t.file_url.split("/music/");
+                  if (urlParts[1]) return decodeURIComponent(urlParts[1]);
+                } catch { }
+                return null;
+              })
+              .filter((p): p is string => p !== null && p.length > 0);
+
+            await safeRemoveFiles(filePaths);
+            await deleteInBatches("tracks", folderTracks.map(t => t.id));
+          }
         }
 
         // Delete the folders
-        const { error } = await supabase
-          .from("folders")
-          .delete()
-          .in("id", folderIds);
-        if (error) throw error;
+        await deleteInBatches("folders", folderIds);
       }
 
       toast({
@@ -991,7 +985,70 @@ export default function AdminMusic() {
       console.error("Error in bulk delete:", error);
       toast({
         title: "Error",
-        description: "No se pudo completar la eliminación. Revisa la consola.",
+        description: "No se pudo completar la eliminación",
+        variant: "destructive",
+      });
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
+
+  // Clean everything (nuclear option)
+  const cleanEverything = async () => {
+    setBulkDeleting(true);
+    try {
+      // 1. Get all tracks
+      const { data: allTracks } = await supabase.from("tracks").select("id, file_url");
+      
+      if (allTracks && allTracks.length > 0) {
+        // Remove all storage files
+        const filePaths = allTracks
+          .map(t => {
+            try {
+              const urlParts = t.file_url.split("/music/");
+              if (urlParts[1]) return decodeURIComponent(urlParts[1]);
+            } catch { }
+            return null;
+          })
+          .filter((p): p is string => p !== null && p.length > 0);
+
+        // Delete storage in batches
+        for (let i = 0; i < filePaths.length; i += 100) {
+          const batch = filePaths.slice(i, i + 100);
+          try {
+            await supabase.storage.from("music").remove(batch);
+          } catch { }
+        }
+
+        // Delete tracks in batches
+        for (let i = 0; i < allTracks.length; i += 50) {
+          const batch = allTracks.slice(i, i + 50).map(t => t.id);
+          await supabase.from("tracks").delete().in("id", batch);
+        }
+      }
+
+      // 2. Delete all folders
+      const { data: allFolders } = await supabase.from("folders").select("id");
+      if (allFolders && allFolders.length > 0) {
+        for (let i = 0; i < allFolders.length; i += 50) {
+          const batch = allFolders.slice(i, i + 50).map(f => f.id);
+          await supabase.from("folders").delete().in("id", batch);
+        }
+      }
+
+      toast({
+        title: "Limpieza completa",
+        description: "Todos los tracks y carpetas han sido eliminados",
+      });
+      setSelectedFolders(new Set());
+      setSelectedTracks(new Set());
+      setShowBulkDeleteConfirm(false);
+      loadContent();
+    } catch (error) {
+      console.error("Error cleaning everything:", error);
+      toast({
+        title: "Error",
+        description: "Error durante la limpieza",
         variant: "destructive",
       });
     } finally {
@@ -1061,6 +1118,16 @@ export default function AdminMusic() {
           <Button variant="outline" onClick={() => setShowBulkUpload(true)}>
             <FolderUp className="w-4 h-4 mr-2" />
             Importar Carpetas
+          </Button>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowCleanAllConfirm(true)}
+            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+          >
+            <Trash className="w-4 h-4 mr-2" />
+            Limpiar Todo
           </Button>
           
           {hasSelection && (
@@ -1570,6 +1637,45 @@ export default function AdminMusic() {
                 </>
               ) : (
                 "Eliminar todo"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Clean All Confirmation */}
+      <AlertDialog open={showCleanAllConfirm} onOpenChange={setShowCleanAllConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>⚠️ ¿Limpiar TODO?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div>
+                <p>Esta acción eliminará:</p>
+                <ul className="mt-2 space-y-1 text-left">
+                  <li>• Todas las carpetas</li>
+                  <li>• Todos los tracks</li>
+                  <li>• Todos los archivos de audio del storage</li>
+                </ul>
+                <p className="mt-3 font-bold text-destructive">
+                  ¡ESTA ACCIÓN NO SE PUEDE DESHACER!
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={cleanEverything}
+              disabled={bulkDeleting}
+              className="bg-destructive text-destructive-foreground"
+            >
+              {bulkDeleting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Limpiando...
+                </>
+              ) : (
+                "Sí, limpiar todo"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
