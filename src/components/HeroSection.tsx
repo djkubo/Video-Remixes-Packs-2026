@@ -1,8 +1,11 @@
 import { motion } from "framer-motion";
 import { Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const HeroSection = () => {
+  const { t } = useLanguage();
+
   return (
     <section className="relative min-h-screen overflow-hidden bg-black">
       {/* Video Background */}
@@ -40,7 +43,7 @@ const HeroSection = () => {
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"></span>
               <span className="relative inline-flex h-2 w-2 rounded-full bg-primary"></span>
             </span>
-            ACCESO 100% DIGITAL & INMEDIATO
+            {t("hero.badge")}
           </span>
         </motion.div>
 
@@ -51,9 +54,9 @@ const HeroSection = () => {
           transition={{ duration: 0.6, delay: 0.1 }}
           className="max-w-5xl font-display text-5xl font-extrabold leading-none tracking-tight text-white text-shadow sm:text-6xl md:text-7xl lg:text-8xl"
         >
-          El Hub Definitivo del{" "}
+          {t("hero.title")}{" "}
           <span className="text-gradient-red">
-            DJ Latino
+            {t("hero.titleHighlight")}
           </span>
         </motion.h1>
 
@@ -64,9 +67,9 @@ const HeroSection = () => {
           transition={{ duration: 0.6, delay: 0.3 }}
           className="mt-8 max-w-2xl font-sans text-lg text-white/80 md:text-xl"
         >
-          Deja de pagar 4 membresías. Centralizamos los mejores pools en un solo lugar.{" "}
+          {t("hero.subtitle")}{" "}
           <span className="font-semibold text-white">
-            1TB de Descarga Masiva vía FTP.
+            {t("hero.subtitleBold")}
           </span>
         </motion.p>
 
@@ -84,7 +87,7 @@ const HeroSection = () => {
           >
             <a href="#pricing">
               <Zap className="h-5 w-5" />
-              Ver Planes y Precios
+              {t("hero.cta")}
             </a>
           </Button>
         </motion.div>
@@ -97,9 +100,9 @@ const HeroSection = () => {
           className="mt-20 flex flex-wrap items-center justify-center gap-12 md:gap-20"
         >
           {[
-            { value: "50K+", label: "Archivos Clean" },
-            { value: "60+", label: "Géneros" },
-            { value: "1TB", label: "Descarga Mensual" },
+            { value: "50K+", label: t("hero.stat1") },
+            { value: "60+", label: t("hero.stat2") },
+            { value: "1TB", label: t("hero.stat3") },
           ].map((stat) => (
             <div key={stat.label} className="text-center">
               <div className="font-display text-4xl font-extrabold text-primary md:text-5xl text-shadow-glow">

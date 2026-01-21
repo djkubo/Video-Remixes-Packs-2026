@@ -1,35 +1,40 @@
 import { motion } from "framer-motion";
 import { Check, ArrowRight, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 const PricingSection = () => {
+  const { t, language } = useLanguage();
+  const { convertPrice, currency } = useCurrency();
+
   const plans = [
     {
-      name: "MENSUAL PRO",
-      price: "$35",
-      period: "USD / mes",
+      name: t("pricing.monthly"),
+      priceUSD: 35,
+      period: currency.code === "USD" ? t("pricing.monthlyPrice") : `${currency.code} / ${language === "es" ? "mes" : "month"}`,
       badge: null,
       features: [
-        "1TB Descargas mensuales",
-        "Acceso FTP completo",
-        "Updates Semanales",
+        t("pricing.feat1"),
+        t("pricing.feat2"),
+        t("pricing.feat3"),
       ],
       highlighted: false,
-      cta: "Elegir Plan Mensual",
+      cta: t("pricing.ctaMonthly"),
     },
     {
-      name: "ANUAL ELITE",
-      price: "$195",
-      period: "USD / año",
-      badge: "🔥 MEJOR VALOR",
-      savingsText: "Ahorras 2 meses",
+      name: t("pricing.annual"),
+      priceUSD: 195,
+      period: currency.code === "USD" ? t("pricing.annualPrice") : `${currency.code} / ${language === "es" ? "año" : "year"}`,
+      badge: t("pricing.bestValue"),
+      equivalentMonthly: 16.25,
       features: [
-        "2TB Descargas (Doble Velocidad)",
-        "Acceso FTP Prioritario",
-        "Soporte VIP por WhatsApp",
+        t("pricing.feat4"),
+        t("pricing.feat5"),
+        t("pricing.feat6"),
       ],
       highlighted: true,
-      cta: "Quiero el Plan ELITE",
+      cta: t("pricing.ctaAnnual"),
     },
   ];
 
@@ -48,14 +53,14 @@ const PricingSection = () => {
           className="mb-16 text-center"
         >
           <span className="badge-primary mb-6">
-            Precios Transparentes
+            {t("pricing.badge")}
           </span>
           <h2 className="font-display text-display-md md:text-display-lg font-extrabold">
-            ELIGE TU PLAN.{" "}
-            <span className="text-gradient-red">EMPIEZA HOY.</span>
+            {t("pricing.title")}{" "}
+            <span className="text-gradient-red">{t("pricing.titleHighlight")}</span>
           </h2>
           <p className="mx-auto mt-6 max-w-xl font-sans text-lg text-muted-foreground">
-            Sin sorpresas. Sin cargos ocultos. Cancela cuando quieras.
+            {t("pricing.subtitle")}
           </p>
         </motion.div>
 
@@ -101,20 +106,20 @@ const PricingSection = () => {
                   </h3>
                   
                   <div className="mt-4 flex items-baseline justify-center gap-1">
-                    <span className={`font-display text-6xl md:text-7xl font-extrabold ${
+                    <span className={`font-display text-5xl md:text-6xl font-extrabold ${
                       plan.highlighted ? "text-gradient-gold" : "text-foreground"
                     }`}>
-                      {plan.price}
-                    </span>
-                    <span className="font-sans text-sm text-muted-foreground">
-                      {plan.period}
+                      {convertPrice(plan.priceUSD)}
                     </span>
                   </div>
+                  <span className="font-sans text-sm text-muted-foreground">
+                    {plan.period}
+                  </span>
 
-                  {plan.highlighted && (
+                  {plan.highlighted && plan.equivalentMonthly && (
                     <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-success/20 px-4 py-1 text-sm font-semibold text-success">
                       <Check className="h-4 w-4" />
-                      Equivale a $16.25/mes
+                      {language === "es" ? "Equivale a" : "Equivalent to"} {convertPrice(plan.equivalentMonthly)}/{language === "es" ? "mes" : "month"}
                     </p>
                   )}
                 </div>
@@ -158,6 +163,22 @@ const PricingSection = () => {
             </motion.div>
           ))}
         </div>
+
+        {/* Currency notice */}
+        {currency.code !== "USD" && (
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.5 }}
+            className="mt-8 text-center text-sm text-muted-foreground"
+          >
+            {language === "es" 
+              ? `* Precios mostrados en ${currency.name} como referencia. El cobro se realiza en USD.`
+              : `* Prices shown in ${currency.name} for reference. Charged in USD.`
+            }
+          </motion.p>
+        )}
       </div>
     </section>
   );
