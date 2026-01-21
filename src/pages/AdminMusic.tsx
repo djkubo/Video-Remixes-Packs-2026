@@ -33,6 +33,7 @@ import {
   Eye,
   EyeOff,
   GripVertical,
+  FolderUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -254,6 +255,7 @@ export default function AdminMusic() {
   // Modals
   const [showNewFolder, setShowNewFolder] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
   const [showEditTrack, setShowEditTrack] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -265,8 +267,10 @@ export default function AdminMusic() {
   // Form states
   const [newFolderName, setNewFolderName] = useState("");
   const [uploadFiles, setUploadFiles] = useState<FileList | null>(null);
+  const [bulkUploadFiles, setBulkUploadFiles] = useState<FileList | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState("");
   const [editingTrack, setEditingTrack] = useState<Track | null>(null);
 
   const { toast } = useToast();
@@ -526,6 +530,210 @@ export default function AdminMusic() {
     } finally {
       setUploading(false);
       setUploadProgress(0);
+      setUploadStatus("");
+    }
+  };
+
+  // Bulk upload folders with files
+  const uploadFoldersWithContent = async () => {
+    if (!bulkUploadFiles || bulkUploadFiles.length === 0) return;
+
+    setUploading(true);
+    setUploadProgress(0);
+    setUploadStatus("Analizando archivos...");
+
+    try {
+      // Group files by folder
+      const folderMap = new Map<string, File[]>();
+      const rootFiles: File[] = [];
+
+      for (const file of Array.from(bulkUploadFiles)) {
+        // webkitRelativePath contains the full path like "Bachata/song.mp3"
+        const relativePath = (file as any).webkitRelativePath || file.name;
+        const pathParts = relativePath.split("/");
+        
+        if (pathParts.length > 1) {
+          // File is inside a folder
+          const folderName = pathParts[0];
+          if (!folderMap.has(folderName)) {
+            folderMap.set(folderName, []);
+          }
+          folderMap.get(folderName)!.push(file);
+        } else {
+          // File is at root level
+          rootFiles.push(file);
+        }
+      }
+
+      const totalItems = folderMap.size + Array.from(folderMap.values()).reduce((acc, files) => acc + files.length, 0) + rootFiles.length;
+      let processed = 0;
+
+      // Create folders and upload their content
+      for (const [folderName, files] of folderMap) {
+        setUploadStatus(`Creando carpeta: ${folderName}`);
+        
+        // Check if folder already exists
+        const { data: existingFolder } = await supabase
+          .from("folders")
+          .select("id")
+          .eq("name", folderName)
+          .eq("parent_id", currentFolderId ?? null)
+          .maybeSingle();
+
+        let folderId: string;
+
+        if (existingFolder) {
+          folderId = existingFolder.id;
+        } else {
+          // Create the folder
+          const { data: newFolder, error: folderError } = await supabase
+            .from("folders")
+            .insert({
+              name: folderName,
+              slug: generateSlug(folderName),
+              parent_id: currentFolderId,
+              sort_order: folders.length + processed,
+            })
+            .select("id")
+            .single();
+
+          if (folderError) throw folderError;
+          folderId = newFolder.id;
+        }
+
+        processed++;
+        setUploadProgress(Math.round((processed / totalItems) * 100));
+
+        // Upload files to this folder
+        const audioFiles = files.filter(f => 
+          f.type.startsWith("audio/") || 
+          f.name.toLowerCase().endsWith(".mp3") ||
+          f.name.toLowerCase().endsWith(".wav") ||
+          f.name.toLowerCase().endsWith(".m4a") ||
+          f.name.toLowerCase().endsWith(".flac")
+        );
+
+        for (let i = 0; i < audioFiles.length; i++) {
+          const file = audioFiles[i];
+          setUploadStatus(`Subiendo: ${folderName}/${file.name}`);
+
+          const fileExt = file.name.split(".").pop();
+          const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+          const filePath = `${folderId}/${fileName}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from("music")
+            .upload(filePath, file);
+
+          if (uploadError) {
+            console.error(`Error uploading ${file.name}:`, uploadError);
+            continue;
+          }
+
+          const { data: urlData } = supabase.storage
+            .from("music")
+            .getPublicUrl(filePath);
+
+          const baseName = file.name.replace(/\.[^/.]+$/, "");
+          let artist = "Unknown Artist";
+          let title = baseName;
+
+          if (baseName.includes(" - ")) {
+            const parts = baseName.split(" - ");
+            artist = parts[0].trim();
+            title = parts.slice(1).join(" - ").trim();
+          }
+
+          await supabase.from("tracks").insert({
+            title,
+            artist,
+            folder_id: folderId,
+            file_path: filePath,
+            file_url: urlData.publicUrl,
+            file_size_bytes: file.size,
+            file_format: fileExt?.toLowerCase() || "mp3",
+            genre: folderName, // Use folder name as genre
+            sort_order: i,
+          });
+
+          processed++;
+          setUploadProgress(Math.round((processed / totalItems) * 100));
+        }
+      }
+
+      // Upload root level files
+      for (let i = 0; i < rootFiles.length; i++) {
+        const file = rootFiles[i];
+        if (!file.type.startsWith("audio/") && 
+            !file.name.toLowerCase().endsWith(".mp3") &&
+            !file.name.toLowerCase().endsWith(".wav")) {
+          continue;
+        }
+
+        setUploadStatus(`Subiendo: ${file.name}`);
+
+        const fileExt = file.name.split(".").pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = currentFolderId
+          ? `${currentFolderId}/${fileName}`
+          : fileName;
+
+        const { error: uploadError } = await supabase.storage
+          .from("music")
+          .upload(filePath, file);
+
+        if (uploadError) {
+          console.error(`Error uploading ${file.name}:`, uploadError);
+          continue;
+        }
+
+        const { data: urlData } = supabase.storage
+          .from("music")
+          .getPublicUrl(filePath);
+
+        const baseName = file.name.replace(/\.[^/.]+$/, "");
+        let artist = "Unknown Artist";
+        let title = baseName;
+
+        if (baseName.includes(" - ")) {
+          const parts = baseName.split(" - ");
+          artist = parts[0].trim();
+          title = parts.slice(1).join(" - ").trim();
+        }
+
+        await supabase.from("tracks").insert({
+          title,
+          artist,
+          folder_id: currentFolderId,
+          file_path: filePath,
+          file_url: urlData.publicUrl,
+          file_size_bytes: file.size,
+          file_format: fileExt?.toLowerCase() || "mp3",
+          sort_order: tracks.length + i,
+        });
+
+        processed++;
+        setUploadProgress(Math.round((processed / totalItems) * 100));
+      }
+
+      toast({
+        title: "Importación completa",
+        description: `Se crearon ${folderMap.size} carpetas con su contenido`,
+      });
+      setShowBulkUpload(false);
+      setBulkUploadFiles(null);
+      loadContent();
+    } catch (error) {
+      console.error("Error in bulk upload:", error);
+      toast({
+        title: "Error",
+        description: "Error durante la importación",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+      setUploadProgress(0);
+      setUploadStatus("");
     }
   };
 
@@ -674,6 +882,10 @@ export default function AdminMusic() {
           <Button variant="secondary" onClick={() => setShowUpload(true)}>
             <Upload className="w-4 h-4 mr-2" />
             Subir Archivos
+          </Button>
+          <Button variant="outline" onClick={() => setShowBulkUpload(true)}>
+            <FolderUp className="w-4 h-4 mr-2" />
+            Importar Carpetas
           </Button>
         </div>
 
@@ -867,6 +1079,120 @@ export default function AdminMusic() {
                   <>
                     <Upload className="w-4 h-4 mr-2" />
                     Subir
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Upload Folders Dialog */}
+      <Dialog open={showBulkUpload} onOpenChange={setShowBulkUpload}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Importar Carpetas con Contenido</DialogTitle>
+            <DialogDescription>
+              Selecciona una carpeta con subcarpetas de música. Cada subcarpeta se convertirá en una categoría y sus archivos de audio se importarán automáticamente.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Seleccionar carpeta</Label>
+              <Input
+                type="file"
+                {...{ webkitdirectory: "", directory: "" } as any}
+                multiple
+                onChange={(e) => setBulkUploadFiles(e.target.files)}
+                className="mt-2"
+              />
+              <p className="text-xs text-muted-foreground mt-2">
+                Formato de archivos: Artista - Título.mp3
+              </p>
+            </div>
+            {bulkUploadFiles && bulkUploadFiles.length > 0 && (
+              <div className="bg-muted/50 rounded-lg p-3 text-sm">
+                <p className="font-medium mb-1">
+                  {bulkUploadFiles.length} archivos seleccionados
+                </p>
+                <p className="text-muted-foreground text-xs">
+                  Se detectaron las siguientes carpetas:
+                </p>
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {Array.from(
+                    new Set(
+                      Array.from(bulkUploadFiles)
+                        .map((f: any) => f.webkitRelativePath?.split("/")[0])
+                        .filter(Boolean)
+                    )
+                  ).slice(0, 10).map((folder) => (
+                    <span
+                      key={folder}
+                      className="bg-primary/10 text-primary text-xs px-2 py-1 rounded"
+                    >
+                      {folder}
+                    </span>
+                  ))}
+                  {Array.from(
+                    new Set(
+                      Array.from(bulkUploadFiles)
+                        .map((f: any) => f.webkitRelativePath?.split("/")[0])
+                        .filter(Boolean)
+                    )
+                  ).length > 10 && (
+                    <span className="text-xs text-muted-foreground">
+                      +{Array.from(
+                        new Set(
+                          Array.from(bulkUploadFiles)
+                            .map((f: any) => f.webkitRelativePath?.split("/")[0])
+                            .filter(Boolean)
+                        )
+                      ).length - 10} más
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+            {uploading && (
+              <div className="space-y-2">
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-primary transition-all"
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+                <p className="text-sm text-center">{uploadProgress}%</p>
+                {uploadStatus && (
+                  <p className="text-xs text-muted-foreground text-center truncate">
+                    {uploadStatus}
+                  </p>
+                )}
+              </div>
+            )}
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowBulkUpload(false);
+                  setBulkUploadFiles(null);
+                }}
+                disabled={uploading}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={uploadFoldersWithContent}
+                disabled={!bulkUploadFiles || bulkUploadFiles.length === 0 || uploading}
+              >
+                {uploading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Importando...
+                  </>
+                ) : (
+                  <>
+                    <FolderUp className="w-4 h-4 mr-2" />
+                    Importar Todo
                   </>
                 )}
               </Button>
