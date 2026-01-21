@@ -14,7 +14,7 @@ import {
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
-  rectSortingStrategy,
+  horizontalListSortingStrategy,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -693,7 +693,7 @@ export default function AdminMusic() {
             >
               <SortableContext
                 items={folders.map((f) => f.id)}
-                strategy={rectSortingStrategy}
+                strategy={horizontalListSortingStrategy}
               >
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {folders.map((folder) => (
