@@ -14,7 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      leads: {
+        Row: {
+          country_code: string | null
+          country_name: string | null
+          created_at: string
+          email: string
+          id: string
+          manychat_subscriber_id: string | null
+          manychat_synced: boolean | null
+          name: string
+          phone: string
+          source: string | null
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          country_code?: string | null
+          country_name?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          manychat_subscriber_id?: string | null
+          manychat_synced?: boolean | null
+          name: string
+          phone: string
+          source?: string | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          country_code?: string | null
+          country_name?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          manychat_subscriber_id?: string | null
+          manychat_synced?: boolean | null
+          name?: string
+          phone?: string
+          source?: string | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
