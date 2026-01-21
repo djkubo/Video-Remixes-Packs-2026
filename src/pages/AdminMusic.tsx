@@ -899,19 +899,37 @@ export default function AdminMusic() {
   const bulkDelete = async () => {
     setBulkDeleting(true);
     try {
+      // Helper to safely remove storage files in batches
+      const safeRemoveFiles = async (filePaths: string[]) => {
+        if (filePaths.length === 0) return;
+        // Process in batches of 100 (Supabase limit)
+        const BATCH_SIZE = 100;
+        for (let i = 0; i < filePaths.length; i += BATCH_SIZE) {
+          const batch = filePaths.slice(i, i + BATCH_SIZE);
+          try {
+            await supabase.storage.from("music").remove(batch);
+          } catch (err) {
+            console.warn("Storage remove batch failed (continuing):", err);
+          }
+        }
+      };
+
       // Delete selected tracks first (including storage files)
       if (selectedTracks.size > 0) {
         const tracksToDelete = tracks.filter(t => selectedTracks.has(t.id));
         const filePaths = tracksToDelete
           .map(t => {
-            const urlParts = t.file_url.split("/music/");
-            return urlParts[1] ? decodeURIComponent(urlParts[1]) : null;
+            try {
+              const urlParts = t.file_url.split("/music/");
+              if (urlParts[1]) {
+                return decodeURIComponent(urlParts[1]);
+              }
+            } catch { }
+            return null;
           })
-          .filter(Boolean) as string[];
+          .filter((p): p is string => p !== null && p.length > 0);
 
-        if (filePaths.length > 0) {
-          await supabase.storage.from("music").remove(filePaths);
-        }
+        await safeRemoveFiles(filePaths);
 
         const { error } = await supabase
           .from("tracks")
@@ -920,36 +938,44 @@ export default function AdminMusic() {
         if (error) throw error;
       }
 
-      // Delete selected folders
+      // Delete selected folders and their contents
       if (selectedFolders.size > 0) {
-        // First delete all tracks in these folders
+        const folderIds = Array.from(selectedFolders);
+        
+        // Get all tracks in these folders
         const { data: folderTracks } = await supabase
           .from("tracks")
           .select("id, file_url")
-          .in("folder_id", Array.from(selectedFolders));
+          .in("folder_id", folderIds);
 
         if (folderTracks && folderTracks.length > 0) {
           const filePaths = folderTracks
             .map(t => {
-              const urlParts = t.file_url.split("/music/");
-              return urlParts[1] ? decodeURIComponent(urlParts[1]) : null;
+              try {
+                const urlParts = t.file_url.split("/music/");
+                if (urlParts[1]) {
+                  return decodeURIComponent(urlParts[1]);
+                }
+              } catch { }
+              return null;
             })
-            .filter(Boolean) as string[];
+            .filter((p): p is string => p !== null && p.length > 0);
 
-          if (filePaths.length > 0) {
-            await supabase.storage.from("music").remove(filePaths);
-          }
+          await safeRemoveFiles(filePaths);
 
-          await supabase
+          // Delete tracks from DB
+          const { error: tracksError } = await supabase
             .from("tracks")
             .delete()
-            .in("folder_id", Array.from(selectedFolders));
+            .in("folder_id", folderIds);
+          if (tracksError) console.warn("Error deleting folder tracks:", tracksError);
         }
 
+        // Delete the folders
         const { error } = await supabase
           .from("folders")
           .delete()
-          .in("id", Array.from(selectedFolders));
+          .in("id", folderIds);
         if (error) throw error;
       }
 
@@ -965,7 +991,7 @@ export default function AdminMusic() {
       console.error("Error in bulk delete:", error);
       toast({
         title: "Error",
-        description: "No se pudo completar la eliminación",
+        description: "No se pudo completar la eliminación. Revisa la consola.",
         variant: "destructive",
       });
     } finally {
