@@ -7,9 +7,9 @@ const HeroSection = () => {
   const { t } = useLanguage();
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-black">
-      {/* Video Background */}
-      <div className="absolute inset-0">
+    <section className="relative min-h-screen overflow-hidden bg-background">
+      {/* Video Background - Only visible in dark mode */}
+      <div className="absolute inset-0 hidden dark:block">
         <video
           autoPlay
           muted
@@ -27,6 +27,11 @@ const HeroSection = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black" />
       </div>
 
+      {/* Light mode background - elegant gradient */}
+      <div className="absolute inset-0 block dark:hidden bg-gradient-to-b from-background via-background to-background-carbon">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-primary/5 rounded-full blur-3xl" />
+      </div>
+
       {/* Red glow from top */}
       <div className="absolute inset-0 hero-gradient" />
 
@@ -38,7 +43,7 @@ const HeroSection = () => {
           transition={{ duration: 0.5 }}
           className="mb-8"
         >
-          <span className="inline-flex items-center gap-2 rounded-full border-2 border-primary/60 bg-primary/20 px-5 py-2.5 text-sm font-bold uppercase tracking-wider text-white backdrop-blur-sm">
+          <span className="inline-flex items-center gap-2 rounded-full border-2 border-primary/60 bg-primary/20 px-5 py-2.5 text-sm font-bold uppercase tracking-wider text-primary-foreground dark:text-white backdrop-blur-sm">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"></span>
               <span className="relative inline-flex h-2 w-2 rounded-full bg-primary"></span>
@@ -52,7 +57,7 @@ const HeroSection = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1 }}
-          className="max-w-5xl font-display text-5xl font-extrabold leading-none tracking-tight text-white text-shadow sm:text-6xl md:text-7xl lg:text-8xl"
+          className="max-w-5xl font-display text-5xl font-extrabold leading-none tracking-tight text-foreground dark:text-white text-shadow sm:text-6xl md:text-7xl lg:text-8xl"
         >
           {t("hero.title")}{" "}
           <span className="text-gradient-red">
@@ -65,10 +70,10 @@ const HeroSection = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="mt-8 max-w-2xl font-sans text-lg text-white/80 md:text-xl"
+          className="mt-8 max-w-2xl font-sans text-lg text-muted-foreground dark:text-white/80 md:text-xl"
         >
           {t("hero.subtitle")}{" "}
-          <span className="font-semibold text-white">
+          <span className="font-semibold text-foreground dark:text-white">
             {t("hero.subtitleBold")}
           </span>
         </motion.p>
@@ -108,7 +113,7 @@ const HeroSection = () => {
               <div className="font-display text-4xl font-extrabold text-primary md:text-5xl text-shadow-glow">
                 {stat.value}
               </div>
-              <div className="mt-2 font-bebas text-sm uppercase tracking-widest text-white/60">
+              <div className="mt-2 font-bebas text-sm uppercase tracking-widest text-muted-foreground dark:text-white/60">
                 {stat.label}
               </div>
             </div>

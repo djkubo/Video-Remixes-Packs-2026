@@ -91,15 +91,15 @@ const TrustSecuritySection = () => {
           transition={{ duration: 0.5, delay: 0.2 }}
           className="mx-auto mb-16 max-w-lg"
         >
-          <div className="rounded-2xl bg-[#0b141a] p-6 shadow-card border border-white/5">
+          <div className="rounded-2xl bg-card p-6 shadow-card border border-border">
             {/* WhatsApp Header */}
-            <div className="mb-4 flex items-center gap-3 border-b border-white/10 pb-4">
+            <div className="mb-4 flex items-center gap-3 border-b border-border pb-4">
               <div className="h-11 w-11 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-lg">
                 🎧
               </div>
               <div>
-                <p className="font-semibold text-white">DJs Satisfechos</p>
-                <p className="text-xs text-gray-400">+1,500 miembros activos</p>
+                <p className="font-semibold text-foreground">DJs Satisfechos</p>
+                <p className="text-xs text-muted-foreground">+1,500 miembros activos</p>
               </div>
             </div>
 
@@ -116,22 +116,22 @@ const TrustSecuritySection = () => {
                 >
                   <div className="relative max-w-[85%]">
                     <div className="absolute -right-2 top-0 h-4 w-4 overflow-hidden">
-                      <div className="h-4 w-4 origin-bottom-left rotate-45 transform bg-[#005c4b]" />
+                      <div className="h-4 w-4 origin-bottom-left rotate-45 transform bg-primary" />
                     </div>
                     
-                    <div className="rounded-lg rounded-tr-none bg-[#005c4b] px-4 py-3 text-white shadow-lg">
+                    <div className="rounded-lg rounded-tr-none bg-primary px-4 py-3 text-primary-foreground shadow-lg">
                       <p className="text-[15px] leading-relaxed">
                         {testimonials[currentTestimonial].message}
                       </p>
                       <div className="mt-1 flex items-center justify-end gap-1">
-                        <span className="text-[11px] text-gray-300">
+                        <span className="text-[11px] text-primary-foreground/70">
                           {testimonials[currentTestimonial].time}
                         </span>
-                        <CheckCheck className="h-4 w-4 text-blue-400" />
+                        <CheckCheck className="h-4 w-4 text-primary-foreground/80" />
                       </div>
                     </div>
                     
-                    <p className="mt-1 text-right text-xs text-gray-500">
+                    <p className="mt-1 text-right text-xs text-muted-foreground">
                       — {testimonials[currentTestimonial].name}
                     </p>
                   </div>
@@ -147,8 +147,8 @@ const TrustSecuritySection = () => {
                   onClick={() => setCurrentTestimonial(index)}
                   className={`h-2 rounded-full transition-all duration-300 ${
                     index === currentTestimonial
-                      ? "w-6 bg-green-500"
-                      : "w-2 bg-gray-600 hover:bg-gray-500"
+                      ? "w-6 bg-primary"
+                      : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"
                   }`}
                 />
               ))}

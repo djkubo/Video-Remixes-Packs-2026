@@ -27,10 +27,10 @@ const MobileStickyBar = () => {
           className="fixed bottom-0 left-0 right-0 z-50 md:hidden"
         >
           {/* Top fade */}
-          <div className="h-4 bg-gradient-to-t from-black to-transparent" />
+          <div className="h-4 bg-gradient-to-t from-background to-transparent" />
           
           {/* Bar content */}
-          <div className="flex items-center justify-between gap-3 bg-black/98 px-4 py-3 backdrop-blur-xl border-t border-primary/30">
+          <div className="flex items-center justify-between gap-3 bg-background/98 px-4 py-3 backdrop-blur-xl border-t border-primary/30">
             <p className="text-sm text-muted-foreground font-sans">
               ¿Listo para empezar?
             </p>
@@ -47,7 +47,7 @@ const MobileStickyBar = () => {
           </div>
           
           {/* Safe area for iOS */}
-          <div className="h-[env(safe-area-inset-bottom)] bg-black" />
+          <div className="h-[env(safe-area-inset-bottom)] bg-background" />
         </motion.div>
       )}
     </AnimatePresence>

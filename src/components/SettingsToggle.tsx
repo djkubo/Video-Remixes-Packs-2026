@@ -40,7 +40,7 @@ const SettingsToggle = () => {
                 setIsOpen(false);
                 setShowCurrencyList(false);
               }}
-              className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+              className="fixed inset-0 z-50 bg-foreground/40 backdrop-blur-sm"
             />
 
             {/* Panel */}
@@ -49,7 +49,7 @@ const SettingsToggle = () => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 100 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed right-0 top-0 z-50 h-full w-80 bg-card/95 backdrop-blur-xl border-l border-border/50 shadow-2xl"
+              className="fixed right-0 top-0 z-50 h-full w-80 bg-card backdrop-blur-xl border-l border-border shadow-2xl"
             >
               {/* Header */}
               <div className="flex items-center justify-between border-b border-border/50 p-6">
