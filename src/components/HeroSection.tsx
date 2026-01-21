@@ -110,7 +110,7 @@ const HeroSection = () => {
             size="lg"
             className="btn-primary-glow group h-16 gap-3 px-10 text-lg font-bold"
           >
-            <a href="#pricing">
+            <a href="https://videoremixespacks.com/plan" target="_blank" rel="noopener noreferrer">
               <Zap className="h-5 w-5" />
               {t("hero.cta")}
             </a>

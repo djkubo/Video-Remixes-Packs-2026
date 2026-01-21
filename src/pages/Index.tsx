@@ -8,7 +8,7 @@ import TestimonialsSection from "@/components/TestimonialsSection";
 import FAQSection from "@/components/FAQSection";
 import InfiniteMarquee from "@/components/InfiniteMarquee";
 import TrustSecuritySection from "@/components/TrustSecuritySection";
-import PricingSection from "@/components/PricingSection";
+
 import FinalCTA from "@/components/FinalCTA";
 import TrustBar from "@/components/TrustBar";
 import GuaranteeSection from "@/components/GuaranteeSection";
@@ -77,8 +77,7 @@ const Index = () => {
         {/* 9. CONFIANZA Y SEGURIDAD - Reducir fricción */}
         <TrustSecuritySection />
         
-        {/* 10. PRECIOS - Decisión */}
-        <PricingSection />
+        {/* 10. PRECIOS - Moved to external site */}
         
         {/* 11. REGLAS DE ORO - Refuerzo de valor */}
         <TrustBar />
