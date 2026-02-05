@@ -1,5 +1,5 @@
 # robots.txt - VideoRemixesPacks
-# https://remix-rhythm-hub.lovable.app
+# https://videoremixespacks.com
 
 User-agent: Googlebot
 Allow: /
@@ -34,7 +34,7 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://remix-rhythm-hub.lovable.app/sitemap.xml
+Sitemap: https://videoremixespacks.com/sitemap.xml
 
 # Host
-Host: https://remix-rhythm-hub.lovable.app
+Host: https://videoremixespacks.com
