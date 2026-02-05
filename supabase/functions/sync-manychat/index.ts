@@ -1,5 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,56 +6,116 @@ const corsHeaders = {
 };
 
 // ============================================
-// STRICT INPUT VALIDATION SCHEMA
+// STRICT INPUT VALIDATION (inline, no external Zod)
 // ============================================
 
-// E.164 international phone format regex (with or without +)
-// Allows: +1234567890, 1234567890, +52 55 1234 5678
+// E.164 international phone format regex
 const PHONE_REGEX = /^\+?[1-9]\d{6,14}$/;
-
-// Country code regex (E.164 format)
 const COUNTRY_CODE_REGEX = /^\+?[1-9]\d{0,3}$/;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-const LeadSchema = z.object({
-  id: z.string().uuid({ message: "Invalid UUID format for lead ID" }),
-  name: z.string()
-    .min(1, "Name is required")
-    .max(100, "Name too long")
-    .transform(s => s.trim())
-    .refine(s => s.length >= 1, "Name cannot be empty after trimming"),
-  email: z.string()
-    .email("Invalid email format")
-    .max(255, "Email too long")
-    .transform(s => s.toLowerCase().trim()),
-  phone: z.string()
-    .min(7, "Phone number too short")
-    .max(20, "Phone number too long")
-    .transform(s => s.replace(/[\s\-\(\)\.]/g, '')) // Remove common separators
-    .refine(
-      s => PHONE_REGEX.test(s),
-      "Invalid phone format. Expected international format (e.g., +521234567890)"
-    ),
-  country_code: z.string()
-    .max(5, "Country code too long")
-    .nullable()
-    .transform(s => s?.replace(/[\s\-]/g, '') || null)
-    .refine(
-      s => s === null || COUNTRY_CODE_REGEX.test(s),
-      "Invalid country code format (e.g., +52, +1)"
-    ),
-  country_name: z.string().max(100).nullable(),
-  source: z.string().max(50).nullable(),
-  tags: z.array(
-    z.string()
-      .max(50)
-      .transform(s => s.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '_'))
-  ).max(20).nullable(),
-});
+interface LeadData {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  country_code: string | null;
+  country_name: string | null;
+  source: string | null;
+  tags: string[] | null;
+}
 
-type LeadData = z.infer<typeof LeadSchema>;
+interface ValidationError {
+  field: string;
+  message: string;
+}
+
+function validateLead(data: unknown): { valid: true; data: LeadData } | { valid: false; errors: ValidationError[] } {
+  const errors: ValidationError[] = [];
+  
+  if (!data || typeof data !== 'object') {
+    return { valid: false, errors: [{ field: 'lead', message: 'Lead data must be an object' }] };
+  }
+
+  const lead = data as Record<string, unknown>;
+
+  // Validate ID (required, UUID)
+  if (typeof lead.id !== 'string' || !UUID_REGEX.test(lead.id)) {
+    errors.push({ field: 'id', message: 'Invalid UUID format' });
+  }
+
+  // Validate name (required, 1-100 chars)
+  if (typeof lead.name !== 'string' || lead.name.trim().length < 1 || lead.name.length > 100) {
+    errors.push({ field: 'name', message: 'Name is required (1-100 characters)' });
+  }
+
+  // Validate email (required, valid format)
+  if (typeof lead.email !== 'string' || !EMAIL_REGEX.test(lead.email) || lead.email.length > 255) {
+    errors.push({ field: 'email', message: 'Invalid email format' });
+  }
+
+  // Validate phone (required, international format)
+  const cleanPhone = typeof lead.phone === 'string' 
+    ? lead.phone.replace(/[\s\-\(\)\.]/g, '') 
+    : '';
+  if (cleanPhone.length < 7 || cleanPhone.length > 20 || !PHONE_REGEX.test(cleanPhone)) {
+    errors.push({ field: 'phone', message: 'Invalid phone format. Expected international format (e.g., +521234567890)' });
+  }
+
+  // Validate country_code (optional)
+  const countryCode = lead.country_code;
+  if (countryCode !== null && countryCode !== undefined) {
+    const cleanCode = typeof countryCode === 'string' ? countryCode.replace(/[\s\-]/g, '') : '';
+    if (cleanCode && !COUNTRY_CODE_REGEX.test(cleanCode)) {
+      errors.push({ field: 'country_code', message: 'Invalid country code format' });
+    }
+  }
+
+  // Validate country_name (optional, max 100)
+  if (lead.country_name !== null && lead.country_name !== undefined) {
+    if (typeof lead.country_name !== 'string' || lead.country_name.length > 100) {
+      errors.push({ field: 'country_name', message: 'Country name too long' });
+    }
+  }
+
+  // Validate source (optional, max 50)
+  if (lead.source !== null && lead.source !== undefined) {
+    if (typeof lead.source !== 'string' || lead.source.length > 50) {
+      errors.push({ field: 'source', message: 'Source too long' });
+    }
+  }
+
+  // Validate tags (optional array)
+  if (lead.tags !== null && lead.tags !== undefined) {
+    if (!Array.isArray(lead.tags) || lead.tags.length > 20) {
+      errors.push({ field: 'tags', message: 'Tags must be an array (max 20)' });
+    } else if (lead.tags.some(t => typeof t !== 'string' || t.length > 50)) {
+      errors.push({ field: 'tags', message: 'Each tag must be a string (max 50 chars)' });
+    }
+  }
+
+  if (errors.length > 0) {
+    return { valid: false, errors };
+  }
+
+  return {
+    valid: true,
+    data: {
+      id: lead.id as string,
+      name: (lead.name as string).trim(),
+      email: (lead.email as string).toLowerCase().trim(),
+      phone: cleanPhone,
+      country_code: typeof lead.country_code === 'string' ? lead.country_code.replace(/[\s\-]/g, '') : null,
+      country_name: typeof lead.country_name === 'string' ? lead.country_name : null,
+      source: typeof lead.source === 'string' ? lead.source : null,
+      tags: Array.isArray(lead.tags) ? lead.tags.map(t => String(t).trim().toLowerCase().replace(/[^a-z0-9_-]/g, '_')) : null,
+    }
+  };
+}
 
 // ============================================
-// MANYCHAT API CALL WITH TIMEOUT & ERROR HANDLING
+// MANYCHAT API CALL WITH TIMEOUT
 // ============================================
 
 interface ManyChatResponse {
@@ -65,7 +124,7 @@ interface ManyChatResponse {
   message?: string;
 }
 
-const MANYCHAT_TIMEOUT_MS = 10000; // 10 seconds timeout
+const MANYCHAT_TIMEOUT_MS = 10000;
 
 async function callManyChatAPI(
   endpoint: string,
@@ -91,14 +150,10 @@ async function callManyChatAPI(
 
     clearTimeout(timeoutId);
 
-    // Check for HTTP-level errors
     if (!response.ok) {
       const errorText = await response.text().catch(() => 'Unknown error');
       console.error(`[ManyChat] HTTP ${response.status} for ${operationName}: ${errorText}`);
-      return {
-        success: false,
-        error: `HTTP ${response.status}: ${errorText.substring(0, 200)}`,
-      };
+      return { success: false, error: `HTTP ${response.status}: ${errorText.substring(0, 200)}` };
     }
 
     const data: ManyChatResponse = await response.json();
@@ -119,8 +174,6 @@ async function callManyChatAPI(
         console.error(`[ManyChat] ${operationName} timed out after ${MANYCHAT_TIMEOUT_MS}ms`);
         return { success: false, error: `Request timed out after ${MANYCHAT_TIMEOUT_MS}ms` };
       }
-      
-      // Network errors, DNS failures, etc.
       console.error(`[ManyChat] ${operationName} network error:`, error.message);
       return { success: false, error: `Network error: ${error.message}` };
     }
@@ -139,21 +192,15 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // ============================================
-  // STEP 1: VERIFY ENVIRONMENT VARIABLES
-  // ============================================
+  // Verify environment variables
   const MANYCHAT_API_KEY = Deno.env.get('MANYCHAT_API_KEY');
   const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
   if (!MANYCHAT_API_KEY) {
-    console.error('[FATAL] MANYCHAT_API_KEY is not configured in environment');
+    console.error('[FATAL] MANYCHAT_API_KEY is not configured');
     return new Response(
-      JSON.stringify({ 
-        error: 'Server configuration error',
-        code: 'MISSING_API_KEY',
-        message: 'ManyChat API key is not configured. Please contact administrator.'
-      }),
+      JSON.stringify({ error: 'Server configuration error', code: 'MISSING_API_KEY' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
@@ -161,24 +208,17 @@ Deno.serve(async (req) => {
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     console.error('[FATAL] Supabase credentials not configured');
     return new Response(
-      JSON.stringify({ 
-        error: 'Server configuration error',
-        code: 'MISSING_SUPABASE_CREDS',
-        message: 'Database credentials not configured. Please contact administrator.'
-      }),
+      JSON.stringify({ error: 'Server configuration error', code: 'MISSING_SUPABASE_CREDS' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 
   try {
-    // ============================================
-    // STEP 2: PARSE AND VALIDATE REQUEST BODY
-    // ============================================
+    // Parse request body
     let body: unknown;
     try {
       body = await req.json();
     } catch {
-      console.error('[Validation] Invalid JSON body received');
       return new Response(
         JSON.stringify({ error: 'Invalid JSON body', code: 'INVALID_JSON' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -186,37 +226,26 @@ Deno.serve(async (req) => {
     }
 
     if (!body || typeof body !== 'object' || !('lead' in body)) {
-      console.error('[Validation] Missing lead object in request body');
       return new Response(
-        JSON.stringify({ error: 'Missing lead data in request body', code: 'MISSING_LEAD' }),
+        JSON.stringify({ error: 'Missing lead data', code: 'MISSING_LEAD' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Validate lead data with strict Zod schema
-    const parseResult = LeadSchema.safeParse((body as { lead: unknown }).lead);
-    if (!parseResult.success) {
-      const errors = parseResult.error.issues.map(issue => ({
-        field: issue.path.join('.'),
-        message: issue.message,
-      }));
-      console.error('[Validation] Lead data validation failed:', errors);
+    // Validate lead data
+    const validation = validateLead((body as { lead: unknown }).lead);
+    if (!validation.valid) {
+      console.error('[Validation] Lead data validation failed:', validation.errors);
       return new Response(
-        JSON.stringify({ 
-          error: 'Invalid lead data', 
-          code: 'VALIDATION_ERROR',
-          details: errors 
-        }),
+        JSON.stringify({ error: 'Invalid lead data', code: 'VALIDATION_ERROR', details: validation.errors }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const lead: LeadData = parseResult.data;
-    console.log('[Lead] Processing:', { id: lead.id, email: lead.email, phone: lead.phone.substring(0, 5) + '***' });
+    const lead = validation.data;
+    console.log('[Lead] Processing:', { id: lead.id, email: lead.email });
 
-    // ============================================
-    // STEP 3: VERIFY LEAD EXISTS IN DATABASE
-    // ============================================
+    // Verify lead exists in database
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     
     const { data: dbLead, error: leadError } = await supabase
@@ -226,14 +255,13 @@ Deno.serve(async (req) => {
       .single();
 
     if (leadError || !dbLead) {
-      console.error('[Security] Lead not found in database:', lead.id);
+      console.error('[Security] Lead not found:', lead.id);
       return new Response(
         JSON.stringify({ error: 'Lead not found', code: 'LEAD_NOT_FOUND' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Verify email matches (prevents data tampering)
     if (dbLead.email.toLowerCase() !== lead.email.toLowerCase()) {
       console.error('[Security] Email mismatch for lead:', lead.id);
       return new Response(
@@ -242,29 +270,18 @@ Deno.serve(async (req) => {
       );
     }
 
-    // ============================================
-    // STEP 4: PREPARE PHONE NUMBER
-    // ============================================
-    // Remove any leading zeros and ensure proper format
+    // Format phone number
     let cleanPhone = lead.phone.replace(/^0+/, '');
-    
-    // If country code is provided and phone doesn't start with +, prepend it
     if (lead.country_code && !cleanPhone.startsWith('+')) {
       const code = lead.country_code.startsWith('+') ? lead.country_code : `+${lead.country_code}`;
       cleanPhone = `${code}${cleanPhone}`;
     }
-    
-    // Ensure phone starts with +
     if (!cleanPhone.startsWith('+')) {
       cleanPhone = `+${cleanPhone}`;
     }
 
-    console.log('[Phone] Formatted:', cleanPhone.substring(0, 6) + '***');
-
-    // ============================================
-    // STEP 5: CREATE SUBSCRIBER IN MANYCHAT
-    // ============================================
-    const nameParts = lead.name.trim().split(' ');
+    // Create subscriber in ManyChat
+    const nameParts = lead.name.split(' ');
     const firstName = nameParts[0] || '';
     const lastName = nameParts.slice(1).join(' ') || '';
 
@@ -279,21 +296,19 @@ Deno.serve(async (req) => {
         email: lead.email,
         has_opt_in_sms: true,
         has_opt_in_email: true,
-        consent_phrase: "Opted in via website exit intent popup for free demos",
+        consent_phrase: "Opted in via website exit intent popup",
       },
       'createSubscriber'
     );
 
     let subscriberId: string | null = null;
-    const manychatErrors: string[] = [];
+    const warnings: string[] = [];
 
     if (createResult.success && createResult.data?.data?.id) {
       subscriberId = String(createResult.data.data.id);
       console.log('[ManyChat] Subscriber created:', subscriberId);
 
-      // ============================================
-      // STEP 6: SET CUSTOM FIELDS (with error isolation)
-      // ============================================
+      // Set custom fields
       const customFields = [
         { field_name: 'country', field_value: lead.country_name || 'Unknown' },
         { field_name: 'lead_source', field_value: lead.source || 'exit_intent' },
@@ -303,85 +318,31 @@ Deno.serve(async (req) => {
       ];
 
       for (const field of customFields) {
-        const fieldResult = await callManyChatAPI(
+        const result = await callManyChatAPI(
           'subscriber/setCustomField',
           MANYCHAT_API_KEY,
-          {
-            subscriber_id: subscriberId,
-            field_name: field.field_name,
-            field_value: field.field_value,
-          },
+          { subscriber_id: subscriberId, ...field },
           `setCustomField:${field.field_name}`
         );
-        
-        if (!fieldResult.success) {
-          manychatErrors.push(`Field ${field.field_name}: ${fieldResult.error}`);
-        }
+        if (!result.success) warnings.push(`Field ${field.field_name}: ${result.error}`);
       }
 
-      // ============================================
-      // STEP 7: ADD TAGS (with error isolation)
-      // ============================================
-      const defaultTags = ['exit_intent', 'demo_request', 'website_lead', 'dj_prospect', 'free_demos'];
-      const allTags = [...new Set([...defaultTags, ...(lead.tags || [])])]; // Deduplicate
-
+      // Add tags
+      const allTags = [...new Set(['exit_intent', 'demo_request', 'website_lead', ...(lead.tags || [])])];
       for (const tag of allTags) {
-        const tagResult = await callManyChatAPI(
+        const result = await callManyChatAPI(
           'subscriber/addTag',
           MANYCHAT_API_KEY,
-          {
-            subscriber_id: subscriberId,
-            tag_name: tag,
-          },
+          { subscriber_id: subscriberId, tag_name: tag },
           `addTag:${tag}`
         );
-        
-        if (!tagResult.success) {
-          manychatErrors.push(`Tag ${tag}: ${tagResult.error}`);
-        }
-      }
-
-      // ============================================
-      // STEP 8: SET OPT-IN STATUS (with error isolation)
-      // ============================================
-      const smsResult = await callManyChatAPI(
-        'subscriber/setSmsOptIn',
-        MANYCHAT_API_KEY,
-        {
-          subscriber_id: subscriberId,
-          sms_opt_in: true,
-          sms_phone: cleanPhone,
-        },
-        'setSmsOptIn'
-      );
-      
-      if (!smsResult.success) {
-        manychatErrors.push(`SMS opt-in: ${smsResult.error}`);
-      }
-
-      const emailResult = await callManyChatAPI(
-        'subscriber/setEmailOptIn',
-        MANYCHAT_API_KEY,
-        {
-          subscriber_id: subscriberId,
-          email_opt_in: true,
-          email: lead.email,
-        },
-        'setEmailOptIn'
-      );
-      
-      if (!emailResult.success) {
-        manychatErrors.push(`Email opt-in: ${emailResult.error}`);
+        if (!result.success) warnings.push(`Tag ${tag}: ${result.error}`);
       }
 
     } else {
-      // Subscriber creation failed - try to find existing
-      console.warn('[ManyChat] Create failed, searching for existing subscriber...');
-      
-      if (createResult.error) {
-        manychatErrors.push(`Create: ${createResult.error}`);
-      }
+      if (createResult.error) warnings.push(`Create: ${createResult.error}`);
 
+      // Try to find existing subscriber
       const findResult = await callManyChatAPI(
         'subscriber/findBySystemField',
         MANYCHAT_API_KEY,
@@ -392,18 +353,11 @@ Deno.serve(async (req) => {
       if (findResult.success && findResult.data?.data?.id) {
         subscriberId = String(findResult.data.data.id);
         console.log('[ManyChat] Found existing subscriber:', subscriberId);
-      } else {
-        console.error('[ManyChat] Could not create or find subscriber');
-        if (findResult.error) {
-          manychatErrors.push(`Find: ${findResult.error}`);
-        }
       }
     }
 
-    // ============================================
-    // STEP 9: UPDATE LEAD IN DATABASE
-    // ============================================
-    const { error: updateError } = await supabase
+    // Update lead in database
+    await supabase
       .from('leads')
       .update({
         manychat_synced: subscriberId !== null,
@@ -411,52 +365,20 @@ Deno.serve(async (req) => {
       })
       .eq('id', lead.id);
 
-    if (updateError) {
-      console.error('[Database] Failed to update lead sync status:', updateError);
-    }
-
-    // ============================================
-    // STEP 10: RETURN RESPONSE
-    // ============================================
-    const response = {
-      success: subscriberId !== null,
-      manychat_subscriber_id: subscriberId,
-      synced: subscriberId !== null,
-      ...(manychatErrors.length > 0 && { warnings: manychatErrors }),
-    };
-
-    console.log('[Complete] Response:', { 
-      success: response.success, 
-      subscriberId: subscriberId?.substring(0, 8) + '...', 
-      warningCount: manychatErrors.length 
-    });
-
     return new Response(
-      JSON.stringify(response),
-      { 
-        status: subscriberId ? 200 : 207, // 207 Multi-Status if partial failure
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
+      JSON.stringify({
+        success: subscriberId !== null,
+        manychat_subscriber_id: subscriberId,
+        synced: subscriberId !== null,
+        ...(warnings.length > 0 && { warnings }),
+      }),
+      { status: subscriberId ? 200 : 207, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    // Catch-all for unexpected errors
-    console.error('[FATAL] Unexpected error in sync-manychat:', error);
-    
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    const errorStack = error instanceof Error ? error.stack : undefined;
-    
-    // Log full stack for debugging
-    if (errorStack) {
-      console.error('[FATAL] Stack trace:', errorStack);
-    }
-
+    console.error('[FATAL] Unexpected error:', error);
     return new Response(
-      JSON.stringify({ 
-        error: 'Internal server error',
-        code: 'INTERNAL_ERROR',
-        message: errorMessage 
-      }),
+      JSON.stringify({ error: 'Internal server error', code: 'INTERNAL_ERROR' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

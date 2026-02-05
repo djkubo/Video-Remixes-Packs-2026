@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,9 +16,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // ============================================
-    // AUTHENTICATION: Require admin role
-    // ============================================
+    // Authentication: Require admin role
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return new Response(
@@ -31,7 +29,6 @@ Deno.serve(async (req) => {
     const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-    // Create client with user's token to verify auth
     const supabaseAuth = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: authHeader } }
     });
@@ -49,7 +46,7 @@ Deno.serve(async (req) => {
 
     const userId = claimsData.user.id;
 
-    // Check if user is admin using service role
+    // Check if user is admin
     const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const { data: adminData, error: adminError } = await supabaseAdmin
       .from('admin_users')
@@ -68,9 +65,6 @@ Deno.serve(async (req) => {
 
     console.log('Admin authenticated:', userId);
 
-    // ============================================
-    // MANYCHAT SETUP (Admin only)
-    // ============================================
     const MANYCHAT_API_KEY = Deno.env.get('MANYCHAT_API_KEY');
 
     if (!MANYCHAT_API_KEY) {
@@ -88,14 +82,14 @@ Deno.serve(async (req) => {
 
     // Create custom fields
     const customFields = [
-      { name: 'country', type: 'text', description: 'País del lead detectado automáticamente' },
-      { name: 'lead_source', type: 'text', description: 'Fuente del lead (exit_intent, landing, etc)' },
-      { name: 'phone_country_code', type: 'text', description: 'Código de país del teléfono' },
-      { name: 'full_name', type: 'text', description: 'Nombre completo del DJ' },
+      { name: 'country', type: 'text', description: 'País del lead' },
+      { name: 'lead_source', type: 'text', description: 'Fuente del lead' },
+      { name: 'phone_country_code', type: 'text', description: 'Código de país' },
+      { name: 'full_name', type: 'text', description: 'Nombre completo' },
       { name: 'signup_date', type: 'date', description: 'Fecha de registro' },
     ];
 
-    console.log('Creating custom fields in ManyChat...');
+    console.log('Creating custom fields...');
 
     for (const field of customFields) {
       try {
@@ -113,13 +107,12 @@ Deno.serve(async (req) => {
         });
 
         const data: ManyChatResponse = await response.json();
-        console.log(`Custom field "${field.name}" result:`, JSON.stringify(data));
+        console.log(`Field "${field.name}":`, data.status);
 
-        if (data.status === 'success') {
-          (results.customFields as unknown[]).push({ name: field.name, status: 'created', data: data.data });
-        } else {
-          (results.customFields as unknown[]).push({ name: field.name, status: 'exists_or_error', data });
-        }
+        (results.customFields as unknown[]).push({ 
+          name: field.name, 
+          status: data.status === 'success' ? 'created' : 'exists_or_error' 
+        });
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Unknown error';
         console.error(`Error creating field "${field.name}":`, errorMessage);
@@ -128,19 +121,9 @@ Deno.serve(async (req) => {
     }
 
     // Create tags
-    const tags = [
-      'exit_intent',
-      'demo_request',
-      'website_lead',
-      'dj_prospect',
-      'free_demos',
-      'monthly_plan_interest',
-      'annual_plan_interest',
-      'spanish_speaker',
-      'english_speaker',
-    ];
+    const tags = ['exit_intent', 'demo_request', 'website_lead', 'dj_prospect', 'free_demos'];
 
-    console.log('Creating tags in ManyChat...');
+    console.log('Creating tags...');
 
     for (const tagName of tags) {
       try {
@@ -154,13 +137,12 @@ Deno.serve(async (req) => {
         });
 
         const data: ManyChatResponse = await response.json();
-        console.log(`Tag "${tagName}" result:`, JSON.stringify(data));
+        console.log(`Tag "${tagName}":`, data.status);
 
-        if (data.status === 'success') {
-          (results.tags as unknown[]).push({ name: tagName, status: 'created', data: data.data });
-        } else {
-          (results.tags as unknown[]).push({ name: tagName, status: 'exists_or_error', data });
-        }
+        (results.tags as unknown[]).push({ 
+          name: tagName, 
+          status: data.status === 'success' ? 'created' : 'exists_or_error' 
+        });
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Unknown error';
         console.error(`Error creating tag "${tagName}":`, errorMessage);
@@ -168,26 +150,19 @@ Deno.serve(async (req) => {
       }
     }
 
-    const summary = {
-      success: true,
-      message: 'ManyChat setup completed',
-      customFieldsCreated: (results.customFields as unknown[]).filter((f: any) => f.status === 'created').length,
-      customFieldsTotal: customFields.length,
-      tagsCreated: (results.tags as unknown[]).filter((t: any) => t.status === 'created').length,
-      tagsTotal: tags.length,
-      errors: (results.errors as unknown[]).length,
-      details: results,
-    };
-
-    console.log('Setup complete:', JSON.stringify(summary));
-
     return new Response(
-      JSON.stringify(summary),
+      JSON.stringify({
+        success: true,
+        message: 'ManyChat setup completed',
+        customFieldsCreated: (results.customFields as unknown[]).filter((f: any) => f.status === 'created').length,
+        tagsCreated: (results.tags as unknown[]).filter((t: any) => t.status === 'created').length,
+        errors: (results.errors as unknown[]).length,
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('Error in setup-manychat function:', error);
+    console.error('Error in setup-manychat:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ error: errorMessage }),
