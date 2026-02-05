@@ -35,8 +35,8 @@ const MobileStickyBar = () => {
           {/* Top fade */}
           <div className="h-4 bg-gradient-to-t from-background to-transparent" />
           
-          {/* Bar content */}
-          <div className="flex items-center justify-between gap-3 bg-background/98 px-4 py-3 backdrop-blur-xl border-t border-primary/30">
+          {/* Bar content - Enhanced separation with stronger blur and subtle border */}
+          <div className="flex items-center justify-between gap-3 bg-background/95 px-4 py-3 backdrop-blur-2xl backdrop-saturate-150 border-t border-white/10 shadow-[0_-4px_30px_rgba(0,0,0,0.5)]">
             <div className="flex items-center gap-2 min-w-0">
               <img
                 src={theme === "dark" ? logoWhite : logoDark}
