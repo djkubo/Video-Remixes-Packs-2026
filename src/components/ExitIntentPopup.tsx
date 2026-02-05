@@ -238,7 +238,7 @@ export default function ExitIntentPopup() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50"
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[60]"
             onClick={handleClose}
           />
           
@@ -248,7 +248,7 @@ export default function ExitIntentPopup() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[95%] max-w-md z-50"
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[95%] max-w-md z-[60]"
           >
             <div className="relative bg-gradient-to-br from-background via-background to-primary/5 border border-border rounded-2xl shadow-2xl overflow-hidden">
               {/* Decorative gradient */}
