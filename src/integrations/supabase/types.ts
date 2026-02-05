@@ -268,6 +268,32 @@ export type Database = {
     }
     Functions: {
       count_folder_tracks: { Args: { folder_id: string }; Returns: number }
+      get_analytics_summary: {
+        Args: { p_end_date: string; p_start_date: string }
+        Returns: Json
+      }
+      get_country_breakdown: {
+        Args: { p_end_date: string; p_start_date: string }
+        Returns: {
+          name: string
+          value: number
+        }[]
+      }
+      get_daily_trends: {
+        Args: { p_end_date: string; p_start_date: string }
+        Returns: {
+          date: string
+          page_views: number
+          visitors: number
+        }[]
+      }
+      get_event_breakdown: {
+        Args: { p_end_date: string; p_start_date: string }
+        Returns: {
+          name: string
+          value: number
+        }[]
+      }
       get_folder_path: {
         Args: { folder_id: string }
         Returns: {
@@ -276,6 +302,10 @@ export type Database = {
           name: string
           slug: string
         }[]
+      }
+      get_source_breakdown: {
+        Args: { p_end_date: string; p_start_date: string }
+        Returns: Json
       }
       has_role: {
         Args: {

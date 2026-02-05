@@ -69,6 +69,23 @@ interface AnalyticsSummary {
   conversion_rate: number;
 }
 
+interface DailyTrend {
+  date: string;
+  visitors: number;
+  page_views: number;
+}
+
+interface BreakdownItem {
+  name: string;
+  value: number;
+}
+
+interface SourceBreakdown {
+  sources: BreakdownItem[];
+  mediums: BreakdownItem[];
+  campaigns: BreakdownItem[];
+}
+
 export default function AdminDashboard() {
   const [dateRange, setDateRange] = useState("7");
   const [activeTab, setActiveTab] = useState<"overview" | "sources" | "leads" | "events">("overview");
@@ -92,209 +109,92 @@ export default function AdminDashboard() {
     },
   });
 
-  // Fetch analytics summary
+  // Fetch analytics summary via RPC (optimized - no raw data download)
   const { data: analytics, isLoading: analyticsLoading, refetch: refetchAnalytics } = useQuery({
-    queryKey: ["admin-analytics", dateRange],
+    queryKey: ["admin-analytics-rpc", dateRange],
     queryFn: async () => {
-      // Get unique visitors and sessions
-      const { data: visitorData } = await supabase
-        .from("analytics_events")
-        .select("visitor_id, session_id")
-        .gte("created_at", startDate.toISOString())
-        .lte("created_at", endDate.toISOString());
+      const { data, error } = await supabase.rpc("get_analytics_summary", {
+        p_start_date: startDate.toISOString(),
+        p_end_date: endDate.toISOString(),
+      });
 
-      const uniqueVisitors = new Set(visitorData?.map(e => e.visitor_id)).size;
-      const uniqueSessions = new Set(visitorData?.map(e => e.session_id)).size;
+      if (error) throw error;
 
-      // Get page views
-      const { count: pageViews } = await supabase
-        .from("analytics_events")
-        .select("*", { count: "exact", head: true })
-        .eq("event_name", "page_view")
-        .gte("created_at", startDate.toISOString())
-        .lte("created_at", endDate.toISOString());
+      const summary = data as {
+        total_visitors: number;
+        total_sessions: number;
+        total_page_views: number;
+        total_clicks: number;
+        avg_time_on_page: number;
+        avg_scroll_depth: number;
+      };
 
-      // Get clicks
-      const { count: clicks } = await supabase
-        .from("analytics_events")
-        .select("*", { count: "exact", head: true })
-        .eq("event_name", "click")
-        .gte("created_at", startDate.toISOString())
-        .lte("created_at", endDate.toISOString());
-
-      // Get scroll depth data
-      const { data: scrollData } = await supabase
-        .from("analytics_events")
-        .select("event_data")
-        .eq("event_name", "scroll_depth")
-        .gte("created_at", startDate.toISOString())
-        .lte("created_at", endDate.toISOString());
-
-      const scrollDepths = scrollData?.map(e => {
-        const data = e.event_data as { percent?: number } | null;
-        return data?.percent || 0;
-      }) || [];
-      const avgScroll = scrollDepths.length > 0 
-        ? scrollDepths.reduce((a, b) => a + b, 0) / scrollDepths.length 
-        : 0;
-
-      // Get time on page data
-      const { data: timeData } = await supabase
-        .from("analytics_events")
-        .select("event_data")
-        .eq("event_name", "time_on_page")
-        .gte("created_at", startDate.toISOString())
-        .lte("created_at", endDate.toISOString());
-
-      const times = timeData?.map(e => {
-        const data = e.event_data as { seconds?: number } | null;
-        return data?.seconds || 0;
-      }) || [];
-      const avgTime = times.length > 0 
-        ? times.reduce((a, b) => a + b, 0) / times.length 
-        : 0;
-
-      // Calculate conversion rate
-      const conversionRate = uniqueVisitors > 0 
-        ? ((leads?.length || 0) / uniqueVisitors) * 100 
+      // Calculate conversion rate with leads count
+      const conversionRate = summary.total_visitors > 0
+        ? ((leads?.length || 0) / summary.total_visitors) * 100
         : 0;
 
       return {
-        total_visitors: uniqueVisitors,
-        total_sessions: uniqueSessions,
-        total_page_views: pageViews || 0,
-        total_clicks: clicks || 0,
-        avg_time_on_page: avgTime,
-        avg_scroll_depth: avgScroll,
+        ...summary,
         conversion_rate: conversionRate,
       } as AnalyticsSummary;
     },
+    enabled: leads !== undefined, // Wait for leads to calculate conversion rate
   });
 
-  // Fetch daily trends
+  // Fetch daily trends via RPC (optimized)
   const { data: dailyTrends } = useQuery({
-    queryKey: ["admin-trends", dateRange],
+    queryKey: ["admin-trends-rpc", dateRange],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("analytics_events")
-        .select("created_at, visitor_id, event_name")
-        .gte("created_at", startDate.toISOString())
-        .lte("created_at", endDate.toISOString());
-
-      // Group by date
-      const byDate: Record<string, { visitors: Set<string>; pageViews: number }> = {};
-      
-      data?.forEach(event => {
-        const date = format(new Date(event.created_at), "MM/dd");
-        if (!byDate[date]) {
-          byDate[date] = { visitors: new Set(), pageViews: 0 };
-        }
-        byDate[date].visitors.add(event.visitor_id || "");
-        if (event.event_name === "page_view") {
-          byDate[date].pageViews++;
-        }
+      const { data, error } = await supabase.rpc("get_daily_trends", {
+        p_start_date: startDate.toISOString(),
+        p_end_date: endDate.toISOString(),
       });
 
-      return Object.entries(byDate).map(([date, data]) => ({
-        date,
-        visitors: data.visitors.size,
-        pageViews: data.pageViews,
-      })).sort((a, b) => a.date.localeCompare(b.date));
+      if (error) throw error;
+      return (data as DailyTrend[]) || [];
     },
   });
 
-  // Fetch event breakdown
+  // Fetch event breakdown via RPC (optimized)
   const { data: eventBreakdown } = useQuery({
-    queryKey: ["admin-events", dateRange],
+    queryKey: ["admin-events-rpc", dateRange],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("analytics_events")
-        .select("event_name")
-        .gte("created_at", startDate.toISOString())
-        .lte("created_at", endDate.toISOString());
-
-      const counts: Record<string, number> = {};
-      data?.forEach(event => {
-        counts[event.event_name] = (counts[event.event_name] || 0) + 1;
+      const { data, error } = await supabase.rpc("get_event_breakdown", {
+        p_start_date: startDate.toISOString(),
+        p_end_date: endDate.toISOString(),
       });
 
-      return Object.entries(counts)
-        .map(([name, value]) => ({ name, value }))
-        .sort((a, b) => b.value - a.value)
-        .slice(0, 10);
+      if (error) throw error;
+      return (data as BreakdownItem[]) || [];
     },
   });
 
-  // Fetch country breakdown
+  // Fetch country breakdown via RPC (optimized)
   const { data: countryBreakdown } = useQuery({
-    queryKey: ["admin-countries", dateRange],
+    queryKey: ["admin-countries-rpc", dateRange],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("analytics_events")
-        .select("country_code, visitor_id")
-        .gte("created_at", startDate.toISOString())
-        .lte("created_at", endDate.toISOString());
-
-      const byCountry: Record<string, Set<string>> = {};
-      data?.forEach(event => {
-        const country = event.country_code || "XX";
-        if (!byCountry[country]) byCountry[country] = new Set();
-        byCountry[country].add(event.visitor_id || "");
+      const { data, error } = await supabase.rpc("get_country_breakdown", {
+        p_start_date: startDate.toISOString(),
+        p_end_date: endDate.toISOString(),
       });
 
-      return Object.entries(byCountry)
-        .map(([name, visitors]) => ({ name, value: visitors.size }))
-        .sort((a, b) => b.value - a.value)
-        .slice(0, 6);
+      if (error) throw error;
+      return (data as BreakdownItem[]) || [];
     },
   });
 
-  // Fetch traffic sources breakdown
+  // Fetch traffic sources breakdown via RPC (optimized)
   const { data: sourceBreakdown } = useQuery({
-    queryKey: ["admin-sources", dateRange],
+    queryKey: ["admin-sources-rpc", dateRange],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("analytics_events")
-        .select("utm_source, utm_medium, utm_campaign, visitor_id")
-        .gte("created_at", startDate.toISOString())
-        .lte("created_at", endDate.toISOString());
-
-      // Group by source
-      const bySource: Record<string, Set<string>> = {};
-      const byMedium: Record<string, Set<string>> = {};
-      const byCampaign: Record<string, Set<string>> = {};
-
-      data?.forEach((event) => {
-        const source = event.utm_source || "direct";
-        const medium = event.utm_medium || "none";
-        const campaign = event.utm_campaign || "(sin campaña)";
-
-        if (!bySource[source]) bySource[source] = new Set();
-        bySource[source].add(event.visitor_id || "");
-
-        if (!byMedium[medium]) byMedium[medium] = new Set();
-        byMedium[medium].add(event.visitor_id || "");
-
-        if (event.utm_campaign) {
-          if (!byCampaign[campaign]) byCampaign[campaign] = new Set();
-          byCampaign[campaign].add(event.visitor_id || "");
-        }
+      const { data, error } = await supabase.rpc("get_source_breakdown", {
+        p_start_date: startDate.toISOString(),
+        p_end_date: endDate.toISOString(),
       });
 
-      return {
-        sources: Object.entries(bySource)
-          .map(([name, visitors]) => ({ name, value: visitors.size }))
-          .sort((a, b) => b.value - a.value)
-          .slice(0, 10),
-        mediums: Object.entries(byMedium)
-          .map(([name, visitors]) => ({ name, value: visitors.size }))
-          .sort((a, b) => b.value - a.value)
-          .slice(0, 10),
-        campaigns: Object.entries(byCampaign)
-          .map(([name, visitors]) => ({ name, value: visitors.size }))
-          .sort((a, b) => b.value - a.value)
-          .slice(0, 10),
-      };
+      if (error) throw error;
+      return data as unknown as SourceBreakdown;
     },
   });
 
@@ -464,7 +364,7 @@ export default function AdminDashboard() {
                       />
                       <Line
                         type="monotone"
-                        dataKey="pageViews"
+                        dataKey="page_views"
                         stroke="hsl(var(--muted-foreground))"
                         strokeWidth={2}
                         dot={false}
@@ -535,7 +435,7 @@ export default function AdminDashboard() {
                 <div>
                   <div className="flex justify-between text-sm mb-2">
                     <span className="text-muted-foreground">Scroll Promedio</span>
-                    <span className="font-medium">{analytics?.avg_scroll_depth.toFixed(0)}%</span>
+                    <span className="font-medium">{analytics?.avg_scroll_depth?.toFixed(0) || 0}%</span>
                   </div>
                   <div className="h-2 bg-muted rounded-full overflow-hidden">
                     <div
@@ -555,7 +455,7 @@ export default function AdminDashboard() {
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-muted-foreground" />
                     <span className="text-sm text-muted-foreground">
-                      {analytics?.total_sessions.toLocaleString()} sesiones totales
+                      {analytics?.total_sessions?.toLocaleString() || 0} sesiones totales
                     </span>
                   </div>
                 </div>
@@ -586,7 +486,7 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {sourceBreakdown?.sources.map((source, index) => {
+                  {sourceBreakdown?.sources?.map((source, index) => {
                     const total = sourceBreakdown.sources.reduce((a, b) => a + b.value, 0);
                     const percent = total > 0 ? (source.value / total) * 100 : 0;
                     return (
@@ -615,7 +515,7 @@ export default function AdminDashboard() {
                       </div>
                     );
                   })}
-                  {!sourceBreakdown?.sources.length && (
+                  {!sourceBreakdown?.sources?.length && (
                     <p className="text-muted-foreground text-center py-8">
                       Sin datos de fuentes
                     </p>
@@ -665,7 +565,7 @@ export default function AdminDashboard() {
                 <CardTitle>Campañas (utm_campaign)</CardTitle>
               </CardHeader>
               <CardContent>
-                {sourceBreakdown?.campaigns.length ? (
+                {sourceBreakdown?.campaigns?.length ? (
                   <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={sourceBreakdown.campaigns}>
