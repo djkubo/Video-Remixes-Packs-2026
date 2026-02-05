@@ -427,6 +427,16 @@ export const translations: Translations = {
   "admin.music.errorUpload": { es: "Error durante la subida", en: "Error during upload" },
   "admin.music.uploading": { es: "Subiendo...", en: "Uploading..." },
   "admin.music.processing": { es: "Procesando...", en: "Processing..." },
+  "admin.music.analyzingFiles": { es: "Analizando archivos...", en: "Analyzing files..." },
+  "admin.music.creatingFolders": { es: "Creando carpetas...", en: "Creating folders..." },
+  "admin.music.filesUploaded": { es: "archivos subidos", en: "files uploaded" },
+  "admin.music.filesFailed": { es: "archivos fallaron", en: "files failed" },
+  "admin.music.foldersFailed": { es: "carpetas fallaron", en: "folders failed" },
+  "admin.music.importComplete": { es: "Importación completa", en: "Import complete" },
+  "admin.music.importWithErrors": { es: "Importación con errores", en: "Import with errors" },
+  "admin.music.importError": { es: "Error de importación", en: "Import error" },
+  "admin.music.importErrorDescription": { es: "Error durante la importación", en: "Error during import" },
+  "admin.music.uploadedFilesPreserved": { es: "Los archivos subidos se conservaron", en: "Uploaded files were preserved" },
 };
 
 interface LanguageContextType {

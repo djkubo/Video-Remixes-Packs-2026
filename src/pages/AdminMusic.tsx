@@ -473,6 +473,44 @@ export default function AdminMusic() {
       .replace(/(^-|-$)/g, "");
   };
 
+  // Generate unique slug by checking for duplicates and appending suffix
+  const generateUniqueSlug = async (
+    baseName: string,
+    parentId: string | null
+  ): Promise<string> => {
+    const baseSlug = generateSlug(baseName);
+    let slug = baseSlug;
+    let counter = 1;
+
+    while (true) {
+      const query = supabase
+        .from("folders")
+        .select("id")
+        .eq("slug", slug);
+
+      if (parentId) {
+        query.eq("parent_id", parentId);
+      } else {
+        query.is("parent_id", null);
+      }
+
+      const { data } = await query.maybeSingle();
+
+      if (!data) {
+        return slug; // Slug is unique
+      }
+
+      // Slug exists, try with counter
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+
+      // Safety limit to prevent infinite loops
+      if (counter > 100) {
+        return `${baseSlug}-${Date.now()}`;
+      }
+    }
+  };
+
   const createFolder = async () => {
     if (!newFolderName.trim()) return;
 
@@ -575,17 +613,24 @@ export default function AdminMusic() {
     }
   };
 
-  // Helper: Upload single file with retry
+  // Interface for tracking failed uploads
+  interface FailedUpload {
+    fileName: string;
+    folderName: string;
+    error: string;
+  }
+
+  // Helper: Upload single file with retry - returns detailed result
   const uploadFileWithRetry = async (
     file: File,
     folderId: string,
     folderName: string,
     sortOrder: number,
     maxRetries = 3
-  ): Promise<boolean> => {
+  ): Promise<{ success: boolean; error?: string }> => {
     const fileExt = file.name.split(".").pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-    const filePath = `${folderId}/${fileName}`;
+    const filePath = folderId ? `${folderId}/${fileName}` : fileName;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
@@ -596,7 +641,7 @@ export default function AdminMusic() {
         if (uploadError) {
           if (attempt === maxRetries) {
             console.error(`Failed to upload ${file.name} after ${maxRetries} attempts:`, uploadError);
-            return false;
+            return { success: false, error: `Storage error: ${uploadError.message}` };
           }
           await new Promise(r => setTimeout(r, 1000 * attempt)); // Exponential backoff
           continue;
@@ -616,54 +661,90 @@ export default function AdminMusic() {
           title = parts.slice(1).join(" - ").trim();
         }
 
-        await supabase.from("tracks").insert({
+        const { error: insertError } = await supabase.from("tracks").insert({
           title,
           artist,
-          folder_id: folderId,
+          folder_id: folderId || null,
           file_path: filePath,
           file_url: urlData.publicUrl,
           file_size_bytes: file.size,
           file_format: fileExt?.toLowerCase() || "mp3",
-          genre: folderName,
+          genre: folderName || null,
           sort_order: sortOrder,
         });
 
-        return true;
+        if (insertError) {
+          // Try to clean up the uploaded file if DB insert fails
+          try {
+            await supabase.storage.from("music").remove([filePath]);
+          } catch { }
+          return { success: false, error: `Database error: ${insertError.message}` };
+        }
+
+        return { success: true };
       } catch (err) {
         if (attempt === maxRetries) {
+          const errorMessage = err instanceof Error ? err.message : "Unknown error";
           console.error(`Error uploading ${file.name}:`, err);
-          return false;
+          return { success: false, error: errorMessage };
         }
         await new Promise(r => setTimeout(r, 1000 * attempt));
       }
     }
-    return false;
+    return { success: false, error: "Max retries exceeded" };
   };
 
-  // Helper: Process batch of files in parallel
+  // Helper: Process batch of files in parallel - returns detailed results
   const uploadBatch = async (
     files: { file: File; folderId: string; folderName: string; sortOrder: number }[],
     onProgress: () => void
-  ): Promise<number> => {
+  ): Promise<{ successCount: number; failures: FailedUpload[] }> => {
+    const failures: FailedUpload[] = [];
+    let successCount = 0;
+
     const results = await Promise.allSettled(
       files.map(async ({ file, folderId, folderName, sortOrder }) => {
-        const success = await uploadFileWithRetry(file, folderId, folderName, sortOrder);
+        const result = await uploadFileWithRetry(file, folderId, folderName, sortOrder);
         onProgress();
-        return success;
+        return { file, folderName, result };
       })
     );
-    return results.filter(r => r.status === "fulfilled" && r.value).length;
+
+    for (const res of results) {
+      if (res.status === "fulfilled") {
+        if (res.value.result.success) {
+          successCount++;
+        } else {
+          failures.push({
+            fileName: res.value.file.name,
+            folderName: res.value.folderName,
+            error: res.value.result.error || "Unknown error",
+          });
+        }
+      } else {
+        // Promise was rejected (shouldn't happen often due to internal try/catch)
+        failures.push({
+          fileName: "Unknown",
+          folderName: "Unknown",
+          error: res.reason?.message || "Promise rejected",
+        });
+      }
+    }
+
+    return { successCount, failures };
   };
 
-  // Bulk upload folders with files - OPTIMIZED with parallel uploads
+  // Bulk upload folders with files - ROBUST with detailed error tracking
   const uploadFoldersWithContent = async () => {
     if (!bulkUploadFiles || bulkUploadFiles.length === 0) return;
 
     setUploading(true);
     setUploadProgress(0);
-    setUploadStatus("Analizando archivos...");
+    setUploadStatus(t("admin.music.analyzingFiles") || "Analizando archivos...");
 
-    const BATCH_SIZE = 10; // Upload 10 files at a time for faster uploads
+    const BATCH_SIZE = 10;
+    const allFailures: FailedUpload[] = [];
+    const folderCreationErrors: string[] = [];
 
     try {
       // Group files by their immediate parent folder (the genre folder)
@@ -684,7 +765,7 @@ export default function AdminMusic() {
       for (const file of Array.from(bulkUploadFiles)) {
         const relativePath = (file as any).webkitRelativePath || file.name;
         const pathParts = relativePath.split("/");
-        
+
         if (pathParts.length > baseFolderDepth + 1) {
           const folderName = pathParts[baseFolderDepth];
           if (!folderMap.has(folderName)) {
@@ -704,60 +785,87 @@ export default function AdminMusic() {
         f.name.toLowerCase().endsWith(".m4a") ||
         f.name.toLowerCase().endsWith(".flac");
 
-      const totalAudioFiles = Array.from(folderMap.values()).reduce(
-        (acc, files) => acc + files.filter(isAudioFile).length,
-        0
-      ) + rootFiles.filter(isAudioFile).length;
+      const totalAudioFiles =
+        Array.from(folderMap.values()).reduce(
+          (acc, files) => acc + files.filter(isAudioFile).length,
+          0
+        ) + rootFiles.filter(isAudioFile).length;
 
       let processedFiles = 0;
       let successfulUploads = 0;
-      let failedUploads = 0;
 
-      // Create all folders in PARALLEL (much faster)
-      setUploadStatus("Creando carpetas...");
+      // Create all folders with UNIQUE SLUG handling
+      setUploadStatus(t("admin.music.creatingFolders") || "Creando carpetas...");
       const folderIds = new Map<string, string>();
       const folderNames = Array.from(folderMap.keys());
 
-      // Process folders in parallel batches of 10
-      const FOLDER_BATCH = 10;
+      // Process folders in parallel batches of 5 (smaller to avoid race conditions on slugs)
+      const FOLDER_BATCH = 5;
       for (let i = 0; i < folderNames.length; i += FOLDER_BATCH) {
         const batch = folderNames.slice(i, i + FOLDER_BATCH);
-        await Promise.all(batch.map(async (folderName, idx) => {
-          const { data: existingFolder } = await supabase
-            .from("folders")
-            .select("id")
-            .eq("name", folderName)
-            .eq("parent_id", currentFolderId ?? null)
-            .maybeSingle();
+        await Promise.all(
+          batch.map(async (folderName, idx) => {
+            try {
+              // First check if folder with same name already exists
+              const { data: existingFolder } = await supabase
+                .from("folders")
+                .select("id")
+                .eq("name", folderName)
+                .eq("parent_id", currentFolderId ?? null)
+                .maybeSingle();
 
-          if (existingFolder) {
-            folderIds.set(folderName, existingFolder.id);
-          } else {
-            const { data: newFolder, error: folderError } = await supabase
-              .from("folders")
-              .insert({
-                name: folderName,
-                slug: generateSlug(folderName),
-                parent_id: currentFolderId,
-                sort_order: folders.length + i + idx,
-              })
-              .select("id")
-              .single();
+              if (existingFolder) {
+                folderIds.set(folderName, existingFolder.id);
+                return;
+              }
 
-            if (folderError) {
-              console.warn(`Error creating folder ${folderName}:`, folderError);
-              return;
+              // Generate unique slug to avoid DB constraint errors
+              const uniqueSlug = await generateUniqueSlug(folderName, currentFolderId);
+
+              const { data: newFolder, error: folderError } = await supabase
+                .from("folders")
+                .insert({
+                  name: folderName,
+                  slug: uniqueSlug,
+                  parent_id: currentFolderId,
+                  sort_order: folders.length + i + idx,
+                })
+                .select("id")
+                .single();
+
+              if (folderError) {
+                console.warn(`Error creating folder ${folderName}:`, folderError);
+                folderCreationErrors.push(`${folderName}: ${folderError.message}`);
+                return;
+              }
+
+              folderIds.set(folderName, newFolder.id);
+            } catch (err) {
+              const errorMsg = err instanceof Error ? err.message : "Unknown error";
+              console.warn(`Exception creating folder ${folderName}:`, err);
+              folderCreationErrors.push(`${folderName}: ${errorMsg}`);
             }
-            folderIds.set(folderName, newFolder.id);
-          }
-        }));
+          })
+        );
       }
 
-      // Prepare all upload tasks
+      // Prepare all upload tasks (skip folders that failed to create)
       const uploadTasks: { file: File; folderId: string; folderName: string; sortOrder: number }[] = [];
 
       for (const [folderName, files] of folderMap) {
-        const folderId = folderIds.get(folderName)!;
+        const folderId = folderIds.get(folderName);
+        if (!folderId) {
+          // Folder creation failed - add all its files to failures
+          files.filter(isAudioFile).forEach((file) => {
+            allFailures.push({
+              fileName: file.name,
+              folderName,
+              error: "Folder creation failed",
+            });
+          });
+          continue;
+        }
+
         const audioFiles = files.filter(isAudioFile);
         audioFiles.forEach((file, idx) => {
           uploadTasks.push({ file, folderId, folderName, sortOrder: idx });
@@ -774,33 +882,68 @@ export default function AdminMusic() {
         });
       });
 
-      // Process in batches
+      // Process in batches - collect failures from each batch
       for (let i = 0; i < uploadTasks.length; i += BATCH_SIZE) {
         const batch = uploadTasks.slice(i, i + BATCH_SIZE);
-        const batchNames = batch.map(t => t.file.name.substring(0, 20)).join(", ");
-        setUploadStatus(`Subiendo: ${batchNames}...`);
+        const batchNames = batch
+          .map((t) => t.file.name.substring(0, 20))
+          .join(", ");
+        setUploadStatus(`${t("admin.music.uploading") || "Subiendo"}: ${batchNames}...`);
 
-        const batchSuccess = await uploadBatch(batch, () => {
+        const { successCount, failures } = await uploadBatch(batch, () => {
           processedFiles++;
           setUploadProgress(Math.round((processedFiles / totalAudioFiles) * 100));
         });
 
-        successfulUploads += batchSuccess;
-        failedUploads += batch.length - batchSuccess;
+        successfulUploads += successCount;
+        allFailures.push(...failures);
       }
 
-      toast({
-        title: "Importación completa",
-        description: `${successfulUploads} archivos subidos en ${folderIds.size} carpetas${failedUploads > 0 ? `. ${failedUploads} fallaron.` : ""}`,
-      });
+      // Build final report
+      const foldersCreated = folderIds.size;
+      const failedCount = allFailures.length;
+
+      if (failedCount === 0 && folderCreationErrors.length === 0) {
+        toast({
+          title: t("admin.music.importComplete") || "Importación completa",
+          description: `${successfulUploads} ${t("admin.music.filesUploaded") || "archivos subidos"} en ${foldersCreated} ${t("admin.music.folders") || "carpetas"}`,
+        });
+      } else {
+        // Show detailed error report
+        let errorDetails = `${successfulUploads} ${t("admin.music.filesUploaded") || "archivos subidos"}.`;
+
+        if (failedCount > 0) {
+          errorDetails += ` ${failedCount} ${t("admin.music.filesFailed") || "archivos fallaron"}.`;
+          // Log first 5 failures for debugging
+          console.error("Upload failures:", allFailures.slice(0, 10));
+        }
+
+        if (folderCreationErrors.length > 0) {
+          errorDetails += ` ${folderCreationErrors.length} ${t("admin.music.foldersFailed") || "carpetas fallaron"}.`;
+          console.error("Folder creation errors:", folderCreationErrors);
+        }
+
+        toast({
+          title: t("admin.music.importWithErrors") || "Importación con errores",
+          description: errorDetails,
+          variant: failedCount > successfulUploads ? "destructive" : "default",
+        });
+
+        // If there are failures, show a more detailed report in console
+        if (failedCount > 0) {
+          console.table(allFailures.slice(0, 20));
+        }
+      }
+
       setShowBulkUpload(false);
       setBulkUploadFiles(null);
       loadContent();
     } catch (error) {
       console.error("Error in bulk upload:", error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
       toast({
-        title: "Error",
-        description: "Error durante la importación. Los archivos subidos se conservaron.",
+        title: t("admin.music.importError") || "Error",
+        description: `${t("admin.music.importErrorDescription") || "Error durante la importación"}. ${errorMessage}. ${t("admin.music.uploadedFilesPreserved") || "Los archivos subidos se conservaron"}.`,
         variant: "destructive",
       });
     } finally {
