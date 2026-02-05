@@ -6,10 +6,9 @@ const corsHeaders = {
 };
 
 // ============================================
-// STRICT INPUT VALIDATION (inline, no external Zod)
+// STRICT INPUT VALIDATION
 // ============================================
 
-// E.164 international phone format regex
 const PHONE_REGEX = /^\+?[1-9]\d{6,14}$/;
 const COUNTRY_CODE_REGEX = /^\+?[1-9]\d{0,3}$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -40,30 +39,25 @@ function validateLead(data: unknown): { valid: true; data: LeadData } | { valid:
 
   const lead = data as Record<string, unknown>;
 
-  // Validate ID (required, UUID)
   if (typeof lead.id !== 'string' || !UUID_REGEX.test(lead.id)) {
     errors.push({ field: 'id', message: 'Invalid UUID format' });
   }
 
-  // Validate name (required, 1-100 chars)
   if (typeof lead.name !== 'string' || lead.name.trim().length < 1 || lead.name.length > 100) {
     errors.push({ field: 'name', message: 'Name is required (1-100 characters)' });
   }
 
-  // Validate email (required, valid format)
   if (typeof lead.email !== 'string' || !EMAIL_REGEX.test(lead.email) || lead.email.length > 255) {
     errors.push({ field: 'email', message: 'Invalid email format' });
   }
 
-  // Validate phone (required, international format)
   const cleanPhone = typeof lead.phone === 'string' 
     ? lead.phone.replace(/[\s\-\(\)\.]/g, '') 
     : '';
   if (cleanPhone.length < 7 || cleanPhone.length > 20 || !PHONE_REGEX.test(cleanPhone)) {
-    errors.push({ field: 'phone', message: 'Invalid phone format. Expected international format (e.g., +521234567890)' });
+    errors.push({ field: 'phone', message: 'Invalid phone format' });
   }
 
-  // Validate country_code (optional)
   const countryCode = lead.country_code;
   if (countryCode !== null && countryCode !== undefined) {
     const cleanCode = typeof countryCode === 'string' ? countryCode.replace(/[\s\-]/g, '') : '';
@@ -72,21 +66,18 @@ function validateLead(data: unknown): { valid: true; data: LeadData } | { valid:
     }
   }
 
-  // Validate country_name (optional, max 100)
   if (lead.country_name !== null && lead.country_name !== undefined) {
     if (typeof lead.country_name !== 'string' || lead.country_name.length > 100) {
       errors.push({ field: 'country_name', message: 'Country name too long' });
     }
   }
 
-  // Validate source (optional, max 50)
   if (lead.source !== null && lead.source !== undefined) {
     if (typeof lead.source !== 'string' || lead.source.length > 50) {
       errors.push({ field: 'source', message: 'Source too long' });
     }
   }
 
-  // Validate tags (optional array)
   if (lead.tags !== null && lead.tags !== undefined) {
     if (!Array.isArray(lead.tags) || lead.tags.length > 20) {
       errors.push({ field: 'tags', message: 'Tags must be an array (max 20)' });
@@ -115,14 +106,8 @@ function validateLead(data: unknown): { valid: true; data: LeadData } | { valid:
 }
 
 // ============================================
-// MANYCHAT API CALL WITH TIMEOUT
+// MANYCHAT API CALL WITH TIMEOUT (sanitized logging)
 // ============================================
-
-interface ManyChatResponse {
-  status: 'success' | 'error';
-  data?: { id?: number | string; [key: string]: unknown };
-  message?: string;
-}
 
 const MANYCHAT_TIMEOUT_MS = 10000;
 
@@ -131,12 +116,13 @@ async function callManyChatAPI(
   apiKey: string,
   body: Record<string, unknown>,
   operationName: string
-): Promise<{ success: boolean; data?: ManyChatResponse; error?: string }> {
+): Promise<{ success: boolean; subscriberId?: string; error?: string }> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), MANYCHAT_TIMEOUT_MS);
 
   try {
-    console.log(`[ManyChat] Calling ${operationName}...`);
+    // Sanitized log - no sensitive data
+    console.log(`[ManyChat] Starting ${operationName}`);
     
     const response = await fetch(`https://api.manychat.com/fb/${endpoint}`, {
       method: 'POST',
@@ -151,40 +137,40 @@ async function callManyChatAPI(
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      const errorText = await response.text().catch(() => 'Unknown error');
-      console.error(`[ManyChat] HTTP ${response.status} for ${operationName}: ${errorText}`);
-      return { success: false, error: `HTTP ${response.status}: ${errorText.substring(0, 200)}` };
+      // Don't log detailed error response
+      console.error(`[ManyChat] ${operationName} failed with status ${response.status}`);
+      return { success: false, error: 'API request failed' };
     }
 
-    const data: ManyChatResponse = await response.json();
+    const data = await response.json();
     
     if (data.status === 'success') {
-      console.log(`[ManyChat] ${operationName} succeeded`);
-      return { success: true, data };
+      // Only log success status, not full response
+      console.log(`[ManyChat] ${operationName} completed successfully`);
+      return { 
+        success: true, 
+        subscriberId: data.data?.id ? String(data.data.id) : undefined 
+      };
     } else {
-      console.error(`[ManyChat] ${operationName} failed:`, data.message || 'Unknown error');
-      return { success: false, data, error: data.message || 'API returned error status' };
+      console.error(`[ManyChat] ${operationName} returned error status`);
+      return { success: false, error: 'API returned error' };
     }
 
   } catch (error) {
     clearTimeout(timeoutId);
 
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        console.error(`[ManyChat] ${operationName} timed out after ${MANYCHAT_TIMEOUT_MS}ms`);
-        return { success: false, error: `Request timed out after ${MANYCHAT_TIMEOUT_MS}ms` };
-      }
-      console.error(`[ManyChat] ${operationName} network error:`, error.message);
-      return { success: false, error: `Network error: ${error.message}` };
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.error(`[ManyChat] ${operationName} timed out`);
+      return { success: false, error: 'Request timed out' };
     }
 
-    console.error(`[ManyChat] ${operationName} unknown error:`, error);
-    return { success: false, error: 'Unknown error occurred' };
+    console.error(`[ManyChat] ${operationName} failed`);
+    return { success: false, error: 'Request failed' };
   }
 }
 
 // ============================================
-// MAIN HANDLER
+// MAIN HANDLER WITH AUTHENTICATION
 // ============================================
 
 Deno.serve(async (req) => {
@@ -192,42 +178,63 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Verify environment variables
   const MANYCHAT_API_KEY = Deno.env.get('MANYCHAT_API_KEY');
   const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+  const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-  if (!MANYCHAT_API_KEY) {
-    console.error('[FATAL] MANYCHAT_API_KEY is not configured');
+  if (!MANYCHAT_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !SUPABASE_ANON_KEY) {
+    console.error('[Config] Missing required environment variables');
     return new Response(
-      JSON.stringify({ error: 'Server configuration error', code: 'MISSING_API_KEY' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  }
-
-  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-    console.error('[FATAL] Supabase credentials not configured');
-    return new Response(
-      JSON.stringify({ error: 'Server configuration error', code: 'MISSING_SUPABASE_CREDS' }),
+      JSON.stringify({ error: 'Server configuration error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 
   try {
+    // ============================================
+    // AUTHENTICATION - Require valid JWT
+    // ============================================
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabaseAuth = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: userData, error: authError } = await supabaseAuth.auth.getUser(token);
+    
+    if (authError || !userData?.user) {
+      console.error('[Auth] Invalid token');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Log only that auth succeeded, not user details
+    console.log('[Auth] User authenticated');
+
     // Parse request body
     let body: unknown;
     try {
       body = await req.json();
     } catch {
       return new Response(
-        JSON.stringify({ error: 'Invalid JSON body', code: 'INVALID_JSON' }),
+        JSON.stringify({ error: 'Invalid request body' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     if (!body || typeof body !== 'object' || !('lead' in body)) {
       return new Response(
-        JSON.stringify({ error: 'Missing lead data', code: 'MISSING_LEAD' }),
+        JSON.stringify({ error: 'Missing lead data' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -235,37 +242,38 @@ Deno.serve(async (req) => {
     // Validate lead data
     const validation = validateLead((body as { lead: unknown }).lead);
     if (!validation.valid) {
-      console.error('[Validation] Lead data validation failed:', validation.errors);
+      console.error('[Validation] Lead data validation failed');
       return new Response(
-        JSON.stringify({ error: 'Invalid lead data', code: 'VALIDATION_ERROR', details: validation.errors }),
+        JSON.stringify({ error: 'Invalid lead data' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const lead = validation.data;
-    console.log('[Lead] Processing:', { id: lead.id, email: lead.email });
+    // Sanitized log - only ID, no PII
+    console.log('[Lead] Processing lead');
 
     // Verify lead exists in database
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     
-    const { data: dbLead, error: leadError } = await supabase
+    const { data: dbLead, error: leadError } = await supabaseAdmin
       .from('leads')
       .select('id, email')
       .eq('id', lead.id)
       .single();
 
     if (leadError || !dbLead) {
-      console.error('[Security] Lead not found:', lead.id);
+      console.error('[Security] Lead not found');
       return new Response(
-        JSON.stringify({ error: 'Lead not found', code: 'LEAD_NOT_FOUND' }),
+        JSON.stringify({ error: 'Lead not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     if (dbLead.email.toLowerCase() !== lead.email.toLowerCase()) {
-      console.error('[Security] Email mismatch for lead:', lead.id);
+      console.error('[Security] Email mismatch');
       return new Response(
-        JSON.stringify({ error: 'Lead data mismatch', code: 'DATA_MISMATCH' }),
+        JSON.stringify({ error: 'Data mismatch' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -296,19 +304,17 @@ Deno.serve(async (req) => {
         email: lead.email,
         has_opt_in_sms: true,
         has_opt_in_email: true,
-        consent_phrase: "Opted in via website exit intent popup",
+        consent_phrase: "Opted in via website",
       },
       'createSubscriber'
     );
 
-    let subscriberId: string | null = null;
-    const warnings: string[] = [];
+    let subscriberId: string | null = createResult.subscriberId || null;
 
-    if (createResult.success && createResult.data?.data?.id) {
-      subscriberId = String(createResult.data.data.id);
-      console.log('[ManyChat] Subscriber created:', subscriberId);
+    if (createResult.success && subscriberId) {
+      console.log('[ManyChat] Subscriber created');
 
-      // Set custom fields
+      // Set custom fields (don't log field values)
       const customFields = [
         { field_name: 'country', field_value: lead.country_name || 'Unknown' },
         { field_name: 'lead_source', field_value: lead.source || 'exit_intent' },
@@ -318,30 +324,26 @@ Deno.serve(async (req) => {
       ];
 
       for (const field of customFields) {
-        const result = await callManyChatAPI(
+        await callManyChatAPI(
           'subscriber/setCustomField',
           MANYCHAT_API_KEY,
           { subscriber_id: subscriberId, ...field },
-          `setCustomField:${field.field_name}`
+          'setCustomField'
         );
-        if (!result.success) warnings.push(`Field ${field.field_name}: ${result.error}`);
       }
 
       // Add tags
       const allTags = [...new Set(['exit_intent', 'demo_request', 'website_lead', ...(lead.tags || [])])];
       for (const tag of allTags) {
-        const result = await callManyChatAPI(
+        await callManyChatAPI(
           'subscriber/addTag',
           MANYCHAT_API_KEY,
           { subscriber_id: subscriberId, tag_name: tag },
-          `addTag:${tag}`
+          'addTag'
         );
-        if (!result.success) warnings.push(`Tag ${tag}: ${result.error}`);
       }
 
     } else {
-      if (createResult.error) warnings.push(`Create: ${createResult.error}`);
-
       // Try to find existing subscriber
       const findResult = await callManyChatAPI(
         'subscriber/findBySystemField',
@@ -350,14 +352,14 @@ Deno.serve(async (req) => {
         'findBySystemField'
       );
 
-      if (findResult.success && findResult.data?.data?.id) {
-        subscriberId = String(findResult.data.data.id);
-        console.log('[ManyChat] Found existing subscriber:', subscriberId);
+      if (findResult.success && findResult.subscriberId) {
+        subscriberId = findResult.subscriberId;
+        console.log('[ManyChat] Found existing subscriber');
       }
     }
 
     // Update lead in database
-    await supabase
+    await supabaseAdmin
       .from('leads')
       .update({
         manychat_synced: subscriberId !== null,
@@ -368,17 +370,15 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: subscriberId !== null,
-        manychat_subscriber_id: subscriberId,
         synced: subscriberId !== null,
-        ...(warnings.length > 0 && { warnings }),
       }),
-      { status: subscriberId ? 200 : 207, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('[FATAL] Unexpected error:', error);
+    console.error('[Error] Unexpected error occurred');
     return new Response(
-      JSON.stringify({ error: 'Internal server error', code: 'INTERNAL_ERROR' }),
+      JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
