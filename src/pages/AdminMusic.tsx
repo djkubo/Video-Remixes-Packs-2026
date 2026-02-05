@@ -396,7 +396,7 @@ export default function AdminMusic() {
     }
   };
 
-  // Handle folder drag end
+  // Handle folder drag end - optimized with single RPC call
   const handleFolderDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -407,14 +407,20 @@ export default function AdminMusic() {
     const newFolders = arrayMove(folders, oldIndex, newIndex);
     setFolders(newFolders);
 
-    // Update sort_order in database
+    // Prepare batch update array
+    const sortOrderUpdates = newFolders.map((folder, index) => ({
+      id: folder.id,
+      sort_order: index,
+    }));
+
+    // Single RPC call instead of N individual updates
     try {
-      for (let i = 0; i < newFolders.length; i++) {
-        await supabase
-          .from("folders")
-          .update({ sort_order: i })
-          .eq("id", newFolders[i].id);
-      }
+      const { error } = await supabase.rpc("update_sort_order", {
+        p_table: "folders",
+        p_items: sortOrderUpdates,
+      });
+
+      if (error) throw error;
       toast({ title: "Orden actualizado" });
     } catch (error) {
       console.error("Error updating order:", error);
@@ -422,7 +428,7 @@ export default function AdminMusic() {
     }
   };
 
-  // Handle track drag end
+  // Handle track drag end - optimized with single RPC call
   const handleTrackDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -433,14 +439,20 @@ export default function AdminMusic() {
     const newTracks = arrayMove(tracks, oldIndex, newIndex);
     setTracks(newTracks);
 
-    // Update sort_order in database
+    // Prepare batch update array
+    const sortOrderUpdates = newTracks.map((track, index) => ({
+      id: track.id,
+      sort_order: index,
+    }));
+
+    // Single RPC call instead of N individual updates
     try {
-      for (let i = 0; i < newTracks.length; i++) {
-        await supabase
-          .from("tracks")
-          .update({ sort_order: i })
-          .eq("id", newTracks[i].id);
-      }
+      const { error } = await supabase.rpc("update_sort_order", {
+        p_table: "tracks",
+        p_items: sortOrderUpdates,
+      });
+
+      if (error) throw error;
       toast({ title: "Orden actualizado" });
     } catch (error) {
       console.error("Error updating order:", error);

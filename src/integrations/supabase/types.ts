@@ -314,6 +314,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      update_sort_order: {
+        Args: { p_items: Json; p_table: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "user"
