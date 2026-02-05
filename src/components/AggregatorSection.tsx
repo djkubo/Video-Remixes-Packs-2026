@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { DollarSign, Trash2, Tag, Gift } from "lucide-react";
+import { DollarSign, Trash2, Tag, Gift, ChevronRight } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const AggregatorSection = () => {
@@ -10,21 +10,26 @@ const AggregatorSection = () => {
       icon: DollarSign,
       title: t("aggregator.feat1.title"),
       description: t("aggregator.feat1.desc"),
+      step: 1,
     },
     {
       icon: Trash2,
       title: t("aggregator.feat2.title"),
       description: t("aggregator.feat2.desc"),
+      step: 2,
     },
     {
       icon: Tag,
       title: t("aggregator.feat3.title"),
       description: t("aggregator.feat3.desc"),
+      step: 3,
     },
     {
       icon: Gift,
       title: t("aggregator.feat4.title"),
       description: t("aggregator.feat4.desc"),
+      step: 4,
+      isResult: true,
     },
   ];
 
@@ -60,8 +65,8 @@ const AggregatorSection = () => {
               </p>
             </div>
 
-            {/* Features Grid */}
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {/* Pipeline Flow - Visual storytelling */}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 relative">
               {features.map((feature, index) => (
                 <motion.div
                   key={feature.title}
@@ -69,13 +74,60 @@ const AggregatorSection = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.4, delay: index * 0.1 }}
-                  className="group flex flex-col items-center text-center p-6 rounded-2xl bg-muted/50 dark:bg-secondary/40 border border-border transition-all duration-300 hover:border-primary/30 hover:bg-muted dark:hover:bg-secondary/60 hover:shadow-md dark:hover:shadow-none"
+                  className="relative flex flex-col"
                 >
-                  <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 dark:bg-primary/15 group-hover:bg-primary/20 transition-all duration-300">
-                    <feature.icon className="h-7 w-7 text-primary" strokeWidth={1.5} />
+                  {/* Connector arrow - visible between items on desktop */}
+                  {index < features.length - 1 && (
+                    <div className="hidden lg:flex absolute -right-2 top-1/2 -translate-y-1/2 z-10 text-primary/40">
+                      <ChevronRight className="h-5 w-5" />
+                    </div>
+                  )}
+                  
+                  <div 
+                    className={`
+                      group flex flex-col items-center text-center p-6 rounded-2xl 
+                      bg-muted/50 dark:bg-secondary/40 border border-border 
+                      transition-all duration-300 hover:border-primary/30 
+                      hover:bg-muted dark:hover:bg-secondary/60 hover:shadow-md dark:hover:shadow-none
+                      h-full
+                      ${feature.isResult ? 'ring-1 ring-primary/20 dark:ring-primary/30' : ''}
+                    `}
+                  >
+                    {/* Step indicator */}
+                    <div className="absolute -top-2 left-4 bg-background dark:bg-card px-2 py-0.5 rounded text-xs font-mono text-muted-foreground">
+                      {String(feature.step).padStart(2, '0')}
+                    </div>
+                    
+                    {/* Icon with glow effect on final result */}
+                    <div 
+                      className={`
+                        mb-5 flex h-14 w-14 items-center justify-center rounded-xl 
+                        bg-primary/10 dark:bg-primary/15 group-hover:bg-primary/20 
+                        transition-all duration-300
+                        ${feature.isResult ? 'shadow-[0_0_25px_hsl(1_99%_34%/0.35)] dark:shadow-[0_0_30px_hsl(1_99%_34%/0.4)]' : ''}
+                      `}
+                    >
+                      <feature.icon 
+                        className={`h-7 w-7 text-primary ${feature.isResult ? 'drop-shadow-[0_0_8px_hsl(1_99%_34%/0.6)]' : ''}`} 
+                        strokeWidth={1.5} 
+                      />
+                    </div>
+                    
+                    <h3 className="font-display text-lg font-bold tracking-wide text-foreground">
+                      {feature.title}
+                    </h3>
+                    <p className="mt-2 font-sans text-sm text-muted-foreground leading-relaxed">
+                      {feature.description}
+                    </p>
+                    
+                    {/* Result badge */}
+                    {feature.isResult && (
+                      <div className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full">
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                        Tu Librería
+                      </div>
+                    )}
                   </div>
-                  <h3 className="font-display text-lg font-bold tracking-wide text-foreground">{feature.title}</h3>
-                  <p className="mt-2 font-sans text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
                 </motion.div>
               ))}
             </div>
