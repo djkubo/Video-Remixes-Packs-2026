@@ -197,6 +197,7 @@ export type Database = {
           id: string
           is_visible: boolean | null
           play_count: number | null
+          search_vector: unknown
           sort_order: number | null
           title: string
           updated_at: string
@@ -217,6 +218,7 @@ export type Database = {
           id?: string
           is_visible?: boolean | null
           play_count?: number | null
+          search_vector?: unknown
           sort_order?: number | null
           title: string
           updated_at?: string
@@ -237,6 +239,7 @@ export type Database = {
           id?: string
           is_visible?: boolean | null
           play_count?: number | null
+          search_vector?: unknown
           sort_order?: number | null
           title?: string
           updated_at?: string
@@ -313,6 +316,19 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      search_tracks: {
+        Args: { p_limit?: number; p_query: string }
+        Returns: {
+          artist: string
+          bpm: number
+          duration_formatted: string
+          file_url: string
+          genre: string
+          id: string
+          rank: number
+          title: string
+        }[]
       }
       update_sort_order: {
         Args: { p_items: Json; p_table: string }

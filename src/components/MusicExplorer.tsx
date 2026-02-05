@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Search, 
@@ -26,6 +26,7 @@ import { useCurrency } from "@/contexts/CurrencyContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useDataLayer } from "@/hooks/useDataLayer";
 import { useAnalytics } from "@/hooks/useAnalytics";
+import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 
 interface FolderType {
   id: string;
@@ -50,6 +51,11 @@ const MusicExplorer = () => {
   const { trackClick } = useDataLayer();
   const { trackEvent } = useAnalytics();
 
+  // Audio player hook - clean separation of audio logic
+  const { playingId, isLoading: audioLoading, toggle: togglePlay } = useAudioPlayer({
+    onError: (error) => console.error("Audio playback error:", error),
+  });
+
   const handleCTAClick = (buttonText: string) => {
     trackClick(buttonText);
     trackEvent("click", { button_text: buttonText, section: "music_explorer" });
@@ -66,10 +72,8 @@ const MusicExplorer = () => {
   const [searchResults, setSearchResults] = useState<Track[] | null>(null);
   const [searching, setSearching] = useState(false);
   
-  const [playingId, setPlayingId] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Load initial content
   useEffect(() => {
@@ -150,37 +154,58 @@ const MusicExplorer = () => {
     return () => clearTimeout(debounceTimer);
   }, [searchQuery]);
 
+  // Full Text Search using PostgreSQL FTS via RPC
   const performSearch = async () => {
     setSearching(true);
     try {
-      const { data } = await supabase
-        .from("tracks")
-        .select("id, title, artist, file_url, duration_formatted, bpm, genre")
-        .eq("is_visible", true)
-        .or(`title.ilike.%${searchQuery}%,artist.ilike.%${searchQuery}%,genre.ilike.%${searchQuery}%`)
-        .limit(50);
-      
-      setSearchResults(data || []);
+      // Use the FTS RPC function for better performance and relevance
+      const { data, error } = await supabase.rpc("search_tracks", {
+        p_query: searchQuery.trim(),
+        p_limit: 50,
+      });
+
+      if (error) {
+        // Fallback to ilike search if FTS fails (e.g., special characters)
+        console.warn("FTS search failed, falling back to ilike:", error);
+        const { data: fallbackData } = await supabase
+          .from("tracks")
+          .select("id, title, artist, file_url, duration_formatted, bpm, genre")
+          .eq("is_visible", true)
+          .or(`title.ilike.%${searchQuery}%,artist.ilike.%${searchQuery}%,genre.ilike.%${searchQuery}%`)
+          .limit(50);
+        setSearchResults(fallbackData || []);
+      } else {
+        // Map FTS results to Track interface
+        const mappedResults: Track[] = (data || []).map((item: {
+          id: string;
+          title: string;
+          artist: string;
+          file_url: string;
+          duration_formatted: string | null;
+          bpm: number | null;
+          genre: string | null;
+        }) => ({
+          id: item.id,
+          title: item.title,
+          artist: item.artist,
+          file_url: item.file_url,
+          duration_formatted: item.duration_formatted,
+          bpm: item.bpm,
+          genre: item.genre,
+        }));
+        setSearchResults(mappedResults);
+      }
     } catch (error) {
       console.error("Search error:", error);
+      setSearchResults([]);
     } finally {
       setSearching(false);
     }
   };
 
+  // Using the audio player hook for clean play/pause handling
   const handlePlay = (track: Track) => {
-    if (playingId === track.id) {
-      audioRef.current?.pause();
-      setPlayingId(null);
-    } else {
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
-      audioRef.current = new Audio(track.file_url);
-      audioRef.current.play().catch(console.error);
-      audioRef.current.onended = () => setPlayingId(null);
-      setPlayingId(track.id);
-    }
+    togglePlay(track);
   };
 
   const handleDownloadClick = (track: Track) => {
