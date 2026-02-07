@@ -75,12 +75,6 @@ const MusicExplorer = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
 
-  // Load initial content
-  useEffect(() => {
-    loadContent();
-    loadTotalCount();
-  }, [loadContent, loadTotalCount]);
-
   const loadContent = useCallback(async () => {
     setLoading(true);
     try {
@@ -141,19 +135,6 @@ const MusicExplorer = () => {
     setTotalTracks(count || 0);
   }, []);
 
-  // Search functionality
-  useEffect(() => {
-    const debounceTimer = setTimeout(() => {
-      if (searchQuery.trim().length >= 2) {
-        performSearch();
-      } else {
-        setSearchResults(null);
-      }
-    }, 300);
-
-    return () => clearTimeout(debounceTimer);
-  }, [searchQuery, performSearch]);
-
   // Full Text Search using PostgreSQL FTS via RPC
   const performSearch = useCallback(async () => {
     const query = searchQuery.trim();
@@ -203,6 +184,25 @@ const MusicExplorer = () => {
       setSearching(false);
     }
   }, [searchQuery]);
+
+  // Load initial content
+  useEffect(() => {
+    loadContent();
+    loadTotalCount();
+  }, [loadContent, loadTotalCount]);
+
+  // Search functionality
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      if (searchQuery.trim().length >= 2) {
+        performSearch();
+      } else {
+        setSearchResults(null);
+      }
+    }, 300);
+
+    return () => clearTimeout(debounceTimer);
+  }, [searchQuery, performSearch]);
 
   // Using the audio player hook for clean play/pause handling
   const handlePlay = (track: Track) => {

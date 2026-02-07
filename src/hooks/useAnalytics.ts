@@ -2,6 +2,44 @@ import { useEffect, useRef, useCallback } from "react";
 import { supabase, supabaseAnonKey, supabaseUrl } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 
+type AnalyticsErrorLike = {
+  code?: string;
+  message?: string;
+  details?: string;
+  hint?: string;
+  status?: number;
+};
+
+const ANALYTICS_DISABLED_STORAGE_KEY = "vrp_analytics_disabled";
+
+function shouldDisableAnalyticsForError(error: unknown): boolean {
+  const err = (error || {}) as AnalyticsErrorLike;
+  const code = typeof err.code === "string" ? err.code : "";
+  const message = typeof err.message === "string" ? err.message.toLowerCase() : "";
+  const details = typeof err.details === "string" ? err.details.toLowerCase() : "";
+  const combined = `${message} ${details}`.trim();
+
+  // Common errors when the DB doesn't have the expected grants / RLS policy.
+  if (code === "42501") return true; // insufficient_privilege
+  if (combined.includes("row-level security")) return true;
+  if (combined.includes("permission denied")) return true;
+  if (combined.includes("insufficient_privilege")) return true;
+
+  // Misconfiguration; retrying won't help.
+  if (combined.includes("invalid api key")) return true;
+  if (combined.includes("jwt") && (combined.includes("expired") || combined.includes("invalid"))) return true;
+
+  return false;
+}
+
+function getInitialAnalyticsDisabled(): boolean {
+  try {
+    return sessionStorage.getItem(ANALYTICS_DISABLED_STORAGE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
 // UTM parameter interface
 interface UTMParams {
   utm_source: string | null;
@@ -164,6 +202,7 @@ const MAX_QUEUE_SIZE = 500;
 const KEEPALIVE_FLUSH_LIMIT = 25;
 
 export const useAnalytics = () => {
+  const isDisabled = useRef<boolean>(getInitialAnalyticsDisabled());
   const visitorId = useRef<string>("");
   const sessionId = useRef<string>("");
   const countryCode = useRef<string>("");
@@ -176,12 +215,31 @@ export const useAnalytics = () => {
   });
   const eventQueue = useRef<AnalyticsEvent[]>([]);
   const isProcessing = useRef(false);
+  const consecutiveFailures = useRef(0);
+  const nextAttemptAtMs = useRef(0);
+  const retryDelayMs = useRef(2000);
+  const hasLoggedError = useRef(false);
 
   useEffect(() => {
     visitorId.current = getVisitorId();
     sessionId.current = getSessionId();
     countryCode.current = detectCountryFromTimezone();
     utmParams.current = getUTMParams();
+  }, []);
+
+  const disableAnalytics = useCallback((reason: string) => {
+    isDisabled.current = true;
+    eventQueue.current = [];
+
+    try {
+      sessionStorage.setItem(ANALYTICS_DISABLED_STORAGE_KEY, "1");
+    } catch {
+      // ignore
+    }
+
+    if (import.meta.env.DEV) {
+      console.warn("Analytics disabled:", reason);
+    }
   }, []);
 
   const buildRecord = useCallback((event: AnalyticsEvent) => {
@@ -203,7 +261,9 @@ export const useAnalytics = () => {
   }, []);
 
   const processQueue = useCallback(async () => {
+    if (isDisabled.current) return;
     if (isProcessing.current || eventQueue.current.length === 0) return;
+    if (Date.now() < nextAttemptAtMs.current) return;
     
     isProcessing.current = true;
     const events = [...eventQueue.current];
@@ -215,18 +275,66 @@ export const useAnalytics = () => {
       const { error } = await supabase.from("analytics_events").insert(records);
       
       if (error) {
-        console.error("Analytics error:", error);
-        // Re-queue failed events
+        if (shouldDisableAnalyticsForError(error)) {
+          disableAnalytics("insert_forbidden");
+          return;
+        }
+
+        consecutiveFailures.current += 1;
+        if (consecutiveFailures.current >= 3) {
+          disableAnalytics("insert_failed_repeatedly");
+          return;
+        }
+
+        // Re-queue failed events and back off to avoid spamming requests/logs.
         eventQueue.current = [...events, ...eventQueue.current];
+
+        const delay = retryDelayMs.current;
+        nextAttemptAtMs.current = Date.now() + delay;
+        retryDelayMs.current = Math.min(delay * 2, 60_000);
+
+        if (import.meta.env.DEV && !hasLoggedError.current) {
+          hasLoggedError.current = true;
+          console.warn("Analytics insert failed; will retry with backoff.", error);
+        }
+        return;
       }
+
+      // Success: reset retry state.
+      consecutiveFailures.current = 0;
+      nextAttemptAtMs.current = 0;
+      retryDelayMs.current = 2000;
+      hasLoggedError.current = false;
     } catch (err) {
-      console.error("Analytics error:", err);
+      if (shouldDisableAnalyticsForError(err)) {
+        disableAnalytics("insert_throw_forbidden");
+        return;
+      }
+
+      consecutiveFailures.current += 1;
+      if (consecutiveFailures.current >= 3) {
+        disableAnalytics("insert_throw_failed_repeatedly");
+        return;
+      }
+
+      // Re-queue and back off.
+      eventQueue.current = [...events, ...eventQueue.current];
+
+      const delay = retryDelayMs.current;
+      nextAttemptAtMs.current = Date.now() + delay;
+      retryDelayMs.current = Math.min(delay * 2, 60_000);
+
+      if (import.meta.env.DEV && !hasLoggedError.current) {
+        hasLoggedError.current = true;
+        console.warn("Analytics insert threw; will retry with backoff.", err);
+      }
     } finally {
       isProcessing.current = false;
     }
-  }, [buildRecord]);
+  }, [buildRecord, disableAnalytics]);
 
   const flushQueueWithKeepalive = useCallback((events: AnalyticsEvent[]) => {
+    if (isDisabled.current) return;
     if (events.length === 0) return;
 
     const url = `${supabaseUrl}/rest/v1/analytics_events`;
@@ -252,6 +360,7 @@ export const useAnalytics = () => {
 
   // Process queue every 2 seconds (batch inserts for performance)
   useEffect(() => {
+    if (isDisabled.current) return;
     const interval = setInterval(processQueue, 2000);
     
     // Best-effort flush when the document is being hidden (close, nav, tab switch).
@@ -279,6 +388,7 @@ export const useAnalytics = () => {
   }, [processQueue, flushQueueWithKeepalive]);
 
   const trackEvent = useCallback((eventName: string, eventData?: Record<string, unknown>) => {
+    if (isDisabled.current) return;
     eventQueue.current.push({
       event_name: eventName,
       event_data: (eventData || {}) as Json,

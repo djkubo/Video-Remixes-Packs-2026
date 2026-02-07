@@ -344,12 +344,6 @@ export default function AdminMusic() {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  // Load folders and tracks
-  useEffect(() => {
-    if (!user) return;
-    loadContent();
-  }, [user, loadContent]);
-
   const loadContent = useCallback(async () => {
     try {
       // Load subfolders
@@ -402,6 +396,12 @@ export default function AdminMusic() {
       });
     }
   }, [currentFolderId, toast]);
+
+  // Load folders and tracks
+  useEffect(() => {
+    if (!user) return;
+    loadContent();
+  }, [user, loadContent]);
 
   // Handle folder drag end - optimized with single RPC call
   const handleFolderDragEnd = async (event: DragEndEvent) => {
