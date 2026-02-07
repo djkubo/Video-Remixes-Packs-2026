@@ -170,7 +170,7 @@ async function callManyChatAPI(
 }
 
 // ============================================
-// MAIN HANDLER WITH AUTHENTICATION
+// MAIN HANDLER (PUBLIC)
 // ============================================
 
 Deno.serve(async (req) => {
@@ -178,12 +178,18 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  if (req.method !== 'POST') {
+    return new Response(
+      JSON.stringify({ error: 'Method not allowed' }),
+      { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
   const MANYCHAT_API_KEY = Deno.env.get('MANYCHAT_API_KEY');
   const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
-  const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-  if (!MANYCHAT_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !SUPABASE_ANON_KEY) {
+  if (!MANYCHAT_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     console.error('[Config] Missing required environment variables');
     return new Response(
       JSON.stringify({ error: 'Server configuration error' }),
@@ -192,35 +198,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // ============================================
-    // AUTHENTICATION - Require valid JWT
-    // ============================================
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const supabaseAuth = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: { headers: { Authorization: authHeader } }
-    });
-
-    const token = authHeader.replace('Bearer ', '');
-    const { data: userData, error: authError } = await supabaseAuth.auth.getUser(token);
-    
-    if (authError || !userData?.user) {
-      console.error('[Auth] Invalid token');
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Log only that auth succeeded, not user details
-    console.log('[Auth] User authenticated');
-
     // Parse request body
     let body: unknown;
     try {
@@ -258,7 +235,7 @@ Deno.serve(async (req) => {
     
     const { data: dbLead, error: leadError } = await supabaseAdmin
       .from('leads')
-      .select('id, email')
+      .select('id, email, manychat_synced, manychat_subscriber_id')
       .eq('id', lead.id)
       .single();
 
@@ -275,6 +252,14 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({ error: 'Data mismatch' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Idempotency: if already synced, don't call ManyChat again.
+    if (dbLead.manychat_synced && dbLead.manychat_subscriber_id) {
+      return new Response(
+        JSON.stringify({ success: true, synced: true }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 

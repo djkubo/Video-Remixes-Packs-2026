@@ -160,6 +160,9 @@ interface AnalyticsEvent {
   page_path?: string;
 }
 
+const MAX_QUEUE_SIZE = 500;
+const KEEPALIVE_FLUSH_LIMIT = 25;
+
 export const useAnalytics = () => {
   const visitorId = useRef<string>("");
   const sessionId = useRef<string>("");
@@ -181,6 +184,24 @@ export const useAnalytics = () => {
     utmParams.current = getUTMParams();
   }, []);
 
+  const buildRecord = useCallback((event: AnalyticsEvent) => {
+    return {
+      event_name: event.event_name,
+      event_data: (event.event_data || {}) as Json,
+      page_path: event.page_path || window.location.pathname,
+      session_id: sessionId.current,
+      visitor_id: visitorId.current,
+      user_agent: navigator.userAgent,
+      referrer: document.referrer || null,
+      country_code: countryCode.current,
+      utm_source: utmParams.current.utm_source,
+      utm_medium: utmParams.current.utm_medium,
+      utm_campaign: utmParams.current.utm_campaign,
+      utm_term: utmParams.current.utm_term,
+      utm_content: utmParams.current.utm_content,
+    };
+  }, []);
+
   const processQueue = useCallback(async () => {
     if (isProcessing.current || eventQueue.current.length === 0) return;
     
@@ -189,21 +210,7 @@ export const useAnalytics = () => {
     eventQueue.current = [];
 
     try {
-      const records = events.map((event) => ({
-        event_name: event.event_name,
-        event_data: (event.event_data || {}) as Json,
-        page_path: event.page_path || window.location.pathname,
-        session_id: sessionId.current,
-        visitor_id: visitorId.current,
-        user_agent: navigator.userAgent,
-        referrer: document.referrer || null,
-        country_code: countryCode.current,
-        utm_source: utmParams.current.utm_source,
-        utm_medium: utmParams.current.utm_medium,
-        utm_campaign: utmParams.current.utm_campaign,
-        utm_term: utmParams.current.utm_term,
-        utm_content: utmParams.current.utm_content,
-      }));
+      const records = events.map(buildRecord);
 
       const { error } = await supabase.from("analytics_events").insert(records);
       
@@ -217,47 +224,59 @@ export const useAnalytics = () => {
     } finally {
       isProcessing.current = false;
     }
-  }, []);
+  }, [buildRecord]);
+
+  const flushQueueWithKeepalive = useCallback((events: AnalyticsEvent[]) => {
+    if (events.length === 0) return;
+
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/analytics_events`;
+    const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    const records = events.slice(0, KEEPALIVE_FLUSH_LIMIT).map(buildRecord);
+
+    try {
+      void fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: anonKey,
+          Authorization: `Bearer ${anonKey}`,
+          Prefer: "return=minimal",
+        },
+        body: JSON.stringify(records),
+        keepalive: true,
+      });
+    } catch {
+      // Best effort on navigation; ignore.
+    }
+  }, [buildRecord]);
 
   // Process queue every 2 seconds (batch inserts for performance)
   useEffect(() => {
     const interval = setInterval(processQueue, 2000);
     
-    // Process remaining events before page unload
-    const handleUnload = () => {
-      if (eventQueue.current.length > 0) {
-        // Use sendBeacon for reliability on page exit
-        const events = eventQueue.current.map((event) => ({
-          event_name: event.event_name,
-          event_data: event.event_data || {},
-          page_path: event.page_path || window.location.pathname,
-          session_id: sessionId.current,
-          visitor_id: visitorId.current,
-          user_agent: navigator.userAgent,
-          referrer: document.referrer || null,
-          country_code: countryCode.current,
-          utm_source: utmParams.current.utm_source,
-          utm_medium: utmParams.current.utm_medium,
-          utm_campaign: utmParams.current.utm_campaign,
-          utm_term: utmParams.current.utm_term,
-          utm_content: utmParams.current.utm_content,
-        }));
-        
-        // Fallback: try to send synchronously
-        navigator.sendBeacon?.(
-          `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/analytics_events`,
-          JSON.stringify(events)
-        );
+    // Best-effort flush when the document is being hidden (close, nav, tab switch).
+    const flushPending = () => {
+      if (eventQueue.current.length === 0) return;
+      const pending = [...eventQueue.current];
+      eventQueue.current = [];
+      flushQueueWithKeepalive(pending);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        flushPending();
       }
     };
 
-    window.addEventListener("beforeunload", handleUnload);
+    window.addEventListener("pagehide", flushPending);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     
     return () => {
       clearInterval(interval);
-      window.removeEventListener("beforeunload", handleUnload);
+      window.removeEventListener("pagehide", flushPending);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [processQueue]);
+  }, [processQueue, flushQueueWithKeepalive]);
 
   const trackEvent = useCallback((eventName: string, eventData?: Record<string, unknown>) => {
     eventQueue.current.push({
@@ -265,6 +284,11 @@ export const useAnalytics = () => {
       event_data: (eventData || {}) as Json,
       page_path: window.location.pathname,
     });
+
+    const overflow = eventQueue.current.length - MAX_QUEUE_SIZE;
+    if (overflow > 0) {
+      eventQueue.current.splice(0, overflow);
+    }
   }, []);
 
   const trackPageView = useCallback(() => {

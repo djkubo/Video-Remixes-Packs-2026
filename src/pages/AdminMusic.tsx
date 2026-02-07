@@ -512,19 +512,21 @@ export default function AdminMusic() {
   };
 
   const createFolder = async () => {
-    if (!newFolderName.trim()) return;
+    const folderName = newFolderName.trim();
+    if (!folderName) return;
 
     try {
+      const slug = await generateUniqueSlug(folderName, currentFolderId);
       const { error } = await supabase.from("folders").insert({
-        name: newFolderName.trim(),
-        slug: generateSlug(newFolderName),
+        name: folderName,
+        slug,
         parent_id: currentFolderId,
         sort_order: folders.length,
       });
 
       if (error) throw error;
 
-      toast({ title: "Carpeta creada", description: newFolderName });
+      toast({ title: "Carpeta creada", description: folderName });
       setNewFolderName("");
       setShowNewFolder(false);
       loadContent();

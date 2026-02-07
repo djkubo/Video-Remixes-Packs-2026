@@ -221,7 +221,21 @@ export default function AdminDashboard() {
       lead.manychat_synced ? t("admin.dashboard.yes") : t("admin.dashboard.no"),
     ]);
 
-    const csv = [headers, ...rows].map(row => row.join(",")).join("\n");
+    const sanitizeForSpreadsheet = (value: string): string => {
+      // Prevent Excel/Sheets formula injection.
+      return /^[=+\-@]/.test(value) ? `'${value}` : value;
+    };
+
+    const toCsvCell = (value: unknown): string => {
+      const str = sanitizeForSpreadsheet(String(value ?? ""));
+      const escaped = str.replace(/"/g, '""');
+      const needsQuotes = /[",\n\r]/.test(escaped);
+      return needsQuotes ? `"${escaped}"` : escaped;
+    };
+
+    const csv = [headers, ...rows]
+      .map((row) => row.map(toCsvCell).join(","))
+      .join("\r\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
