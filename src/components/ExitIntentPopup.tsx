@@ -143,10 +143,10 @@ export default function ExitIntentPopup() {
     trackEvent("popup", { action: "closed", trigger: "manual_close" });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.name.trim() || !formData.email.trim() || !formData.phone.trim()) {
+	  const handleSubmit = async (e: React.FormEvent) => {
+	    e.preventDefault();
+	    
+	    if (!formData.name.trim() || !formData.email.trim() || !formData.phone.trim()) {
       toast({
         title: language === "es" ? "Campos requeridos" : "Required fields",
         description: language === "es" 
@@ -158,8 +158,8 @@ export default function ExitIntentPopup() {
     }
 
     // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
+	    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+	    if (!emailRegex.test(formData.email)) {
       toast({
         title: language === "es" ? "Email inválido" : "Invalid email",
         description: language === "es" 
@@ -167,13 +167,28 @@ export default function ExitIntentPopup() {
           : "Please enter a valid email",
         variant: "destructive",
       });
-      return;
-    }
+	      return;
+	    }
 
-    setIsSubmitting(true);
+	    // Basic phone validation (digits, reasonable length, not all zeros)
+	    const cleanPhoneInput = formData.phone.trim().replace(/[\s().-]/g, "");
+	    const phoneDigits = cleanPhoneInput.startsWith("+") ? cleanPhoneInput.slice(1) : cleanPhoneInput;
+	    if (!/^\d{7,20}$/.test(phoneDigits) || !/[1-9]/.test(phoneDigits)) {
+	      toast({
+	        title: language === "es" ? "WhatsApp inválido" : "Invalid WhatsApp",
+	        description:
+	          language === "es"
+	            ? "Ingresa un número válido (solo dígitos)."
+	            : "Enter a valid number (digits only).",
+	        variant: "destructive",
+	      });
+	      return;
+	    }
 
-    try {
-      const cleanPhone = formData.phone.trim().replace(/[\s().-]/g, "");
+	    setIsSubmitting(true);
+
+	    try {
+	      const cleanPhone = cleanPhoneInput;
 
       // Insert lead into database
       const { data: lead, error: insertError } = await supabase
@@ -260,11 +275,11 @@ export default function ExitIntentPopup() {
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-accent to-primary" />
               
               {/* Close button */}
-              <button
-                onClick={handleClose}
-                className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted transition-colors"
-                aria-label="Close"
-              >
+	              <button
+	                onClick={handleClose}
+	                className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted transition-colors"
+	                aria-label={language === "es" ? "Cerrar" : "Close"}
+	              >
                 <X className="w-5 h-5 text-muted-foreground" />
               </button>
 
@@ -300,14 +315,17 @@ export default function ExitIntentPopup() {
                     <Label htmlFor="name" className="text-sm font-medium">
                       {language === "es" ? "Tu nombre" : "Your name"}
                     </Label>
-                    <Input
-                      id="name"
-                      type="text"
-                      placeholder={language === "es" ? "DJ Carlos" : "DJ Carlos"}
-                      value={formData.name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                      className="mt-1"
-                      disabled={isSubmitting}
+	                    <Input
+	                      id="name"
+	                      type="text"
+	                      name="name"
+	                      autoComplete="name"
+	                      required
+	                      placeholder={language === "es" ? "DJ Carlos" : "DJ Carlos"}
+	                      value={formData.name}
+	                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+	                      className="mt-1"
+	                      disabled={isSubmitting}
                     />
                   </div>
 
@@ -315,14 +333,17 @@ export default function ExitIntentPopup() {
                     <Label htmlFor="email" className="text-sm font-medium">
                       {language === "es" ? "Tu email" : "Your email"}
                     </Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="dj@ejemplo.com"
-                      value={formData.email}
-                      onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                      className="mt-1"
-                      disabled={isSubmitting}
+	                    <Input
+	                      id="email"
+	                      type="email"
+	                      name="email"
+	                      autoComplete="email"
+	                      required
+	                      placeholder={language === "es" ? "dj@ejemplo.com" : "dj@example.com"}
+	                      value={formData.email}
+	                      onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+	                      className="mt-1"
+	                      disabled={isSubmitting}
                     />
                   </div>
 
@@ -334,22 +355,26 @@ export default function ExitIntentPopup() {
                       <div className="flex items-center px-3 bg-muted border border-r-0 border-input rounded-l-md text-sm text-muted-foreground">
                         {countryData.dial_code}
                       </div>
-                      <Input
-                        id="phone"
-                        type="tel"
-                        placeholder="55 1234 5678"
-                        value={formData.phone}
-                        onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                        className="rounded-l-none"
-                        disabled={isSubmitting}
-                      />
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {language === "es" 
-                        ? `Detectamos que estás en ${countryData.country_name}` 
-                        : `We detected you're in ${countryData.country_name}`}
-                    </p>
-                  </div>
+	                      <Input
+	                        id="phone"
+	                        type="tel"
+	                        name="phone"
+	                        autoComplete="tel"
+	                        inputMode="tel"
+	                        required
+	                        placeholder={language === "es" ? "55 1234 5678" : "(555) 123-4567"}
+	                        value={formData.phone}
+	                        onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+	                        className="rounded-l-none"
+	                        disabled={isSubmitting}
+	                      />
+	                    </div>
+	                    <p className="text-xs text-muted-foreground mt-1">
+	                      {language === "es" 
+	                        ? `Solo números, sin el código de país. Detectamos que estás en ${countryData.country_name}` 
+	                        : `Digits only, without country code. We detected you're in ${countryData.country_name}`}
+	                    </p>
+	                  </div>
 
                   <Button 
                     type="submit" 

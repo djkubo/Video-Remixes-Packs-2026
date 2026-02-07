@@ -7,8 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function AdminLogin() {
+  const { language } = useLanguage();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -41,13 +43,43 @@ export default function AdminLogin() {
     checkExistingAuth();
   }, [navigate]);
 
+  const getAuthErrorMessage = (err: unknown): string => {
+    const msg =
+      err && typeof err === "object" && "message" in err
+        ? String((err as { message?: unknown }).message ?? "")
+        : "";
+    const lower = msg.toLowerCase();
+
+    if (lower.includes("invalid login credentials")) {
+      return language === "es"
+        ? "Email o contraseña incorrectos"
+        : "Incorrect email or password";
+    }
+
+    if (lower.includes("email not confirmed")) {
+      return language === "es"
+        ? "Confirma tu email antes de ingresar"
+        : "Please confirm your email before signing in";
+    }
+
+    if (lower.includes("too many requests")) {
+      return language === "es"
+        ? "Demasiados intentos. Intenta de nuevo en unos minutos."
+        : "Too many attempts. Please try again in a few minutes.";
+    }
+
+    return language === "es"
+      ? "No se pudo iniciar sesión. Verifica tus datos e intenta de nuevo."
+      : "Unable to sign in. Check your details and try again.";
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!email || !password) {
       toast({
-        title: "Error",
-        description: "Por favor ingresa email y contraseña",
+        title: language === "es" ? "Error" : "Error",
+        description: language === "es" ? "Ingresa email y contraseña" : "Enter email and password",
         variant: "destructive",
       });
       return;
@@ -55,8 +87,11 @@ export default function AdminLogin() {
 
     if (password.length < 6) {
       toast({
-        title: "Error",
-        description: "La contraseña debe tener al menos 6 caracteres",
+        title: language === "es" ? "Error" : "Error",
+        description:
+          language === "es"
+            ? "La contraseña debe tener al menos 6 caracteres"
+            : "Password must be at least 6 characters",
         variant: "destructive",
       });
       return;
@@ -66,7 +101,7 @@ export default function AdminLogin() {
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim().toLowerCase(),
         password,
       });
 
@@ -88,22 +123,24 @@ export default function AdminLogin() {
         // Sign out if not admin
         await supabase.auth.signOut();
         toast({
-          title: "Acceso Denegado",
-          description: "No tienes permisos de administrador",
+          title: language === "es" ? "Acceso denegado" : "Access denied",
+          description: language === "es" ? "No tienes permisos de administrador" : "You don't have admin access",
           variant: "destructive",
         });
         return;
       }
 
-      toast({ title: "Bienvenido", description: "Sesión iniciada correctamente" });
+      toast({
+        title: language === "es" ? "Bienvenido" : "Welcome",
+        description: language === "es" ? "Sesión iniciada correctamente" : "Signed in successfully",
+      });
       navigate("/admin/music");
       
     } catch (error: unknown) {
       console.error("Auth error:", error);
-      const message = error instanceof Error ? error.message : "Error de autenticación";
       toast({
-        title: "Error",
-        description: message,
+        title: language === "es" ? "Error" : "Error",
+        description: getAuthErrorMessage(error),
         variant: "destructive",
       });
     } finally {
@@ -132,9 +169,13 @@ export default function AdminLogin() {
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
               <Music className="w-8 h-8 text-primary" />
             </div>
-            <h1 className="text-2xl font-bold">Admin Panel</h1>
+            <h1 className="text-2xl font-bold">
+              {language === "es" ? "Panel de Admin" : "Admin Panel"}
+            </h1>
             <p className="text-muted-foreground">
-              Acceso restringido a administradores
+              {language === "es"
+                ? "Acceso restringido a administradores"
+                : "Restricted admin access"}
             </p>
           </div>
 
@@ -142,7 +183,9 @@ export default function AdminLogin() {
           <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border border-border mb-6">
             <ShieldAlert className="w-5 h-5 text-primary flex-shrink-0" />
             <p className="text-xs text-muted-foreground">
-              Solo usuarios autorizados pueden acceder
+              {language === "es"
+                ? "Solo usuarios autorizados pueden acceder"
+                : "Only authorized users can access"}
             </p>
           </div>
 
@@ -153,6 +196,9 @@ export default function AdminLogin() {
               <Input
                 id="email"
                 type="email"
+                name="email"
+                autoComplete="email"
+                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@ejemplo.com"
@@ -162,10 +208,15 @@ export default function AdminLogin() {
             </div>
 
             <div>
-              <Label htmlFor="password">Contraseña</Label>
+              <Label htmlFor="password">
+                {language === "es" ? "Contraseña" : "Password"}
+              </Label>
               <Input
                 id="password"
                 type="password"
+                name="password"
+                autoComplete="current-password"
+                required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
@@ -178,12 +229,12 @@ export default function AdminLogin() {
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Verificando...
+                  {language === "es" ? "Verificando..." : "Checking..."}
                 </>
               ) : (
                 <>
                   <Lock className="w-4 h-4 mr-2" />
-                  Ingresar
+                  {language === "es" ? "Ingresar" : "Sign in"}
                 </>
               )}
             </Button>

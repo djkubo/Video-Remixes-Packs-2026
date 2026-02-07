@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import { es, enUS } from "date-fns/locale";
@@ -94,11 +94,25 @@ export default function AdminDashboard() {
   const [dateRange, setDateRange] = useState("7");
   const [activeTab, setActiveTab] = useState<"overview" | "sources" | "leads" | "events">("overview");
 
-  const startDate = startOfDay(subDays(new Date(), parseInt(dateRange)));
-  const endDate = endOfDay(new Date());
+  const { startDate, endDate } = useMemo(() => {
+    const days = Math.max(1, Number.parseInt(dateRange, 10) || 7);
+    // "Last N days" should include today, so subtract N - 1.
+    const start = startOfDay(subDays(new Date(), Math.max(0, days - 1)));
+    const end = endOfDay(new Date());
+    return { startDate: start, endDate: end };
+  }, [dateRange]);
+
+  const fmtInt = (value: number | null | undefined): string => {
+    return typeof value === "number" ? value.toLocaleString() : "—";
+  };
 
   // Fetch leads
-  const { data: leads, isLoading: leadsLoading, refetch: refetchLeads } = useQuery({
+  const {
+    data: leads,
+    isLoading: leadsLoading,
+    isFetching: leadsFetching,
+    refetch: refetchLeads,
+  } = useQuery({
     queryKey: ["admin-leads", dateRange],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -114,7 +128,12 @@ export default function AdminDashboard() {
   });
 
   // Fetch analytics summary via RPC (optimized - no raw data download)
-  const { data: analytics, isLoading: analyticsLoading, refetch: refetchAnalytics } = useQuery({
+  const {
+    data: analytics,
+    isLoading: analyticsLoading,
+    isFetching: analyticsFetching,
+    refetch: refetchAnalytics,
+  } = useQuery({
     queryKey: ["admin-analytics-rpc", dateRange],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_analytics_summary", {
@@ -147,7 +166,7 @@ export default function AdminDashboard() {
   });
 
   // Fetch daily trends via RPC (optimized)
-  const { data: dailyTrends } = useQuery({
+  const { data: dailyTrends, isFetching: trendsFetching, refetch: refetchTrends } = useQuery({
     queryKey: ["admin-trends-rpc", dateRange],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_daily_trends", {
@@ -161,7 +180,7 @@ export default function AdminDashboard() {
   });
 
   // Fetch event breakdown via RPC (optimized)
-  const { data: eventBreakdown } = useQuery({
+  const { data: eventBreakdown, isFetching: eventsFetching, refetch: refetchEvents } = useQuery({
     queryKey: ["admin-events-rpc", dateRange],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_event_breakdown", {
@@ -175,7 +194,7 @@ export default function AdminDashboard() {
   });
 
   // Fetch country breakdown via RPC (optimized)
-  const { data: countryBreakdown } = useQuery({
+  const { data: countryBreakdown, isFetching: countriesFetching, refetch: refetchCountries } = useQuery({
     queryKey: ["admin-countries-rpc", dateRange],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_country_breakdown", {
@@ -189,7 +208,7 @@ export default function AdminDashboard() {
   });
 
   // Fetch traffic sources breakdown via RPC (optimized)
-  const { data: sourceBreakdown } = useQuery({
+  const { data: sourceBreakdown, isFetching: sourcesFetching, refetch: refetchSources } = useQuery({
     queryKey: ["admin-sources-rpc", dateRange],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_source_breakdown", {
@@ -202,9 +221,25 @@ export default function AdminDashboard() {
     },
   });
 
+  const isRefreshing =
+    leadsFetching ||
+    analyticsFetching ||
+    trendsFetching ||
+    eventsFetching ||
+    countriesFetching ||
+    sourcesFetching;
+
+  const dailyTrendsData = dailyTrends ?? [];
+  const eventBreakdownData = eventBreakdown ?? [];
+  const countryBreakdownData = countryBreakdown ?? [];
+
   const handleRefresh = () => {
     refetchLeads();
     refetchAnalytics();
+    refetchTrends();
+    refetchEvents();
+    refetchCountries();
+    refetchSources();
   };
 
   const exportLeadsCSV = () => {
@@ -268,7 +303,7 @@ export default function AdminDashboard() {
           </Select>
           
           <Button variant="outline" size="icon" onClick={handleRefresh}>
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
           </Button>
         </div>
       </div>
@@ -309,7 +344,7 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {analyticsLoading ? "..." : analytics?.total_visitors.toLocaleString()}
+                  {analyticsLoading ? "..." : fmtInt(analytics?.total_visitors)}
                 </div>
               </CardContent>
             </Card>
@@ -323,7 +358,7 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {analyticsLoading ? "..." : analytics?.total_page_views.toLocaleString()}
+                  {analyticsLoading ? "..." : fmtInt(analytics?.total_page_views)}
                 </div>
               </CardContent>
             </Card>
@@ -337,7 +372,7 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {analyticsLoading ? "..." : analytics?.total_clicks.toLocaleString()}
+                  {analyticsLoading ? "..." : fmtInt(analytics?.total_clicks)}
                 </div>
               </CardContent>
             </Card>
@@ -351,7 +386,7 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-green-500">
-                  {analyticsLoading ? "..." : `${analytics?.conversion_rate.toFixed(2)}%`}
+                  {analyticsLoading ? "..." : `${(analytics?.conversion_rate ?? 0).toFixed(2)}%`}
                 </div>
               </CardContent>
             </Card>
@@ -367,7 +402,7 @@ export default function AdminDashboard() {
               <CardContent>
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={dailyTrends}>
+                    <LineChart data={dailyTrendsData}>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                       <XAxis dataKey="date" className="text-xs" />
                       <YAxis className="text-xs" />
@@ -402,7 +437,7 @@ export default function AdminDashboard() {
               <CardContent>
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={eventBreakdown} layout="vertical">
+                    <BarChart data={eventBreakdownData} layout="vertical">
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                       <XAxis type="number" className="text-xs" />
                       <YAxis dataKey="name" type="category" className="text-xs" width={100} />
@@ -424,7 +459,7 @@ export default function AdminDashboard() {
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
-                        data={countryBreakdown}
+                        data={countryBreakdownData}
                         cx="50%"
                         cy="50%"
                         labelLine={false}
@@ -433,7 +468,7 @@ export default function AdminDashboard() {
                         fill="#8884d8"
                         dataKey="value"
                       >
-                        {countryBreakdown?.map((_, index) => (
+                        {countryBreakdownData.map((_, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
