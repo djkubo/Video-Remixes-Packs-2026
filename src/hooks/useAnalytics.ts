@@ -17,7 +17,11 @@ function shouldDisableAnalyticsForError(error: unknown): boolean {
   const code = typeof err.code === "string" ? err.code : "";
   const message = typeof err.message === "string" ? err.message.toLowerCase() : "";
   const details = typeof err.details === "string" ? err.details.toLowerCase() : "";
+  const status = typeof err.status === "number" ? err.status : 0;
   const combined = `${message} ${details}`.trim();
+
+  // Explicit HTTP auth failures.
+  if (status === 401 || status === 403) return true;
 
   // Common errors when the DB doesn't have the expected grants / RLS policy.
   if (code === "42501") return true; // insufficient_privilege

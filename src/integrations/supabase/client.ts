@@ -6,31 +6,66 @@ import type { Database } from './types';
 // Lovable Cloud deployments may not expose Vite build-time env vars to the bundle.
 // To avoid a production blank screen, we provide a hostname-based fallback for the
 // public (anon) Supabase config. These values are public by design.
+//
+// IMPORTANT:
+// We intentionally do NOT fallback on localhost to avoid accidentally pointing local
+// dev environments at the production Supabase project.
+const DEFAULT_PUBLIC_SUPABASE: { projectId: string; anonKey: string; url?: string } = {
+  projectId: "sstxifqsickevprpuhap",
+  anonKey:
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzdHhpZnFzaWNrZXZwcnB1aGFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1NzM3MDAsImV4cCI6MjA4NDE0OTcwMH0.yNYJflrpmmQatP6t0ClLIu2urvqpRfaMPDeC2FlOEZA",
+};
+
 const HOSTNAME_FALLBACKS: Record<
   string,
   { projectId: string; anonKey: string; url?: string }
 > = {
   "videoremixpack.com": {
-    projectId: "sstxifqsickevprpuhap",
-    anonKey:
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzdHhpZnFzaWNrZXZwcnB1aGFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1NzM3MDAsImV4cCI6MjA4NDE0OTcwMH0.yNYJflrpmmQatP6t0ClLIu2urvqpRfaMPDeC2FlOEZA",
+    ...DEFAULT_PUBLIC_SUPABASE,
   },
   "www.videoremixpack.com": {
-    projectId: "sstxifqsickevprpuhap",
-    anonKey:
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzdHhpZnFzaWNrZXZwcnB1aGFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1NzM3MDAsImV4cCI6MjA4NDE0OTcwMH0.yNYJflrpmmQatP6t0ClLIu2urvqpRfaMPDeC2FlOEZA",
+    ...DEFAULT_PUBLIC_SUPABASE,
   },
   "videoremixespacks.com": {
-    projectId: "sstxifqsickevprpuhap",
-    anonKey:
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzdHhpZnFzaWNrZXZwcnB1aGFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1NzM3MDAsImV4cCI6MjA4NDE0OTcwMH0.yNYJflrpmmQatP6t0ClLIu2urvqpRfaMPDeC2FlOEZA",
+    ...DEFAULT_PUBLIC_SUPABASE,
   },
   "www.videoremixespacks.com": {
-    projectId: "sstxifqsickevprpuhap",
-    anonKey:
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzdHhpZnFzaWNrZXZwcnB1aGFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1NzM3MDAsImV4cCI6MjA4NDE0OTcwMH0.yNYJflrpmmQatP6t0ClLIu2urvqpRfaMPDeC2FlOEZA",
+    ...DEFAULT_PUBLIC_SUPABASE,
   },
 };
+
+function isLocalhostHostname(hostname: string): boolean {
+  const lower = hostname.toLowerCase();
+  return (
+    lower === "localhost" ||
+    lower === "127.0.0.1" ||
+    lower === "0.0.0.0" ||
+    lower === "[::1]" ||
+    lower.endsWith(".localhost")
+  );
+}
+
+function getFallbackForHostname(
+  hostname: string | null | undefined
+): { projectId: string; anonKey: string; url?: string } | undefined {
+  if (!hostname) return undefined;
+
+  const direct = HOSTNAME_FALLBACKS[hostname];
+  if (direct) return direct;
+
+  // Lovable preview domains frequently use random subdomains. Use the default
+  // public config so previews don't crash with "Supabase URL is required".
+  const lower = hostname.toLowerCase();
+  if (lower.endsWith(".lovableproject.com") || lower.endsWith(".lovable.app")) {
+    return DEFAULT_PUBLIC_SUPABASE;
+  }
+
+  if (!isLocalhostHostname(hostname)) {
+    return DEFAULT_PUBLIC_SUPABASE;
+  }
+
+  return undefined;
+}
 
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
   const parts = token.split('.');
@@ -52,7 +87,7 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
 const env = import.meta.env;
 
 const hostnameFallback =
-  typeof window !== "undefined" ? HOSTNAME_FALLBACKS[window.location.hostname] : undefined;
+  typeof window !== "undefined" ? getFallbackForHostname(window.location.hostname) : undefined;
 
 export const supabaseAnonKey =
   env.VITE_SUPABASE_PUBLISHABLE_KEY ||
