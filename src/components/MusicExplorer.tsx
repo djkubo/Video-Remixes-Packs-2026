@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Search, 
@@ -79,9 +79,9 @@ const MusicExplorer = () => {
   useEffect(() => {
     loadContent();
     loadTotalCount();
-  }, [currentFolderId]);
+  }, [loadContent, loadTotalCount]);
 
-  const loadContent = async () => {
+  const loadContent = useCallback(async () => {
     setLoading(true);
     try {
       // Load subfolders
@@ -131,15 +131,15 @@ const MusicExplorer = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentFolderId]);
 
-  const loadTotalCount = async () => {
+  const loadTotalCount = useCallback(async () => {
     const { count } = await supabase
       .from("tracks")
       .select("*", { count: "exact", head: true })
       .eq("is_visible", true);
     setTotalTracks(count || 0);
-  };
+  }, []);
 
   // Search functionality
   useEffect(() => {
@@ -152,15 +152,16 @@ const MusicExplorer = () => {
     }, 300);
 
     return () => clearTimeout(debounceTimer);
-  }, [searchQuery]);
+  }, [searchQuery, performSearch]);
 
   // Full Text Search using PostgreSQL FTS via RPC
-  const performSearch = async () => {
+  const performSearch = useCallback(async () => {
+    const query = searchQuery.trim();
     setSearching(true);
     try {
       // Use the FTS RPC function for better performance and relevance
       const { data, error } = await supabase.rpc("search_tracks", {
-        p_query: searchQuery.trim(),
+        p_query: query,
         p_limit: 50,
       });
 
@@ -171,7 +172,7 @@ const MusicExplorer = () => {
           .from("tracks")
           .select("id, title, artist, file_url, duration_formatted, bpm, genre")
           .eq("is_visible", true)
-          .or(`title.ilike.%${searchQuery}%,artist.ilike.%${searchQuery}%,genre.ilike.%${searchQuery}%`)
+          .or(`title.ilike.%${query}%,artist.ilike.%${query}%,genre.ilike.%${query}%`)
           .limit(50);
         setSearchResults(fallbackData || []);
       } else {
@@ -201,7 +202,7 @@ const MusicExplorer = () => {
     } finally {
       setSearching(false);
     }
-  };
+  }, [searchQuery]);
 
   // Using the audio player hook for clean play/pause handling
   const handlePlay = (track: Track) => {

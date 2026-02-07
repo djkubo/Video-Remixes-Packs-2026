@@ -1,4 +1,4 @@
-import { useState, useEffect, type InputHTMLAttributes } from "react";
+import { useState, useEffect, useCallback, type InputHTMLAttributes } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   DndContext,
@@ -348,9 +348,9 @@ export default function AdminMusic() {
   useEffect(() => {
     if (!user) return;
     loadContent();
-  }, [user, currentFolderId]);
+  }, [user, loadContent]);
 
-  const loadContent = async () => {
+  const loadContent = useCallback(async () => {
     try {
       // Load subfolders
       let foldersQuery = supabase
@@ -401,7 +401,7 @@ export default function AdminMusic() {
         variant: "destructive",
       });
     }
-  };
+  }, [currentFolderId, toast]);
 
   // Handle folder drag end - optimized with single RPC call
   const handleFolderDragEnd = async (event: DragEndEvent) => {
