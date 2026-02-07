@@ -25,7 +25,7 @@ const SettingsToggle = () => {
         <button
           onClick={() => setIsOpen(true)}
           className="flex h-12 w-12 items-center justify-center rounded-full bg-card/90 dark:bg-card/80 backdrop-blur-xl border border-border shadow-lg transition-all hover:bg-card hover:border-primary/50 hover:shadow-xl dark:hover:shadow-glow"
-          aria-label="Settings"
+          aria-label={language === "es" ? "Configuración" : "Settings"}
         >
           <Settings className="h-5 w-5 text-foreground" />
         </button>
