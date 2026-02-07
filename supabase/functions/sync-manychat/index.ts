@@ -9,7 +9,10 @@ const corsHeaders = {
 // STRICT INPUT VALIDATION
 // ============================================
 
-const PHONE_REGEX = /^\+?[1-9]\d{6,14}$/;
+// Accepts user-provided "input" phone formats after basic cleanup (digits, optional +),
+// then we later normalize to strict E.164 before calling ManyChat.
+const PHONE_INPUT_REGEX = /^\+?\d{7,20}$/;
+const E164_PHONE_REGEX = /^\+[1-9]\d{6,14}$/;
 const COUNTRY_CODE_REGEX = /^\+?[1-9]\d{0,3}$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -51,10 +54,11 @@ function validateLead(data: unknown): { valid: true; data: LeadData } | { valid:
     errors.push({ field: 'email', message: 'Invalid email format' });
   }
 
-  const cleanPhone = typeof lead.phone === 'string' 
-    ? lead.phone.replace(/[\s().-]/g, '') 
+  const cleanPhone = typeof lead.phone === 'string'
+    ? lead.phone.replace(/[\s().-]/g, '')
     : '';
-  if (cleanPhone.length < 7 || cleanPhone.length > 20 || !PHONE_REGEX.test(cleanPhone)) {
+  const phoneDigits = cleanPhone.startsWith('+') ? cleanPhone.slice(1) : cleanPhone;
+  if (!PHONE_INPUT_REGEX.test(cleanPhone) || !/[1-9]/.test(phoneDigits)) {
     errors.push({ field: 'phone', message: 'Invalid phone format' });
   }
 
@@ -103,6 +107,31 @@ function validateLead(data: unknown): { valid: true; data: LeadData } | { valid:
       tags: Array.isArray(lead.tags) ? lead.tags.map(t => String(t).trim().toLowerCase().replace(/[^a-z0-9_-]/g, '_')) : null,
     }
   };
+}
+
+function formatPhoneToE164(phone: string, countryCode: string | null): string | null {
+  const cleaned = phone.replace(/[\s().-]/g, '');
+  const hasPlus = cleaned.startsWith('+');
+
+  const digits = hasPlus ? cleaned.slice(1) : cleaned;
+  const digitsNoLeadingZeros = digits.replace(/^0+/, '');
+
+  if (!digitsNoLeadingZeros || !/^\d{7,20}$/.test(digitsNoLeadingZeros) || !/[1-9]/.test(digitsNoLeadingZeros)) {
+    return null;
+  }
+
+  let fullDigits = digitsNoLeadingZeros;
+
+  if (!hasPlus && countryCode) {
+    const cc = countryCode.replace(/[\s-]/g, '');
+    const ccDigits = cc.startsWith('+') ? cc.slice(1) : cc;
+    if (ccDigits) {
+      fullDigits = `${ccDigits}${digitsNoLeadingZeros}`;
+    }
+  }
+
+  const e164 = `+${fullDigits}`;
+  return E164_PHONE_REGEX.test(e164) ? e164 : null;
 }
 
 // ============================================
@@ -271,14 +300,14 @@ Deno.serve(async (req) => {
     const lead = leadValidation.data;
     console.log('[Lead] Processing lead', lead.id);
 
-    // Format phone number
-    let cleanPhone = lead.phone.replace(/^0+/, '');
-    if (lead.country_code && !cleanPhone.startsWith('+')) {
-      const code = lead.country_code.startsWith('+') ? lead.country_code : `+${lead.country_code}`;
-      cleanPhone = `${code}${cleanPhone}`;
-    }
-    if (!cleanPhone.startsWith('+')) {
-      cleanPhone = `+${cleanPhone}`;
+    // Normalize phone to E.164
+    const e164Phone = formatPhoneToE164(lead.phone, lead.country_code);
+    if (!e164Phone) {
+      console.error('[Validation] Phone normalization failed');
+      return new Response(
+        JSON.stringify({ error: 'Invalid phone format' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Create subscriber in ManyChat
@@ -292,8 +321,8 @@ Deno.serve(async (req) => {
       {
         first_name: firstName,
         last_name: lastName,
-        phone: cleanPhone,
-        whatsapp_phone: cleanPhone,
+        phone: e164Phone,
+        whatsapp_phone: e164Phone,
         email: lead.email,
         has_opt_in_sms: true,
         has_opt_in_email: true,
@@ -341,7 +370,7 @@ Deno.serve(async (req) => {
       const findResult = await callManyChatAPI(
         'subscriber/findBySystemField',
         MANYCHAT_API_KEY,
-        { phone: cleanPhone },
+        { phone: e164Phone },
         'findBySystemField'
       );
 
