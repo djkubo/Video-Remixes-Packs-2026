@@ -2,6 +2,3 @@ project_id = "sstxifqsickevprpuhap"
 
 [functions.sync-manychat]
 verify_jwt = false
-
-[functions.setup-manychat]
-verify_jwt = false
