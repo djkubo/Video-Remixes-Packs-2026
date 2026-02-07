@@ -368,7 +368,17 @@ const MusicExplorer = () => {
                       {/* Play Button */}
                       <div className="col-span-1 flex items-center">
                         <button
+                          type="button"
                           onClick={() => handlePlay(track)}
+                          aria-label={
+                            playingId === track.id
+                              ? language === "es"
+                                ? `Pausar preview: ${track.title}`
+                                : `Pause preview: ${track.title}`
+                              : language === "es"
+                                ? `Reproducir preview: ${track.title}`
+                                : `Play preview: ${track.title}`
+                          }
                           className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20 text-primary transition-all hover:bg-primary hover:text-primary-foreground"
                         >
                           {playingId === track.id ? (
@@ -412,7 +422,13 @@ const MusicExplorer = () => {
                           </span>
                         )}
                         <button
+                          type="button"
                           onClick={() => handleDownloadClick(track)}
+                          aria-label={
+                            language === "es"
+                              ? `Ver cómo descargar: ${track.title}`
+                              : `See how to download: ${track.title}`
+                          }
                           className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/20 text-primary transition-all hover:bg-primary hover:text-primary-foreground"
                         >
                           <Download className="h-4 w-4" />
@@ -451,6 +467,10 @@ const MusicExplorer = () => {
           {isSearching ? (
             <>
               {searchResults?.length || 0} {language === "es" ? "resultados encontrados" : "results found"}
+            </>
+          ) : currentFolderId === null && displayTracks.length === 0 ? (
+            <>
+              {language === "es" ? "Total:" : "Total:"} {totalTracks.toLocaleString()}+ {t("explorer.tracks")}
             </>
           ) : (
             <>
