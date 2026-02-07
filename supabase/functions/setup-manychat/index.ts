@@ -154,8 +154,8 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         message: 'ManyChat setup completed',
-        customFieldsCreated: (results.customFields as unknown[]).filter((f: any) => f.status === 'created').length,
-        tagsCreated: (results.tags as unknown[]).filter((t: any) => t.status === 'created').length,
+        customFieldsCreated: (results.customFields as Array<{ status?: string }>).filter((f) => f.status === 'created').length,
+        tagsCreated: (results.tags as Array<{ status?: string }>).filter((t) => t.status === 'created').length,
         errors: (results.errors as unknown[]).length,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

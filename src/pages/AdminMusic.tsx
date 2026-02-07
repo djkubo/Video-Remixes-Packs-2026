@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type InputHTMLAttributes } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   DndContext,
@@ -62,6 +62,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
+import type { User } from "@supabase/supabase-js";
 
 interface Folder {
   id: string;
@@ -85,6 +86,10 @@ interface Track {
   is_visible: boolean;
   sort_order: number;
 }
+
+type FileWithPath = File & {
+  webkitRelativePath?: string;
+};
 
 // Sortable Folder Component
 function SortableFolder({
@@ -250,7 +255,7 @@ function SortableTrack({
 }
 
 export default function AdminMusic() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [folders, setFolders] = useState<Folder[]>([]);
   const [tracks, setTracks] = useState<Track[]>([]);
@@ -676,12 +681,14 @@ export default function AdminMusic() {
         });
 
         if (insertError) {
-          // Try to clean up the uploaded file if DB insert fails
-          try {
-            await supabase.storage.from("music").remove([filePath]);
-          } catch { }
-          return { success: false, error: `Database error: ${insertError.message}` };
-        }
+	          // Try to clean up the uploaded file if DB insert fails
+	          try {
+	            await supabase.storage.from("music").remove([filePath]);
+	          } catch {
+	            // Ignore best-effort cleanup errors.
+	          }
+	          return { success: false, error: `Database error: ${insertError.message}` };
+	        }
 
         return { success: true };
       } catch (err) {
@@ -757,7 +764,7 @@ export default function AdminMusic() {
       let baseFolderDepth = 0;
       const firstFile = Array.from(bulkUploadFiles)[0];
       if (firstFile) {
-        const firstPath = (firstFile as any).webkitRelativePath || firstFile.name;
+        const firstPath = (firstFile as FileWithPath).webkitRelativePath || firstFile.name;
         const firstParts = firstPath.split("/");
         if (firstParts.length > 2) {
           baseFolderDepth = 1;
@@ -765,7 +772,7 @@ export default function AdminMusic() {
       }
 
       for (const file of Array.from(bulkUploadFiles)) {
-        const relativePath = (file as any).webkitRelativePath || file.name;
+        const relativePath = (file as FileWithPath).webkitRelativePath || file.name;
         const pathParts = relativePath.split("/");
 
         if (pathParts.length > baseFolderDepth + 1) {
@@ -1111,13 +1118,15 @@ export default function AdminMusic() {
       if (selectedTracks.size > 0) {
         const tracksToDelete = tracks.filter(t => selectedTracks.has(t.id));
         const filePaths = tracksToDelete
-          .map(t => {
-            try {
-              const urlParts = t.file_url.split("/music/");
-              if (urlParts[1]) return decodeURIComponent(urlParts[1]);
-            } catch { }
-            return null;
-          })
+	          .map(t => {
+	            try {
+	              const urlParts = t.file_url.split("/music/");
+	              if (urlParts[1]) return decodeURIComponent(urlParts[1]);
+	            } catch {
+	              // Ignore malformed URLs.
+	            }
+	            return null;
+	          })
           .filter((p): p is string => p !== null && p.length > 0);
 
         await safeRemoveFiles(filePaths);
@@ -1136,14 +1145,16 @@ export default function AdminMusic() {
             .eq("folder_id", folderId);
 
           if (folderTracks && folderTracks.length > 0) {
-            const filePaths = folderTracks
-              .map(t => {
-                try {
-                  const urlParts = t.file_url.split("/music/");
-                  if (urlParts[1]) return decodeURIComponent(urlParts[1]);
-                } catch { }
-                return null;
-              })
+	            const filePaths = folderTracks
+	              .map(t => {
+	                try {
+	                  const urlParts = t.file_url.split("/music/");
+	                  if (urlParts[1]) return decodeURIComponent(urlParts[1]);
+	                } catch {
+	                  // Ignore malformed URLs.
+	                }
+	                return null;
+	              })
               .filter((p): p is string => p !== null && p.length > 0);
 
             await safeRemoveFiles(filePaths);
@@ -1184,23 +1195,27 @@ export default function AdminMusic() {
       
       if (allTracks && allTracks.length > 0) {
         // Remove all storage files
-        const filePaths = allTracks
-          .map(t => {
-            try {
-              const urlParts = t.file_url.split("/music/");
-              if (urlParts[1]) return decodeURIComponent(urlParts[1]);
-            } catch { }
-            return null;
-          })
+	        const filePaths = allTracks
+	          .map(t => {
+	            try {
+	              const urlParts = t.file_url.split("/music/");
+	              if (urlParts[1]) return decodeURIComponent(urlParts[1]);
+	            } catch {
+	              // Ignore malformed URLs.
+	            }
+	            return null;
+	          })
           .filter((p): p is string => p !== null && p.length > 0);
 
         // Delete storage in batches
-        for (let i = 0; i < filePaths.length; i += 100) {
-          const batch = filePaths.slice(i, i + 100);
-          try {
-            await supabase.storage.from("music").remove(batch);
-          } catch { }
-        }
+	        for (let i = 0; i < filePaths.length; i += 100) {
+	          const batch = filePaths.slice(i, i + 100);
+	          try {
+	            await supabase.storage.from("music").remove(batch);
+	          } catch {
+	            // Ignore batch failures; continue cleanup.
+	          }
+	        }
 
         // Delete tracks in batches
         for (let i = 0; i < allTracks.length; i += 50) {
@@ -1583,7 +1598,7 @@ export default function AdminMusic() {
               <Label>Seleccionar carpeta</Label>
               <Input
                 type="file"
-                {...{ webkitdirectory: "", directory: "" } as any}
+                {...({ webkitdirectory: "", directory: "" } as unknown as InputHTMLAttributes<HTMLInputElement>)}
                 multiple
                 onChange={(e) => setBulkUploadFiles(e.target.files)}
                 className="mt-2"
@@ -1603,9 +1618,9 @@ export default function AdminMusic() {
                 <div className="flex flex-wrap gap-1 mt-2">
                   {Array.from(
                     new Set(
-                      Array.from(bulkUploadFiles)
-                        .map((f: any) => f.webkitRelativePath?.split("/")[0])
-                        .filter(Boolean)
+	                      Array.from(bulkUploadFiles)
+	                        .map((f) => (f as FileWithPath).webkitRelativePath?.split("/")[0])
+	                        .filter(Boolean)
                     )
                   ).slice(0, 10).map((folder) => (
                     <span
@@ -1617,17 +1632,17 @@ export default function AdminMusic() {
                   ))}
                   {Array.from(
                     new Set(
-                      Array.from(bulkUploadFiles)
-                        .map((f: any) => f.webkitRelativePath?.split("/")[0])
-                        .filter(Boolean)
+	                      Array.from(bulkUploadFiles)
+	                        .map((f) => (f as FileWithPath).webkitRelativePath?.split("/")[0])
+	                        .filter(Boolean)
                     )
                   ).length > 10 && (
                     <span className="text-xs text-muted-foreground">
                       +{Array.from(
                         new Set(
-                          Array.from(bulkUploadFiles)
-                            .map((f: any) => f.webkitRelativePath?.split("/")[0])
-                            .filter(Boolean)
+	                          Array.from(bulkUploadFiles)
+	                            .map((f) => (f as FileWithPath).webkitRelativePath?.split("/")[0])
+	                            .filter(Boolean)
                         )
                       ).length - 10} más
                     </span>

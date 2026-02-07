@@ -98,11 +98,12 @@ export default function AdminLogin() {
       toast({ title: "Bienvenido", description: "Sesión iniciada correctamente" });
       navigate("/admin/music");
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Auth error:", error);
+      const message = error instanceof Error ? error.message : "Error de autenticación";
       toast({
         title: "Error",
-        description: error.message || "Error de autenticación",
+        description: message,
         variant: "destructive",
       });
     } finally {

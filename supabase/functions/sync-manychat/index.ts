@@ -52,7 +52,7 @@ function validateLead(data: unknown): { valid: true; data: LeadData } | { valid:
   }
 
   const cleanPhone = typeof lead.phone === 'string' 
-    ? lead.phone.replace(/[\s\-\(\)\.]/g, '') 
+    ? lead.phone.replace(/[\s().-]/g, '') 
     : '';
   if (cleanPhone.length < 7 || cleanPhone.length > 20 || !PHONE_REGEX.test(cleanPhone)) {
     errors.push({ field: 'phone', message: 'Invalid phone format' });
@@ -60,7 +60,7 @@ function validateLead(data: unknown): { valid: true; data: LeadData } | { valid:
 
   const countryCode = lead.country_code;
   if (countryCode !== null && countryCode !== undefined) {
-    const cleanCode = typeof countryCode === 'string' ? countryCode.replace(/[\s\-]/g, '') : '';
+    const cleanCode = typeof countryCode === 'string' ? countryCode.replace(/[\s-]/g, '') : '';
     if (cleanCode && !COUNTRY_CODE_REGEX.test(cleanCode)) {
       errors.push({ field: 'country_code', message: 'Invalid country code format' });
     }
@@ -97,7 +97,7 @@ function validateLead(data: unknown): { valid: true; data: LeadData } | { valid:
       name: (lead.name as string).trim(),
       email: (lead.email as string).toLowerCase().trim(),
       phone: cleanPhone,
-      country_code: typeof lead.country_code === 'string' ? lead.country_code.replace(/[\s\-]/g, '') : null,
+      country_code: typeof lead.country_code === 'string' ? lead.country_code.replace(/[\s-]/g, '') : null,
       country_name: typeof lead.country_name === 'string' ? lead.country_name : null,
       source: typeof lead.source === 'string' ? lead.source : null,
       tags: Array.isArray(lead.tags) ? lead.tags.map(t => String(t).trim().toLowerCase().replace(/[^a-z0-9_-]/g, '_')) : null,

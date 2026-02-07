@@ -173,7 +173,7 @@ export default function ExitIntentPopup() {
     setIsSubmitting(true);
 
     try {
-      const cleanPhone = formData.phone.trim().replace(/[\s\-\(\)\.]/g, "");
+      const cleanPhone = formData.phone.trim().replace(/[\s().-]/g, "");
 
       // Insert lead into database
       const { data: lead, error: insertError } = await supabase
