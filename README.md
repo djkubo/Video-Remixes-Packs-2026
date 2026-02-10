@@ -69,9 +69,15 @@ Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and 
 - This project uses Supabase Edge Functions:
   - `sync-manychat`: must be **public** so the website can call it (configured with `verify_jwt = false` in `supabase/config.toml`).
   - `setup-manychat`: admin-only (requires an authenticated admin token).
+  - `stripe-checkout`: must be **public** so the website can redirect users to Stripe Checkout (configured with `verify_jwt = false` in `supabase/config.toml`).
+    - Requires the Edge Function secret `STRIPE_SECRET_KEY` (never commit or expose this in the frontend).
 - After publishing/deploying, you can verify `sync-manychat` is public by opening:
   - `https://<YOUR_PROJECT_REF>.supabase.co/functions/v1/sync-manychat`
   - Expected response: `{"ok":true,"function":"sync-manychat"}` (if you see `{"error":"Unauthorized"}`, the function is still deployed with JWT verification enabled).
+
+- After publishing/deploying, you can verify `stripe-checkout` is public by opening:
+  - `https://<YOUR_PROJECT_REF>.supabase.co/functions/v1/stripe-checkout`
+  - Expected response: `{"ok":true,"function":"stripe-checkout"}`.
 
 ## Can I connect a custom domain to my Lovable project?
 
