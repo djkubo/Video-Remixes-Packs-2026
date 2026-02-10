@@ -231,6 +231,28 @@ export default function Usb128() {
           if (import.meta.env.DEV) console.warn("Stripe invoke threw:", stripeErr);
         }
 
+        // Fallback: PayPal redirect (if configured).
+        try {
+          const { data: paypal, error: paypalError } = await supabase.functions.invoke(
+            "paypal-checkout",
+            {
+              body: { action: "create", leadId, product: "usb128" },
+            }
+          );
+
+          if (paypalError && import.meta.env.DEV) {
+            console.warn("PayPal checkout error:", paypalError);
+          }
+
+          const approveUrl = (paypal as { approveUrl?: unknown } | null)?.approveUrl;
+          if (typeof approveUrl === "string" && approveUrl.length > 0) {
+            window.location.assign(approveUrl);
+            return;
+          }
+        } catch (paypalErr) {
+          if (import.meta.env.DEV) console.warn("PayPal invoke threw:", paypalErr);
+        }
+
         navigate("/usb128/gracias");
       } catch (err) {
         console.error("USB128 lead submit error:", err);

@@ -1,8 +1,10 @@
+import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, CheckCircle2, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { supabase } from "@/integrations/supabase/client";
 
 // Optional: if you have a payment/checkout link for the Annual Membership, put it here.
 // If empty, the page will instruct the user to check WhatsApp.
@@ -11,7 +13,47 @@ const ANUAL_PAYMENT_URL = "";
 export default function AnualThankYou() {
   const { language } = useLanguage();
   const [params] = useSearchParams();
-  const hasStripeSession = Boolean(params.get("session_id"));
+  const stripeSessionId = params.get("session_id");
+  const paypalOrderId = params.get("token");
+  const leadId = params.get("lead_id");
+
+  const hasStripeSession = Boolean(stripeSessionId);
+  const hasPayPalOrder = Boolean(paypalOrderId);
+
+  const [paypalCaptureState, setPaypalCaptureState] = useState<
+    "idle" | "processing" | "success" | "error"
+  >("idle");
+
+  useEffect(() => {
+    if (!paypalOrderId || !leadId) return;
+    if (paypalCaptureState !== "idle") return;
+
+    setPaypalCaptureState("processing");
+    (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("paypal-checkout", {
+          body: { action: "capture", leadId, orderId: paypalOrderId },
+        });
+
+        const completed = Boolean((data as { completed?: unknown } | null)?.completed);
+        if (error || !completed) {
+          setPaypalCaptureState("error");
+          return;
+        }
+
+        // Re-sync ManyChat so payment tags get applied.
+        try {
+          await supabase.functions.invoke("sync-manychat", { body: { leadId } });
+        } catch {
+          // ignore
+        }
+
+        setPaypalCaptureState("success");
+      } catch {
+        setPaypalCaptureState("error");
+      }
+    })();
+  }, [leadId, paypalCaptureState, paypalOrderId]);
 
   return (
     <main className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -36,10 +78,18 @@ export default function AnualThankYou() {
           </h1>
 
           <p className="text-lg text-muted-foreground mb-8">
-            {hasStripeSession
+            {hasStripeSession || (hasPayPalOrder && paypalCaptureState === "success")
               ? language === "es"
                 ? "Pago recibido. En breve te enviaremos por WhatsApp (y/o email) tu acceso a la Membresía Anual."
                 : "Payment received. You’ll receive your Annual Membership access via WhatsApp (and/or email) shortly."
+              : hasPayPalOrder && paypalCaptureState === "processing"
+                ? language === "es"
+                  ? "Estamos confirmando tu pago con PayPal. No cierres esta página."
+                  : "We’re confirming your PayPal payment. Please keep this page open."
+                : hasPayPalOrder && paypalCaptureState === "error"
+                  ? language === "es"
+                    ? "Tu pago con PayPal está pendiente de confirmación. Revisa tu email de PayPal o intenta de nuevo."
+                    : "Your PayPal payment is pending confirmation. Check your PayPal email or try again."
               : language === "es"
                 ? "Ya registramos tus datos para la Membresía Anual. En breve te enviaremos por WhatsApp el link de pago y el acceso."
                 : "We’ve registered your details for the Annual Membership. You’ll receive the payment link and access via WhatsApp shortly."}
@@ -50,10 +100,10 @@ export default function AnualThankYou() {
               <MessageCircle className="w-6 h-6 text-green-500" />
               <span className="font-semibold">
                 {language === "es"
-                  ? hasStripeSession
+                  ? hasStripeSession || (hasPayPalOrder && paypalCaptureState === "success")
                     ? "Revisa tu WhatsApp y tu email"
                     : "Revisa tu WhatsApp"
-                  : hasStripeSession
+                  : hasStripeSession || (hasPayPalOrder && paypalCaptureState === "success")
                     ? "Check WhatsApp and email"
                     : "Check your WhatsApp"}
               </span>

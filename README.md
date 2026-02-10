@@ -71,6 +71,8 @@ Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and 
   - `setup-manychat`: admin-only (requires an authenticated admin token).
   - `stripe-checkout`: must be **public** so the website can redirect users to Stripe Checkout (configured with `verify_jwt = false` in `supabase/config.toml`).
     - Requires the Edge Function secret `STRIPE_SECRET_KEY` (never commit or expose this in the frontend).
+  - `paypal-checkout`: must be **public** so the website can redirect users to PayPal (configured with `verify_jwt = false` in `supabase/config.toml`).
+    - Requires the Edge Function secrets `PAYPAL_CLIENT_ID` and `PAYPAL_CLIENT_SECRET` (never commit or expose the secret in the frontend).
 - After publishing/deploying, you can verify `sync-manychat` is public by opening:
   - `https://<YOUR_PROJECT_REF>.supabase.co/functions/v1/sync-manychat`
   - Expected response: `{"ok":true,"function":"sync-manychat"}` (if you see `{"error":"Unauthorized"}`, the function is still deployed with JWT verification enabled).
@@ -78,6 +80,10 @@ Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and 
 - After publishing/deploying, you can verify `stripe-checkout` is public by opening:
   - `https://<YOUR_PROJECT_REF>.supabase.co/functions/v1/stripe-checkout`
   - Expected response: `{"ok":true,"function":"stripe-checkout"}`.
+
+- After publishing/deploying, you can verify `paypal-checkout` is public by opening:
+  - `https://<YOUR_PROJECT_REF>.supabase.co/functions/v1/paypal-checkout`
+  - Expected response: `{"ok":true,"function":"paypal-checkout"}`.
 
 ## Can I connect a custom domain to my Lovable project?
 
