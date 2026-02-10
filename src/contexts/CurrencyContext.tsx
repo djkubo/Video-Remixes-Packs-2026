@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { detectCountryCodeFromTimezone } from "@/lib/country";
 
 interface CurrencyInfo {
   code: string;
@@ -78,38 +79,36 @@ export const CurrencyProvider = ({ children }: { children: ReactNode }) => {
       }
     }
 
-    // Try to detect from browser/geolocation
-    try {
-      const response = await fetch("https://ipapi.co/json/");
-      if (response.ok) {
-        const data = await response.json();
-        const countryCode = data.country_code;
-        
-        // Map country to currency
-        const countryToCurrency: { [key: string]: string } = {
-          MX: "MXN",
-          US: "USD",
-          CO: "COP",
-          AR: "ARS",
-          CL: "CLP",
-          PE: "PEN",
-          BR: "BRL",
-          GB: "GBP",
-          ES: "EUR",
-          FR: "EUR",
-          DE: "EUR",
-          IT: "EUR",
-        };
+    // Try to detect from timezone/locale (no network to avoid CORS failures).
+    const countryToCurrency: { [key: string]: string } = {
+      MX: "MXN",
+      US: "USD",
+      CO: "COP",
+      AR: "ARS",
+      CL: "CLP",
+      PE: "PEN",
+      BR: "BRL",
+      GB: "GBP",
+      ES: "EUR",
+      FR: "EUR",
+      DE: "EUR",
+      IT: "EUR",
+    };
 
-        const currencyCode = countryToCurrency[countryCode] || "USD";
-        const found = availableCurrencies.find((c) => c.code === currencyCode);
-        if (found) {
-          setCurrencyState(found);
-          localStorage.setItem("vrp-currency", found.code);
-        }
-      }
-    } catch (error) {
-      if (import.meta.env.DEV) console.log("Could not detect user location, using USD");
+    const tzCountry = detectCountryCodeFromTimezone();
+    const localeCountry = (() => {
+      const lang = navigator.language || "";
+      const parts = lang.split("-");
+      const cc = parts.length >= 2 ? parts[1] : "";
+      return cc.toUpperCase() || null;
+    })();
+
+    const countryCode = tzCountry || localeCountry || "US";
+    const currencyCode = countryToCurrency[countryCode] || "USD";
+    const found = availableCurrencies.find((c) => c.code === currencyCode);
+    if (found) {
+      setCurrencyState(found);
+      localStorage.setItem("vrp-currency", found.code);
     }
   };
 

@@ -31,6 +31,7 @@ import HlsVideo from "@/components/HlsVideo";
 import djEditsPoster from "@/assets/dj-edits-poster.jpg";
 import logoWhite from "@/assets/logo-white.png";
 import logoDark from "@/assets/logo-dark.png";
+import { countryNameFromCode, detectCountryCodeFromTimezone } from "@/lib/country";
 
 type CountryData = {
   country_code: string;
@@ -116,31 +117,16 @@ export default function DjEdits() {
     document.title = "DJ Edits | Aprende a crear DJ edits desde cero";
   }, []);
 
-  // Detect user's country (best-effort; fallback to US).
+  // Detect user's country (best-effort; timezone-based so we avoid CORS/network issues).
   useEffect(() => {
-    const detectCountry = async () => {
-      try {
-        const response = await fetch("https://ipapi.co/json/");
-        const data = (await response.json()) as Partial<{
-          country_code: string;
-          country_name: string;
-        }>;
-
-        if (data.country_code) {
-          const dialCode = COUNTRY_DIAL_CODES[data.country_code] || "+1";
-          setCountryData({
-            country_code: data.country_code,
-            country_name: data.country_name || data.country_code,
-            dial_code: dialCode,
-          });
-        }
-      } catch {
-        // ignore
-      }
-    };
-
-    detectCountry();
-  }, []);
+    const code = detectCountryCodeFromTimezone() || "US";
+    const dialCode = COUNTRY_DIAL_CODES[code] || "+1";
+    setCountryData({
+      country_code: code,
+      country_name: countryNameFromCode(code, language === "es" ? "es" : "en"),
+      dial_code: dialCode,
+    });
+  }, [language]);
 
   const openJoin = useCallback(() => setIsJoinOpen(true), []);
 
@@ -574,4 +560,3 @@ export default function DjEdits() {
     </main>
   );
 }
-
