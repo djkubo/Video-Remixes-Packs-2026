@@ -26,6 +26,7 @@ import DjEdits from "./pages/DjEdits";
 import AdminLogin from "./pages/AdminLogin";
 import AdminMusic from "./pages/AdminMusic";
 import Admin from "./pages/Admin";
+import RouteMenu from "@/components/RouteMenu";
 
 const queryClient = new QueryClient();
 const DevTestPopup = import.meta.env.DEV ? lazy(() => import("./pages/TestPopup")) : null;
@@ -41,6 +42,7 @@ const App = () => {
                 <Toaster />
                 <Sonner />
                 <BrowserRouter>
+                  <RouteMenu />
                   <Routes>
                     <Route path="/" element={<Index />} />
 
