@@ -131,6 +131,8 @@ Deno.serve(async (req) => {
       'whatsapp_group',
       'usb128',
       'usb_order',
+      'usb_500gb',
+      'usb_definitiva',
     ];
 
     console.log('Creating tags...');

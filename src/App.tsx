@@ -15,6 +15,8 @@ import Gratis from "./pages/Gratis";
 import GratisThankYou from "./pages/GratisThankYou";
 import Usb128 from "./pages/Usb128";
 import Usb128ThankYou from "./pages/Usb128ThankYou";
+import Usb500gb from "./pages/Usb500gb";
+import Usb500gbThankYou from "./pages/Usb500gbThankYou";
 import AdminLogin from "./pages/AdminLogin";
 import AdminMusic from "./pages/AdminMusic";
 import Admin from "./pages/Admin";
@@ -39,6 +41,8 @@ const App = () => {
                   <Route path="/gratis/gracias" element={<GratisThankYou />} />
                   <Route path="/usb128" element={<Usb128 />} />
                   <Route path="/usb128/gracias" element={<Usb128ThankYou />} />
+                  <Route path="/usb-500gb" element={<Usb500gb />} />
+                  <Route path="/usb-500gb/gracias" element={<Usb500gbThankYou />} />
                   <Route path="/gracias" element={<ThankYou />} />
                   {import.meta.env.DEV && DevTestPopup && (
                     <Route
