@@ -25,14 +25,49 @@ export default function MembresiaThankYou() {
   const stripeSessionId = params.get("session_id");
   const paypalOrderId = params.get("token");
   const leadId = params.get("lead_id");
+  const product = params.get("product") || plan;
 
   const hasStripeSession = Boolean(stripeSessionId);
   const hasPayPalOrder = Boolean(paypalOrderId);
+
+  const [stripeVerifyState, setStripeVerifyState] = useState<
+    "idle" | "processing" | "success" | "error"
+  >("idle");
 
   const [paypalCaptureState, setPaypalCaptureState] = useState<
     "idle" | "processing" | "success" | "error"
   >("idle");
   const paymentUrl = getPaymentUrl(plan);
+
+  useEffect(() => {
+    if (!stripeSessionId || !leadId) return;
+    if (stripeVerifyState !== "idle") return;
+
+    setStripeVerifyState("processing");
+    (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("stripe-checkout", {
+          body: { action: "verify", leadId, sessionId: stripeSessionId, product },
+        });
+
+        const paid = Boolean((data as { paid?: unknown } | null)?.paid);
+        if (error || !paid) {
+          setStripeVerifyState("error");
+          return;
+        }
+
+        try {
+          await supabase.functions.invoke("sync-manychat", { body: { leadId } });
+        } catch {
+          // ignore
+        }
+
+        setStripeVerifyState("success");
+      } catch {
+        setStripeVerifyState("error");
+      }
+    })();
+  }, [leadId, product, stripeSessionId, stripeVerifyState]);
 
   useEffect(() => {
     if (!paypalOrderId || !leadId) return;
@@ -65,6 +100,10 @@ export default function MembresiaThankYou() {
     })();
   }, [leadId, paypalCaptureState, paypalOrderId]);
 
+  const paidConfirmed =
+    (hasStripeSession && stripeVerifyState === "success") ||
+    (hasPayPalOrder && paypalCaptureState === "success");
+
   return (
     <main className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
@@ -88,10 +127,18 @@ export default function MembresiaThankYou() {
           </h1>
 
           <p className="text-lg text-muted-foreground mb-8">
-            {hasStripeSession || (hasPayPalOrder && paypalCaptureState === "success")
+            {paidConfirmed
               ? language === "es"
                 ? "Pago recibido. En breve te enviaremos por WhatsApp (y/o email) tu acceso a la membresía."
                 : "Payment received. You’ll receive your membership access via WhatsApp (and/or email) shortly."
+              : hasStripeSession && stripeVerifyState === "processing"
+                ? language === "es"
+                  ? "Estamos confirmando tu pago con Stripe. No cierres esta página."
+                  : "We’re confirming your Stripe payment. Please keep this page open."
+                : hasStripeSession && stripeVerifyState === "error"
+                  ? language === "es"
+                    ? "Tu pago con Stripe está pendiente de confirmación. Revisa tu email o intenta de nuevo."
+                    : "Your Stripe payment is pending confirmation. Check your email or try again."
               : hasPayPalOrder && paypalCaptureState === "processing"
                 ? language === "es"
                   ? "Estamos confirmando tu pago con PayPal. No cierres esta página."
@@ -110,10 +157,10 @@ export default function MembresiaThankYou() {
               <MessageCircle className="w-6 h-6 text-green-500" />
               <span className="font-semibold">
                 {language === "es"
-                  ? hasStripeSession || (hasPayPalOrder && paypalCaptureState === "success")
+                  ? paidConfirmed
                     ? "Revisa tu WhatsApp y tu email"
                     : "Revisa tu WhatsApp"
-                  : hasStripeSession || (hasPayPalOrder && paypalCaptureState === "success")
+                  : paidConfirmed
                     ? "Check WhatsApp and email"
                     : "Check your WhatsApp"}
               </span>

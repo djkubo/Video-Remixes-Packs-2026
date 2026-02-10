@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { createShippoLabel, getShippoFromAddress, getShippoToken, type ShippoAddress } from "../_shared/shippo.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,6 +9,29 @@ const corsHeaders = {
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function normalizeTags(input: unknown): string[] {
+  if (!Array.isArray(input)) return [];
+  const out: string[] = [];
+  for (const t of input) {
+    if (typeof t !== "string") continue;
+    const norm = t.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "_");
+    if (!norm) continue;
+    out.push(norm);
+  }
+  return out;
+}
+
+function mergeTags(existing: unknown, add: string[]): string[] {
+  const base = normalizeTags(existing);
+  const set = new Set<string>(base);
+  for (const t of add) set.add(t);
+  return Array.from(set).slice(0, 20);
+}
 
 type ProductKey =
   | "usb128"
@@ -87,6 +111,62 @@ function parseAmountCents(value: string | null | undefined): number | null {
   const n = Number.parseInt(value, 10);
   if (!Number.isFinite(n) || n <= 0) return null;
   return n;
+}
+
+function isShippingProduct(product: ProductKey): boolean {
+  return Boolean(PRODUCTS[product].shipping);
+}
+
+function buildShippoToAddressFromStripe(args: {
+  lead: { name: string; email: string; phone: string };
+  session: Record<string, unknown>;
+}): ShippoAddress | null {
+  const shippingDetails = isRecord(args.session.shipping_details)
+    ? (args.session.shipping_details as Record<string, unknown>)
+    : null;
+
+  const customerDetails = isRecord(args.session.customer_details)
+    ? (args.session.customer_details as Record<string, unknown>)
+    : null;
+
+  const name =
+    (shippingDetails && typeof shippingDetails.name === "string" && shippingDetails.name) ||
+    args.lead.name;
+
+  const addr =
+    (shippingDetails && isRecord(shippingDetails.address) && (shippingDetails.address as Record<string, unknown>)) ||
+    (customerDetails && isRecord(customerDetails.address) && (customerDetails.address as Record<string, unknown>)) ||
+    null;
+
+  if (!addr) return null;
+
+  const street1 = typeof addr.line1 === "string" ? addr.line1 : "";
+  const street2 = typeof addr.line2 === "string" ? addr.line2 : "";
+  const city = typeof addr.city === "string" ? addr.city : "";
+  const state = typeof addr.state === "string" ? addr.state : "";
+  const zip = typeof addr.postal_code === "string" ? addr.postal_code : "";
+  const country = typeof addr.country === "string" ? addr.country : "";
+
+  const email =
+    (customerDetails && typeof customerDetails.email === "string" && customerDetails.email) ||
+    args.lead.email;
+  const phone =
+    (customerDetails && typeof customerDetails.phone === "string" && customerDetails.phone) ||
+    args.lead.phone;
+
+  if (!name || !street1 || !city || !state || !zip || !country) return null;
+
+  return {
+    name,
+    street1,
+    street2: street2 || undefined,
+    city,
+    state,
+    zip,
+    country,
+    phone,
+    email,
+  };
 }
 
 function isAllowedOrigin(origin: string): boolean {
@@ -247,6 +327,27 @@ async function stripeCreateCheckoutSession(args: {
   return { id, url };
 }
 
+async function stripeRetrieveCheckoutSession(args: {
+  stripeSecretKey: string;
+  sessionId: string;
+}): Promise<Record<string, unknown>> {
+  const url = `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(args.sessionId)}`;
+  const res = await fetch(url, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${args.stripeSecretKey}`,
+    },
+  });
+
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  if (!res.ok) {
+    console.error("[Stripe] Session retrieval failed");
+    throw new Error("Stripe session retrieval failed");
+  }
+
+  return data;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -289,8 +390,10 @@ Deno.serve(async (req) => {
   }
 
   const input = (body || {}) as Record<string, unknown>;
+  const action = typeof input.action === "string" ? input.action : "create";
   const leadId = typeof input.leadId === "string" ? input.leadId : "";
   const product = typeof input.product === "string" ? input.product : "";
+  const sessionId = typeof input.sessionId === "string" ? input.sessionId : "";
 
   if (!UUID_REGEX.test(leadId)) {
     return new Response(JSON.stringify({ error: "Invalid leadId" }), {
@@ -299,6 +402,178 @@ Deno.serve(async (req) => {
     });
   }
 
+  const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+    auth: { persistSession: false },
+  });
+
+  if (action === "verify") {
+    if (!sessionId || sessionId.length < 10) {
+      return new Response(JSON.stringify({ error: "Invalid sessionId" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    try {
+      const session = await stripeRetrieveCheckoutSession({
+        stripeSecretKey: STRIPE_SECRET_KEY,
+        sessionId,
+      });
+
+      const paymentStatus =
+        typeof session.payment_status === "string" ? session.payment_status : "";
+      const paid =
+        paymentStatus === "paid" || paymentStatus === "no_payment_required";
+
+      const clientRef =
+        typeof session.client_reference_id === "string"
+          ? session.client_reference_id
+          : "";
+      const metadata = isRecord(session.metadata)
+        ? (session.metadata as Record<string, unknown>)
+        : {};
+      const metaLeadId =
+        typeof metadata.lead_id === "string" ? metadata.lead_id : "";
+      const metaProduct =
+        typeof metadata.product === "string" ? metadata.product : "";
+
+      if ((clientRef && clientRef !== leadId) || (metaLeadId && metaLeadId !== leadId)) {
+        return new Response(JSON.stringify({ error: "Session does not match lead" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const resolvedProduct = metaProduct || product;
+      if (!resolvedProduct || !(resolvedProduct in PRODUCTS)) {
+        return new Response(JSON.stringify({ error: "Invalid product" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const productKey = resolvedProduct as ProductKey;
+
+      const { data: lead, error: leadError } = await supabaseAdmin
+        .from("leads")
+        .select("id,email,name,phone,source,tags")
+        .eq("id", leadId)
+        .maybeSingle();
+
+      if (leadError) {
+        console.error("[Supabase] Failed to fetch lead");
+        return new Response(JSON.stringify({ error: "Failed to fetch lead" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (!lead) {
+        return new Response(JSON.stringify({ error: "Lead not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Not paid yet: return without mutating.
+      if (!paid) {
+        return new Response(JSON.stringify({ ok: true, paid: false, payment_status: paymentStatus }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const baseTags = mergeTags(lead.tags, ["paid_stripe"]);
+      const alreadyHasLabel =
+        baseTags.includes("shippo_label_created") || baseTags.includes("shippo_label");
+
+      let shippo: { ok: boolean; labelUrl?: string; trackingNumber?: string } | undefined;
+
+      if (isShippingProduct(productKey) && !alreadyHasLabel) {
+        const shippoToken = getShippoToken();
+        const fromAddress = getShippoFromAddress();
+        const toAddress = buildShippoToAddressFromStripe({
+          lead: { name: lead.name, email: lead.email, phone: lead.phone },
+          session,
+        });
+
+        if (shippoToken && fromAddress && toAddress) {
+          try {
+            const label = await createShippoLabel({
+              token: shippoToken,
+              fromAddress,
+              toAddress,
+              metadata: {
+                lead_id: leadId,
+                provider: "stripe",
+                session_id: sessionId,
+                product: productKey,
+              },
+            });
+
+            shippo = { ok: true, labelUrl: label.labelUrl, trackingNumber: label.trackingNumber };
+
+            const tagsWithShippo = mergeTags(baseTags, ["shippo_label_created", "shippo_label"]);
+
+            try {
+              await supabaseAdmin
+                .from("leads")
+                .update({
+                  tags: tagsWithShippo,
+                  payment_provider: "stripe",
+                  payment_id: sessionId,
+                  paid_at: new Date().toISOString(),
+                  shipping_to: toAddress,
+                  shipping_label_url: label.labelUrl,
+                  shipping_tracking_number: label.trackingNumber,
+                  shipping_carrier: label.carrier || null,
+                  shipping_servicelevel: label.servicelevel || null,
+                  shipping_status: "label_created",
+                })
+                .eq("id", leadId);
+            } catch {
+              await supabaseAdmin.from("leads").update({ tags: tagsWithShippo }).eq("id", leadId);
+            }
+          } catch {
+            shippo = { ok: false };
+            const tagsNeedsShipping = mergeTags(baseTags, ["needs_shipping"]);
+            await supabaseAdmin.from("leads").update({ tags: tagsNeedsShipping }).eq("id", leadId);
+          }
+        } else {
+          shippo = { ok: false };
+          const tagsNeedsShipping = mergeTags(baseTags, ["needs_shipping"]);
+          await supabaseAdmin.from("leads").update({ tags: tagsNeedsShipping }).eq("id", leadId);
+        }
+      } else {
+        // Digital product or already has label: just persist payment state (best-effort).
+        try {
+          await supabaseAdmin
+            .from("leads")
+            .update({
+              tags: baseTags,
+              payment_provider: "stripe",
+              payment_id: sessionId,
+              paid_at: new Date().toISOString(),
+            })
+            .eq("id", leadId);
+        } catch {
+          await supabaseAdmin.from("leads").update({ tags: baseTags }).eq("id", leadId);
+        }
+      }
+
+      return new Response(JSON.stringify({ ok: true, paid: true, shippo }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    } catch {
+      return new Response(JSON.stringify({ error: "Stripe verify failed" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+  }
+
+  // action: "create"
   if (!product || !(product in PRODUCTS)) {
     return new Response(JSON.stringify({ error: "Invalid product" }), {
       status: 400,
@@ -316,16 +591,12 @@ Deno.serve(async (req) => {
 
   const siteOrigin = getSafeSiteOrigin(req);
   const { successPath, cancelPath } = getRedirectPaths(productKey);
-  const successUrl = `${siteOrigin}${successPath}${successPath.includes("?") ? "&" : "?"}session_id={CHECKOUT_SESSION_ID}`;
-  const cancelUrl = `${siteOrigin}${cancelPath}${cancelPath.includes("?") ? "&" : "?"}canceled=1`;
-
-  const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-    auth: { persistSession: false },
-  });
+  const successUrl = `${siteOrigin}${successPath}${successPath.includes("?") ? "&" : "?"}lead_id=${encodeURIComponent(leadId)}&product=${encodeURIComponent(productKey)}&provider=stripe&session_id={CHECKOUT_SESSION_ID}`;
+  const cancelUrl = `${siteOrigin}${cancelPath}${cancelPath.includes("?") ? "&" : "?"}lead_id=${encodeURIComponent(leadId)}&product=${encodeURIComponent(productKey)}&provider=stripe&canceled=1`;
 
   const { data: lead, error: leadError } = await supabaseAdmin
     .from("leads")
-    .select("id,email,name,source,tags")
+    .select("id,email,name,phone,source,tags")
     .eq("id", leadId)
     .maybeSingle();
 
@@ -372,11 +643,19 @@ Deno.serve(async (req) => {
       form,
     });
 
+    // Track checkout started (best-effort).
+    try {
+      const nextTags = mergeTags(lead.tags, ["stripe_checkout"]);
+      await supabaseAdmin.from("leads").update({ tags: nextTags }).eq("id", leadId);
+    } catch {
+      // ignore
+    }
+
     return new Response(JSON.stringify({ ok: true, sessionId: session.id, url: session.url }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (err) {
+  } catch {
     console.error("[Stripe] Error creating checkout session");
     return new Response(JSON.stringify({ error: "Checkout creation failed" }), {
       status: 500,
@@ -384,4 +663,3 @@ Deno.serve(async (req) => {
     });
   }
 });
-

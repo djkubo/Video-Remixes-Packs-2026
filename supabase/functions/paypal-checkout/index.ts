@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { createShippoLabel, getShippoFromAddress, getShippoToken, type ShippoAddress } from "../_shared/shippo.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -65,6 +66,58 @@ const PRODUCTS: Record<ProductKey, ProductConfig> = {
     shippingPreference: "NO_SHIPPING",
   },
 };
+
+function isShippingProduct(product: ProductKey): boolean {
+  return PRODUCTS[product].shippingPreference === "GET_FROM_FILE";
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function buildShippoToAddress(args: {
+  lead: { name: string; email: string; phone: string };
+  orderInfo: Record<string, unknown>;
+}): ShippoAddress | null {
+  const purchaseUnits = Array.isArray(args.orderInfo.purchase_units)
+    ? (args.orderInfo.purchase_units as unknown[])
+    : [];
+  const pu0 = purchaseUnits[0];
+  if (!isRecord(pu0)) return null;
+
+  const shipping = pu0.shipping;
+  if (!isRecord(shipping)) return null;
+
+  const shippingNameObj = shipping.name;
+  const fullName =
+    isRecord(shippingNameObj) && typeof shippingNameObj.full_name === "string"
+      ? shippingNameObj.full_name
+      : args.lead.name;
+
+  const addr = shipping.address;
+  if (!isRecord(addr)) return null;
+
+  const street1 = typeof addr.address_line_1 === "string" ? addr.address_line_1 : "";
+  const street2 = typeof addr.address_line_2 === "string" ? addr.address_line_2 : "";
+  const city = typeof addr.admin_area_2 === "string" ? addr.admin_area_2 : "";
+  const state = typeof addr.admin_area_1 === "string" ? addr.admin_area_1 : "";
+  const zip = typeof addr.postal_code === "string" ? addr.postal_code : "";
+  const country = typeof addr.country_code === "string" ? addr.country_code : "";
+
+  if (!fullName || !street1 || !city || !state || !zip || !country) return null;
+
+  return {
+    name: fullName,
+    street1,
+    street2: street2 || undefined,
+    city,
+    state,
+    zip,
+    country,
+    phone: args.lead.phone,
+    email: args.lead.email,
+  };
+}
 
 function parseAmountCents(value: string | null | undefined): number | null {
   if (!value) return null;
@@ -407,6 +460,10 @@ Deno.serve(async (req) => {
     const purchaseUnits = Array.isArray(orderInfo.json.purchase_units)
       ? (orderInfo.json.purchase_units as unknown[])
       : [];
+    const referenceId = (() => {
+      const pu0 = purchaseUnits[0] as Record<string, unknown> | undefined;
+      return typeof pu0?.reference_id === "string" ? (pu0.reference_id as string) : "";
+    })();
     const customId = (() => {
       const pu0 = purchaseUnits[0] as Record<string, unknown> | undefined;
       return typeof pu0?.custom_id === "string" ? (pu0.custom_id as string) : "";
@@ -439,22 +496,117 @@ Deno.serve(async (req) => {
     const completed = status.toUpperCase() === "COMPLETED";
 
     // Track successful payment in DB (best-effort).
+    let shippo: { ok: boolean; labelUrl?: string; trackingNumber?: string } | undefined;
+
     if (completed) {
       try {
         const { data: lead } = await supabaseAdmin
           .from("leads")
-          .select("tags")
+          .select("tags,name,email,phone")
           .eq("id", leadId)
           .maybeSingle();
 
-        const nextTags = mergeTags(lead?.tags, ["paid_paypal"]);
-        await supabaseAdmin.from("leads").update({ tags: nextTags }).eq("id", leadId);
+        const baseTags = mergeTags(lead?.tags, ["paid_paypal"]);
+
+        const parsedProduct = referenceId && referenceId in PRODUCTS
+          ? (referenceId as ProductKey)
+          : null;
+
+        // Auto-create a Shippo label for physical products (USBs) if Shippo is configured.
+        if (parsedProduct && isShippingProduct(parsedProduct)) {
+          const alreadyHasLabel =
+            baseTags.includes("shippo_label_created") || baseTags.includes("shippo_label");
+
+          if (!alreadyHasLabel && lead?.name && lead?.email && lead?.phone) {
+            const shippoToken = getShippoToken();
+            const fromAddress = getShippoFromAddress();
+            const toAddress = buildShippoToAddress({
+              lead: { name: lead.name, email: lead.email, phone: lead.phone },
+              orderInfo: orderInfo.json,
+            });
+
+            if (shippoToken && fromAddress && toAddress) {
+              try {
+                const label = await createShippoLabel({
+                  token: shippoToken,
+                  fromAddress,
+                  toAddress,
+                  metadata: {
+                    lead_id: leadId,
+                    provider: "paypal",
+                    order_id: orderId,
+                    product: parsedProduct,
+                  },
+                });
+
+                shippo = {
+                  ok: true,
+                  labelUrl: label.labelUrl,
+                  trackingNumber: label.trackingNumber,
+                };
+
+                const tagsWithShippo = mergeTags(baseTags, [
+                  "shippo_label_created",
+                  "shippo_label",
+                ]);
+
+                // Persist details if the optional columns exist (best-effort).
+                try {
+                  await supabaseAdmin
+                    .from("leads")
+                    .update({
+                      tags: tagsWithShippo,
+                      payment_provider: "paypal",
+                      payment_id: orderId,
+                      paid_at: new Date().toISOString(),
+                      shipping_to: toAddress,
+                      shipping_label_url: label.labelUrl,
+                      shipping_tracking_number: label.trackingNumber,
+                      shipping_carrier: label.carrier || null,
+                      shipping_servicelevel: label.servicelevel || null,
+                      shipping_status: "label_created",
+                    })
+                    .eq("id", leadId);
+                } catch {
+                  await supabaseAdmin.from("leads").update({ tags: tagsWithShippo }).eq("id", leadId);
+                }
+              } catch {
+                shippo = { ok: false };
+                const tagsNeedsShipping = mergeTags(baseTags, ["needs_shipping"]);
+                await supabaseAdmin.from("leads").update({ tags: tagsNeedsShipping }).eq("id", leadId);
+              }
+            } else {
+              shippo = { ok: false };
+              const tagsNeedsShipping = mergeTags(baseTags, ["needs_shipping"]);
+              await supabaseAdmin.from("leads").update({ tags: tagsNeedsShipping }).eq("id", leadId);
+            }
+          } else {
+            // Nothing to do (already has label or missing lead info).
+            const nextTags = mergeTags(baseTags, []);
+            await supabaseAdmin.from("leads").update({ tags: nextTags }).eq("id", leadId);
+          }
+        } else {
+          // Digital product: just store payment state (best-effort).
+          try {
+            await supabaseAdmin
+              .from("leads")
+              .update({
+                tags: baseTags,
+                payment_provider: "paypal",
+                payment_id: orderId,
+                paid_at: new Date().toISOString(),
+              })
+              .eq("id", leadId);
+          } catch {
+            await supabaseAdmin.from("leads").update({ tags: baseTags }).eq("id", leadId);
+          }
+        }
       } catch {
         // ignore
       }
     }
 
-    return new Response(JSON.stringify({ ok: true, status, completed }), {
+    return new Response(JSON.stringify({ ok: true, status, completed, shippo }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
@@ -465,4 +617,3 @@ Deno.serve(async (req) => {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 });
-
