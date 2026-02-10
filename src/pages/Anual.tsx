@@ -219,6 +219,29 @@ export default function Anual() {
         }
 
         setIsJoinOpen(false);
+
+        // Try to redirect to Stripe Checkout (if configured). If not, fallback to thank-you.
+        try {
+          const { data: checkout, error: checkoutError } = await supabase.functions.invoke(
+            "stripe-checkout",
+            {
+              body: { leadId, product: "anual" },
+            }
+          );
+
+          if (checkoutError && import.meta.env.DEV) {
+            console.warn("Stripe checkout error:", checkoutError);
+          }
+
+          const url = (checkout as { url?: unknown } | null)?.url;
+          if (typeof url === "string" && url.length > 0) {
+            window.location.assign(url);
+            return;
+          }
+        } catch (stripeErr) {
+          if (import.meta.env.DEV) console.warn("Stripe invoke threw:", stripeErr);
+        }
+
         navigate("/anual/gracias");
       } catch (err) {
         console.error("ANUAL lead submit error:", err);
@@ -903,4 +926,3 @@ export default function Anual() {
     </main>
   );
 }
-

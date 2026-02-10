@@ -221,8 +221,30 @@ export default function Usb128() {
           if (import.meta.env.DEV) console.warn("ManyChat sync threw:", syncErr);
         }
 
-        // Close modal and go to thank-you page.
         setIsOrderOpen(false);
+
+        // Try to redirect to Stripe Checkout (if configured). If not, fallback to thank-you.
+        try {
+          const { data: checkout, error: checkoutError } = await supabase.functions.invoke(
+            "stripe-checkout",
+            {
+              body: { leadId, product: "usb128" },
+            }
+          );
+
+          if (checkoutError && import.meta.env.DEV) {
+            console.warn("Stripe checkout error:", checkoutError);
+          }
+
+          const url = (checkout as { url?: unknown } | null)?.url;
+          if (typeof url === "string" && url.length > 0) {
+            window.location.assign(url);
+            return;
+          }
+        } catch (stripeErr) {
+          if (import.meta.env.DEV) console.warn("Stripe invoke threw:", stripeErr);
+        }
+
         navigate("/usb128/gracias");
       } catch (err) {
         console.error("USB128 lead submit error:", err);

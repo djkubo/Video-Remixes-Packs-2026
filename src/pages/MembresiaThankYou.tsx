@@ -20,6 +20,7 @@ export default function MembresiaThankYou() {
   const [params] = useSearchParams();
 
   const plan = params.get("plan");
+  const hasStripeSession = Boolean(params.get("session_id"));
   const paymentUrl = getPaymentUrl(plan);
 
   return (
@@ -45,16 +46,26 @@ export default function MembresiaThankYou() {
           </h1>
 
           <p className="text-lg text-muted-foreground mb-8">
-            {language === "es"
-              ? "Ya registramos tus datos. En breve te enviaremos por WhatsApp el acceso y el link de pago (si aplica)."
-              : "We’ve registered your details. You’ll receive access and the payment link (if applicable) via WhatsApp shortly."}
+            {hasStripeSession
+              ? language === "es"
+                ? "Pago recibido. En breve te enviaremos por WhatsApp (y/o email) tu acceso a la membresía."
+                : "Payment received. You’ll receive your membership access via WhatsApp (and/or email) shortly."
+              : language === "es"
+                ? "Ya registramos tus datos. En breve te enviaremos por WhatsApp el acceso y el link de pago (si aplica)."
+                : "We’ve registered your details. You’ll receive access and the payment link (if applicable) via WhatsApp shortly."}
           </p>
 
           <div className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-xl p-6 mb-8 text-left">
             <div className="flex items-center gap-3 mb-3">
               <MessageCircle className="w-6 h-6 text-green-500" />
               <span className="font-semibold">
-                {language === "es" ? "Revisa tu WhatsApp" : "Check your WhatsApp"}
+                {language === "es"
+                  ? hasStripeSession
+                    ? "Revisa tu WhatsApp y tu email"
+                    : "Revisa tu WhatsApp"
+                  : hasStripeSession
+                    ? "Check WhatsApp and email"
+                    : "Check your WhatsApp"}
               </span>
             </div>
             <p className="text-sm text-muted-foreground">

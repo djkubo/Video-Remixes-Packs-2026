@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, CheckCircle2, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,8 @@ const ANUAL_PAYMENT_URL = "";
 
 export default function AnualThankYou() {
   const { language } = useLanguage();
+  const [params] = useSearchParams();
+  const hasStripeSession = Boolean(params.get("session_id"));
 
   return (
     <main className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -34,16 +36,26 @@ export default function AnualThankYou() {
           </h1>
 
           <p className="text-lg text-muted-foreground mb-8">
-            {language === "es"
-              ? "Ya registramos tus datos para la Membresía Anual. En breve te enviaremos por WhatsApp el link de pago y el acceso."
-              : "We’ve registered your details for the Annual Membership. You’ll receive the payment link and access via WhatsApp shortly."}
+            {hasStripeSession
+              ? language === "es"
+                ? "Pago recibido. En breve te enviaremos por WhatsApp (y/o email) tu acceso a la Membresía Anual."
+                : "Payment received. You’ll receive your Annual Membership access via WhatsApp (and/or email) shortly."
+              : language === "es"
+                ? "Ya registramos tus datos para la Membresía Anual. En breve te enviaremos por WhatsApp el link de pago y el acceso."
+                : "We’ve registered your details for the Annual Membership. You’ll receive the payment link and access via WhatsApp shortly."}
           </p>
 
           <div className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-xl p-6 mb-8 text-left">
             <div className="flex items-center gap-3 mb-3">
               <MessageCircle className="w-6 h-6 text-green-500" />
               <span className="font-semibold">
-                {language === "es" ? "Revisa tu WhatsApp" : "Check your WhatsApp"}
+                {language === "es"
+                  ? hasStripeSession
+                    ? "Revisa tu WhatsApp y tu email"
+                    : "Revisa tu WhatsApp"
+                  : hasStripeSession
+                    ? "Check WhatsApp and email"
+                    : "Check your WhatsApp"}
               </span>
             </div>
             <p className="text-sm text-muted-foreground">
@@ -74,4 +86,3 @@ export default function AnualThankYou() {
     </main>
   );
 }
-

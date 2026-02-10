@@ -98,7 +98,7 @@ const PLAN_DETAILS: Record<
     tags: ["membresia", "plan_1tb_mensual"],
   },
   plan_2tb_anual: {
-    label: "Plan 2 TB / Mes",
+    label: "Plan 2 TB / Año",
     priceLabel: "$195 anual",
     tags: ["membresia", "plan_2tb_anual"],
   },
@@ -256,6 +256,29 @@ export default function Membresia() {
         }
 
         setIsJoinOpen(false);
+
+        // Try to redirect to Stripe Checkout (if configured). If not, fallback to thank-you.
+        try {
+          const { data: checkout, error: checkoutError } = await supabase.functions.invoke(
+            "stripe-checkout",
+            {
+              body: { leadId, product: selectedPlan },
+            }
+          );
+
+          if (checkoutError && import.meta.env.DEV) {
+            console.warn("Stripe checkout error:", checkoutError);
+          }
+
+          const url = (checkout as { url?: unknown } | null)?.url;
+          if (typeof url === "string" && url.length > 0) {
+            window.location.assign(url);
+            return;
+          }
+        } catch (stripeErr) {
+          if (import.meta.env.DEV) console.warn("Stripe invoke threw:", stripeErr);
+        }
+
         navigate(`/membresia/gracias?plan=${encodeURIComponent(selectedPlan)}`);
       } catch (err) {
         console.error("MEMBRESIA lead submit error:", err);
@@ -745,4 +768,3 @@ export default function Membresia() {
     </main>
   );
 }
-
