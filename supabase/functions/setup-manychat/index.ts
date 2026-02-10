@@ -121,7 +121,15 @@ Deno.serve(async (req) => {
     }
 
     // Create tags
-    const tags = ['exit_intent', 'demo_request', 'website_lead', 'dj_prospect', 'free_demos'];
+    const tags = [
+      'exit_intent',
+      'demo_request',
+      'website_lead',
+      'dj_prospect',
+      'free_demos',
+      'gratis',
+      'whatsapp_group',
+    ];
 
     console.log('Creating tags...');
 

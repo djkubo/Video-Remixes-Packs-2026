@@ -189,11 +189,13 @@ export default function ExitIntentPopup() {
 
 	    try {
 	      const cleanPhone = cleanPhoneInput;
+	      const leadId = crypto.randomUUID();
 
       // Insert lead into database
-      const { data: lead, error: insertError } = await supabase
+      const { error: insertError } = await supabase
         .from("leads")
         .insert({
+          id: leadId,
           name: formData.name.trim(),
           email: formData.email.trim().toLowerCase(),
           phone: cleanPhone,
@@ -201,16 +203,11 @@ export default function ExitIntentPopup() {
           country_name: countryData.country_name,
           source: "exit_intent",
           tags: ["exit_intent", "demo_request"],
-        })
-        .select()
-        .single();
+        });
 
       if (insertError) {
         console.error("Error inserting lead:", insertError);
         throw insertError;
-      }
-      if (!lead?.id) {
-        throw new Error("Lead insert did not return an id");
       }
 
       // Track form submission
@@ -220,7 +217,7 @@ export default function ExitIntentPopup() {
       // Sync with ManyChat via edge function
       try {
         const { error: syncError } = await supabase.functions.invoke("sync-manychat", {
-          body: { leadId: lead.id },
+          body: { leadId },
         });
 
         if (syncError) {

@@ -355,7 +355,9 @@ Deno.serve(async (req) => {
       }
 
       // Add tags
-      const allTags = [...new Set(['exit_intent', 'demo_request', 'website_lead', ...(lead.tags || [])])];
+      // Keep tagging source-driven and avoid hard-coding exit-intent tags for all leads.
+      const baseTags = ['website_lead'];
+      const allTags = [...new Set([...baseTags, ...(lead.tags || [])])];
       for (const tag of allTags) {
         await callManyChatAPI(
           'subscriber/addTag',

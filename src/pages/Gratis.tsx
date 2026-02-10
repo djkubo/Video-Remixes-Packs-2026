@@ -68,10 +68,10 @@ function isValidEmail(email: string): boolean {
   return emailRegex.test(email);
 }
 
-function normalizePhoneInput(input: string): { raw: string; digits: string } {
-  const raw = input.trim();
-  const digits = raw.replace(/[^\d]/g, "");
-  return { raw, digits };
+function normalizePhoneInput(input: string): { clean: string; digits: string } {
+  const clean = input.trim().replace(/[\s().-]/g, "");
+  const digits = clean.startsWith("+") ? clean.slice(1) : clean;
+  return { clean, digits };
 }
 
 export default function Gratis() {
@@ -144,9 +144,9 @@ export default function Gratis() {
       const firstName = formData.firstName.trim();
       const lastName = formData.lastName.trim();
       const email = formData.email.trim().toLowerCase();
-      const { raw: rawPhone, digits: phoneDigits } = normalizePhoneInput(formData.phone);
+      const { clean: cleanPhone, digits: phoneDigits } = normalizePhoneInput(formData.phone);
 
-      if (!firstName || !lastName || !email || !rawPhone) {
+      if (!firstName || !lastName || !email || !cleanPhone) {
         toast({
           title: language === "es" ? "Campos requeridos" : "Required fields",
           description:
@@ -186,30 +186,29 @@ export default function Gratis() {
       setIsSubmitting(true);
       try {
         const fullName = `${firstName} ${lastName}`.trim();
+        const leadId = crypto.randomUUID();
 
-        const { data: lead, error: insertError } = await supabase
+        const { error: insertError } = await supabase
           .from("leads")
           .insert({
+            id: leadId,
             name: fullName,
             email,
-            phone: rawPhone,
+            phone: cleanPhone,
             country_code: countryData.dial_code,
             country_name: countryData.country_name,
             source: "gratis",
             tags: ["gratis", "whatsapp_group"],
-          })
-          .select()
-          .single();
+          });
 
         if (insertError) throw insertError;
-        if (!lead?.id) throw new Error("Lead insert did not return an id");
 
         trackFormSubmit("gratis_whatsapp_join");
-        trackEvent("gratis_join_submit", { lead_id: lead.id });
+        trackEvent("gratis_join_submit", { lead_id: leadId });
 
         try {
           const { error: syncError } = await supabase.functions.invoke("sync-manychat", {
-            body: { leadId: lead.id },
+            body: { leadId },
           });
           if (syncError && import.meta.env.DEV) {
             console.warn("ManyChat sync error:", syncError);
