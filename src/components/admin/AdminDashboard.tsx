@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import { es, enUS } from "date-fns/locale";
 import {
+  Copy,
   Users,
   Eye,
   MousePointer,
@@ -15,7 +16,10 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -45,6 +49,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
+import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const COLORS = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#8b5cf6"];
@@ -55,9 +60,20 @@ interface Lead {
   email: string;
   phone: string;
   country_name: string | null;
+  tags?: string[] | null;
   source: string | null;
   created_at: string;
   manychat_synced: boolean | null;
+  manychat_subscriber_id?: string | null;
+  payment_provider?: string | null;
+  payment_id?: string | null;
+  paid_at?: string | null;
+  shipping_to?: unknown;
+  shipping_label_url?: string | null;
+  shipping_tracking_number?: string | null;
+  shipping_carrier?: string | null;
+  shipping_servicelevel?: string | null;
+  shipping_status?: string | null;
 }
 
 interface AnalyticsSummary {
@@ -90,9 +106,13 @@ interface SourceBreakdown {
 export default function AdminDashboard() {
   const { t, language } = useLanguage();
   const dateLocale = language === "es" ? es : enUS;
+  const { toast } = useToast();
   
   const [dateRange, setDateRange] = useState("7");
   const [activeTab, setActiveTab] = useState<"overview" | "sources" | "leads" | "events">("overview");
+  const [leadSearch, setLeadSearch] = useState("");
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [resyncingLeadId, setResyncingLeadId] = useState<string | null>(null);
 
   const { startDate, endDate } = useMemo(() => {
     const days = Math.max(1, Number.parseInt(dateRange, 10) || 7);
@@ -104,6 +124,142 @@ export default function AdminDashboard() {
 
   const fmtInt = (value: number | null | undefined): string => {
     return typeof value === "number" ? value.toLocaleString() : "—";
+  };
+
+  const copyToClipboard = async (value: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      toast({
+        title: language === "es" ? "Copiado" : "Copied",
+        description: language === "es" ? "Se copió al portapapeles." : "Copied to clipboard.",
+      });
+    } catch {
+      toast({
+        title: language === "es" ? "No se pudo copiar" : "Copy failed",
+        description:
+          language === "es"
+            ? "No se pudo copiar al portapapeles."
+            : "Unable to copy to clipboard.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const resyncManyChat = async (leadId: string) => {
+    if (!leadId) return;
+    if (resyncingLeadId) return;
+
+    setResyncingLeadId(leadId);
+    try {
+      const { data, error } = await supabase.functions.invoke("sync-manychat", {
+        body: { leadId },
+      });
+
+      if (error) throw error;
+
+      const ok = Boolean((data as { success?: unknown } | null)?.success);
+      toast({
+        title: language === "es" ? "ManyChat" : "ManyChat",
+        description: ok
+          ? language === "es"
+            ? "Sincronización completada."
+            : "Sync completed."
+          : language === "es"
+            ? "No se pudo sincronizar."
+            : "Unable to sync.",
+        variant: ok ? "default" : "destructive",
+      });
+    } catch (err) {
+      console.error("ManyChat resync error:", err);
+      toast({
+        title: language === "es" ? "Error" : "Error",
+        description:
+          language === "es"
+            ? "No se pudo sincronizar con ManyChat."
+            : "Could not sync with ManyChat.",
+        variant: "destructive",
+      });
+    } finally {
+      setResyncingLeadId(null);
+    }
+  };
+
+  const renderTags = (tags: string[] | null | undefined) => {
+    const list = Array.isArray(tags) ? tags : [];
+    if (!list.length) return <span className="text-muted-foreground">—</span>;
+
+    const sorted = [...list].sort();
+    const visible = sorted.slice(0, 4);
+    const extra = sorted.length - visible.length;
+
+    return (
+      <div className="flex flex-wrap gap-1 max-w-[260px]">
+        {visible.map((tag) => (
+          <Badge
+            key={tag}
+            variant="outline"
+            className="border-border/60 bg-card/40 px-2 py-0.5 text-[10px] text-muted-foreground"
+          >
+            {tag}
+          </Badge>
+        ))}
+        {extra > 0 ? (
+          <Badge
+            variant="secondary"
+            className="px-2 py-0.5 text-[10px]"
+          >
+            +{extra}
+          </Badge>
+        ) : null}
+      </div>
+    );
+  };
+
+  const renderPayment = (lead: Lead) => {
+    const paidAt = lead.paid_at ? new Date(lead.paid_at) : null;
+    const provider = (lead.payment_provider || "").toUpperCase();
+    const isPaid = Boolean(paidAt);
+
+    return (
+      <div className="space-y-1">
+        <div className="flex items-center gap-2">
+          <Badge
+            variant={isPaid ? "default" : "outline"}
+            className={isPaid ? "bg-green-600 hover:bg-green-600" : ""}
+          >
+            {isPaid ? (language === "es" ? "PAGADO" : "PAID") : (language === "es" ? "PENDIENTE" : "PENDING")}
+          </Badge>
+          {provider ? (
+            <span className="text-xs text-muted-foreground">{provider}</span>
+          ) : null}
+        </div>
+        {paidAt ? (
+          <p className="text-xs text-muted-foreground">
+            {format(paidAt, "dd MMM yyyy HH:mm", { locale: dateLocale })}
+          </p>
+        ) : null}
+      </div>
+    );
+  };
+
+  const renderShipping = (lead: Lead) => {
+    const status = (lead.shipping_status || "").trim();
+    const tracking = (lead.shipping_tracking_number || "").trim();
+
+    if (!status && !tracking) {
+      return <span className="text-muted-foreground">—</span>;
+    }
+
+    return (
+      <div className="space-y-1">
+        {status ? (
+          <p className="text-xs font-medium">{status}</p>
+        ) : null}
+        {tracking ? (
+          <p className="text-xs text-muted-foreground">{tracking}</p>
+        ) : null}
+      </div>
+    );
   };
 
   // Fetch leads
@@ -126,6 +282,31 @@ export default function AdminDashboard() {
       return data as Lead[];
     },
   });
+
+  const filteredLeads = useMemo(() => {
+    const normalize = (value: unknown): string =>
+      String(value ?? "").toLowerCase().trim();
+
+    if (!leads?.length) return [];
+    const q = normalize(leadSearch);
+    if (!q) return leads;
+
+    return leads.filter((lead) => {
+      const hay = [
+        lead.name,
+        lead.email,
+        lead.phone,
+        lead.country_name || "",
+        lead.source || "",
+        (lead.tags || []).join(" "),
+        lead.payment_provider || "",
+        lead.shipping_status || "",
+        lead.shipping_tracking_number || "",
+      ].map(normalize).join(" | ");
+
+      return hay.includes(q);
+    });
+  }, [leadSearch, leads]);
 
   // Fetch analytics summary via RPC (optimized - no raw data download)
   const {
@@ -243,17 +424,40 @@ export default function AdminDashboard() {
   };
 
   const exportLeadsCSV = () => {
-    if (!leads?.length) return;
+    if (!filteredLeads?.length) return;
     
-    const headers = [t("admin.dashboard.name"), t("admin.dashboard.email"), t("admin.dashboard.phone"), t("admin.dashboard.country"), t("admin.dashboard.source"), t("admin.dashboard.date"), "ManyChat Sync"];
-    const rows = leads.map(lead => [
+    const headers = [
+      t("admin.dashboard.name"),
+      t("admin.dashboard.email"),
+      t("admin.dashboard.phone"),
+      t("admin.dashboard.country"),
+      t("admin.dashboard.source"),
+      "Tags",
+      "Payment Provider",
+      "Paid At",
+      "Shipping Status",
+      "Tracking",
+      t("admin.dashboard.date"),
+      "ManyChat Sync",
+      "ManyChat Subscriber ID",
+      "Lead ID",
+    ];
+
+    const rows = filteredLeads.map((lead) => [
       lead.name,
       lead.email,
       lead.phone,
       lead.country_name || "",
       lead.source || "",
+      (lead.tags || []).join("|"),
+      lead.payment_provider || "",
+      lead.paid_at ? format(new Date(lead.paid_at), "yyyy-MM-dd HH:mm") : "",
+      lead.shipping_status || "",
+      lead.shipping_tracking_number || "",
       format(new Date(lead.created_at), "dd/MM/yyyy HH:mm"),
       lead.manychat_synced ? t("admin.dashboard.yes") : t("admin.dashboard.no"),
+      lead.manychat_subscriber_id || "",
+      lead.id,
     ]);
 
     const sanitizeForSpreadsheet = (value: string): string => {
@@ -694,14 +898,32 @@ export default function AdminDashboard() {
       {/* Leads Tab */}
       {activeTab === "leads" && (
         <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <p className="text-muted-foreground">
-              {leads?.length || 0} {t("admin.dashboard.leadsInPeriod")}
-            </p>
-            <Button variant="outline" onClick={exportLeadsCSV} disabled={!leads?.length}>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <p className="text-muted-foreground">
+                {filteredLeads.length} {t("admin.dashboard.leadsInPeriod")}
+              </p>
+              {leads?.length ? (
+                <p className="text-xs text-muted-foreground">
+                  {language === "es"
+                    ? `Mostrando ${filteredLeads.length} de ${leads.length}`
+                    : `Showing ${filteredLeads.length} of ${leads.length}`}
+                </p>
+              ) : null}
+            </div>
+
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Input
+                value={leadSearch}
+                onChange={(e) => setLeadSearch(e.target.value)}
+                placeholder={language === "es" ? "Buscar lead..." : "Search lead..."}
+                className="w-full sm:w-72"
+              />
+              <Button variant="outline" onClick={exportLeadsCSV} disabled={!filteredLeads.length}>
               <Download className="w-4 h-4 mr-2" />
               {t("admin.dashboard.exportCSV")}
             </Button>
+          </div>
           </div>
 
           <Card>
@@ -713,26 +935,38 @@ export default function AdminDashboard() {
                   <TableHead>{t("admin.dashboard.phone")}</TableHead>
                   <TableHead>{t("admin.dashboard.country")}</TableHead>
                   <TableHead>{t("admin.dashboard.source")}</TableHead>
+                  <TableHead>{language === "es" ? "Pago" : "Payment"}</TableHead>
+                  <TableHead>{language === "es" ? "Envío" : "Shipping"}</TableHead>
+                  <TableHead>Tags</TableHead>
                   <TableHead>{t("admin.dashboard.date")}</TableHead>
                   <TableHead>ManyChat</TableHead>
+                  <TableHead className="text-right">{language === "es" ? "Acciones" : "Actions"}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {leadsLoading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
+                    <TableCell colSpan={11} className="text-center py-8">
                       {t("admin.dashboard.loading")}
                     </TableCell>
                   </TableRow>
-                ) : leads?.length === 0 ? (
+                ) : filteredLeads.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                      {t("admin.dashboard.noLeads")}
+                    <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
+                      {leadSearch
+                        ? language === "es"
+                          ? "No hay resultados para tu búsqueda."
+                          : "No results for your search."
+                        : t("admin.dashboard.noLeads")}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  leads?.map((lead) => (
-                    <TableRow key={lead.id}>
+                  filteredLeads.map((lead) => (
+                    <TableRow
+                      key={lead.id}
+                      className="cursor-pointer"
+                      onClick={() => setSelectedLead(lead)}
+                    >
                       <TableCell className="font-medium">{lead.name}</TableCell>
                       <TableCell>{lead.email}</TableCell>
                       <TableCell>{lead.phone}</TableCell>
@@ -742,6 +976,9 @@ export default function AdminDashboard() {
                           {lead.source || "exit_intent"}
                         </span>
                       </TableCell>
+                      <TableCell>{renderPayment(lead)}</TableCell>
+                      <TableCell>{renderShipping(lead)}</TableCell>
+                      <TableCell>{renderTags(lead.tags)}</TableCell>
                       <TableCell className="text-muted-foreground">
                         {format(new Date(lead.created_at), "dd MMM yyyy HH:mm", { locale: dateLocale })}
                       </TableCell>
@@ -752,12 +989,156 @@ export default function AdminDashboard() {
                           <span className="text-muted-foreground">—</span>
                         )}
                       </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              void resyncManyChat(lead.id);
+                            }}
+                            disabled={Boolean(resyncingLeadId)}
+                          >
+                            {resyncingLeadId === lead.id
+                              ? language === "es"
+                                ? "Sincronizando..."
+                                : "Syncing..."
+                              : language === "es"
+                                ? "Re-sync"
+                                : "Re-sync"}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              void copyToClipboard(lead.id);
+                            }}
+                          >
+                            <Copy className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
               </TableBody>
             </Table>
           </Card>
+
+          <Dialog open={Boolean(selectedLead)} onOpenChange={(open) => !open && setSelectedLead(null)}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>
+                  {language === "es" ? "Detalle del lead" : "Lead details"}
+                </DialogTitle>
+              </DialogHeader>
+
+              {selectedLead ? (
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-xs text-muted-foreground">{t("admin.dashboard.name")}</p>
+                      <p className="font-medium">{selectedLead.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">{t("admin.dashboard.email")}</p>
+                      <p className="font-medium break-all">{selectedLead.email}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">{t("admin.dashboard.phone")}</p>
+                      <p className="font-medium">{selectedLead.phone}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">{t("admin.dashboard.country")}</p>
+                      <p className="font-medium">{selectedLead.country_name || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">{t("admin.dashboard.source")}</p>
+                      <p className="font-medium">{selectedLead.source || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">{t("admin.dashboard.date")}</p>
+                      <p className="font-medium">
+                        {format(new Date(selectedLead.created_at), "dd MMM yyyy HH:mm", { locale: dateLocale })}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        {language === "es" ? "Pago" : "Payment"}
+                      </p>
+                      {renderPayment(selectedLead)}
+                      {selectedLead.payment_id ? (
+                        <div className="text-xs text-muted-foreground break-all">
+                          {language === "es" ? "ID:" : "ID:"} {selectedLead.payment_id}
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        {language === "es" ? "Envío" : "Shipping"}
+                      </p>
+                      {renderShipping(selectedLead)}
+                      {selectedLead.shipping_label_url ? (
+                        <a
+                          href={selectedLead.shipping_label_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-primary underline"
+                        >
+                          {language === "es" ? "Ver etiqueta" : "View label"}
+                        </a>
+                      ) : null}
+                    </div>
+
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground">Tags</p>
+                      {renderTags(selectedLead.tags)}
+                    </div>
+
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground">ManyChat</p>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={selectedLead.manychat_synced ? "default" : "outline"}>
+                          {selectedLead.manychat_synced
+                            ? language === "es" ? "Sincronizado" : "Synced"
+                            : language === "es" ? "No" : "No"}
+                        </Badge>
+                        {selectedLead.manychat_subscriber_id ? (
+                          <span className="text-xs text-muted-foreground break-all">
+                            {selectedLead.manychat_subscriber_id}
+                          </span>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+                      <Button
+                        variant="outline"
+                        onClick={() => void copyToClipboard(selectedLead.id)}
+                      >
+                        <Copy className="w-4 h-4 mr-2" />
+                        {language === "es" ? "Copiar Lead ID" : "Copy Lead ID"}
+                      </Button>
+                      <Button
+                        onClick={() => void resyncManyChat(selectedLead.id)}
+                        disabled={Boolean(resyncingLeadId)}
+                      >
+                        {resyncingLeadId === selectedLead.id
+                          ? language === "es" ? "Sincronizando..." : "Syncing..."
+                          : language === "es" ? "Re-sync ManyChat" : "Re-sync ManyChat"}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </DialogContent>
+          </Dialog>
         </div>
       )}
 
