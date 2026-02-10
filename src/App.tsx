@@ -17,6 +17,8 @@ import Usb128 from "./pages/Usb128";
 import Usb128ThankYou from "./pages/Usb128ThankYou";
 import Usb500gb from "./pages/Usb500gb";
 import Usb500gbThankYou from "./pages/Usb500gbThankYou";
+import Anual from "./pages/Anual";
+import AnualThankYou from "./pages/AnualThankYou";
 import AdminLogin from "./pages/AdminLogin";
 import AdminMusic from "./pages/AdminMusic";
 import Admin from "./pages/Admin";
@@ -36,18 +38,29 @@ const App = () => {
                 <Sonner />
                 <BrowserRouter>
                   <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/gratis" element={<Gratis />} />
-                  <Route path="/gratis/gracias" element={<GratisThankYou />} />
-                  <Route path="/usb128" element={<Usb128 />} />
-                  <Route path="/usb128/gracias" element={<Usb128ThankYou />} />
-                  <Route path="/usb-500gb" element={<Usb500gb />} />
-                  <Route path="/usb-500gb/gracias" element={<Usb500gbThankYou />} />
-                  <Route path="/gracias" element={<ThankYou />} />
-                  {import.meta.env.DEV && DevTestPopup && (
-                    <Route
-                      path="/test-popup"
-                      element={
+                    <Route path="/" element={<Index />} />
+
+                    <Route path="/gratis" element={<Gratis />} />
+                    <Route path="/gratis/gracias" element={<GratisThankYou />} />
+
+                    <Route path="/usb128" element={<Usb128 />} />
+                    <Route path="/usb128/gracias" element={<Usb128ThankYou />} />
+
+                    <Route path="/usb-500gb" element={<Usb500gb />} />
+                    <Route path="/usb-500gb/gracias" element={<Usb500gbThankYou />} />
+
+                    <Route path="/anual" element={<Anual />} />
+                    <Route path="/anual/gracias" element={<AnualThankYou />} />
+                    {/* Aliases requested by marketing (uppercase URLs) */}
+                    <Route path="/ANUAL" element={<Anual />} />
+                    <Route path="/ANUAL/gracias" element={<AnualThankYou />} />
+
+                    <Route path="/gracias" element={<ThankYou />} />
+
+                    {import.meta.env.DEV && DevTestPopup && (
+                      <Route
+                        path="/test-popup"
+                        element={
                           <Suspense fallback={null}>
                             <DevTestPopup />
                           </Suspense>
