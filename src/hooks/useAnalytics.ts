@@ -1,6 +1,11 @@
 import { useEffect, useRef, useCallback } from "react";
 import { supabase, supabaseAnonKey, supabaseUrl } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
+import { getEnabledExperimentIds } from "@/lib/croFlags";
+import {
+  getExperimentAssignments,
+  type ExperimentAssignment,
+} from "@/lib/experiments";
 
 type AnalyticsErrorLike = {
   code?: string;
@@ -202,6 +207,63 @@ interface AnalyticsEvent {
   page_path?: string;
 }
 
+type DeviceType = "mobile" | "tablet" | "desktop";
+
+function detectDeviceType(): DeviceType {
+  const width = window.innerWidth || 0;
+  const ua = navigator.userAgent.toLowerCase();
+
+  if (/ipad|tablet/.test(ua) || (width >= 768 && width <= 1024)) return "tablet";
+  if (/mobile|iphone|android/.test(ua) || width < 768) return "mobile";
+  return "desktop";
+}
+
+function detectLanguage(): "es" | "en" {
+  try {
+    const stored = localStorage.getItem("vrp-language");
+    if (stored === "es" || stored === "en") return stored;
+  } catch {
+    // Ignore read errors.
+  }
+  return document.documentElement.lang.startsWith("en") ? "en" : "es";
+}
+
+function inferFunnelStepFromPath(pathname: string): string {
+  if (pathname === "/" || pathname === "/trends") return "home";
+  if (pathname === "/membresia" || pathname === "/plan" || pathname === "/anual") return "pricing";
+  if (pathname === "/gratis" || pathname === "/usb128" || pathname === "/usb-500gb") return "lead_capture";
+  if (pathname === "/explorer" || pathname === "/genres") return "catalog";
+  if (pathname === "/help") return "support";
+  if (pathname === "/login") return "login";
+  if (pathname.endsWith("/gracias")) return "post_checkout";
+  return "browse";
+}
+
+function isExperimentAssignment(value: unknown): value is ExperimentAssignment {
+  if (!value || typeof value !== "object") return false;
+  const item = value as { id?: unknown; variant?: unknown; assignedAt?: unknown };
+  return (
+    typeof item.id === "string" &&
+    (item.variant === "A" || item.variant === "B") &&
+    typeof item.assignedAt === "string"
+  );
+}
+
+function normalizeExperimentAssignments(
+  value: unknown
+): ExperimentAssignment[] | null {
+  if (!Array.isArray(value)) return null;
+
+  const valid = value.filter(isExperimentAssignment);
+  if (valid.length === 0) return null;
+
+  return valid.map((item) => ({
+    id: item.id as ExperimentAssignment["id"],
+    variant: item.variant,
+    assignedAt: item.assignedAt,
+  }));
+}
+
 const MAX_QUEUE_SIZE = 500;
 const KEEPALIVE_FLUSH_LIMIT = 25;
 
@@ -231,6 +293,13 @@ export const useAnalytics = () => {
     utmParams.current = getUTMParams();
   }, []);
 
+  const ensureRuntimeContext = useCallback(() => {
+    if (!visitorId.current) visitorId.current = getVisitorId();
+    if (!sessionId.current) sessionId.current = getSessionId();
+    if (!countryCode.current) countryCode.current = detectCountryFromTimezone();
+    if (!utmParams.current.utm_source) utmParams.current = getUTMParams();
+  }, []);
+
   const disableAnalytics = useCallback((reason: string) => {
     isDisabled.current = true;
     eventQueue.current = [];
@@ -247,6 +316,14 @@ export const useAnalytics = () => {
   }, []);
 
   const buildRecord = useCallback((event: AnalyticsEvent) => {
+    ensureRuntimeContext();
+    const eventData =
+      event.event_data && typeof event.event_data === "object" && !Array.isArray(event.event_data)
+        ? (event.event_data as Record<string, unknown>)
+        : {};
+    const parsedAssignments =
+      normalizeExperimentAssignments(eventData.experiment_assignments) || [];
+
     return {
       event_name: event.event_name,
       event_data: (event.event_data || {}) as Json,
@@ -261,8 +338,14 @@ export const useAnalytics = () => {
       utm_campaign: utmParams.current.utm_campaign,
       utm_term: utmParams.current.utm_term,
       utm_content: utmParams.current.utm_content,
+      experiment_assignments: parsedAssignments as unknown as Json,
+      funnel_step: typeof eventData.funnel_step === "string" ? eventData.funnel_step : null,
+      cta_id: typeof eventData.cta_id === "string" ? eventData.cta_id : null,
+      plan_id: typeof eventData.plan_id === "string" ? eventData.plan_id : null,
+      device_type: typeof eventData.device_type === "string" ? eventData.device_type : null,
+      language: typeof eventData.language === "string" ? eventData.language : null,
     };
-  }, []);
+  }, [ensureRuntimeContext]);
 
   const processQueue = useCallback(async () => {
     if (isDisabled.current) return;
@@ -393,17 +476,58 @@ export const useAnalytics = () => {
 
   const trackEvent = useCallback((eventName: string, eventData?: Record<string, unknown>) => {
     if (isDisabled.current) return;
+
+    ensureRuntimeContext();
+
+    const data = eventData || {};
+    const pagePath =
+      typeof data.page_path === "string" && data.page_path.trim().length > 0
+        ? data.page_path
+        : window.location.pathname;
+    const ctaId =
+      typeof data.cta_id === "string" && data.cta_id.trim().length > 0
+        ? data.cta_id
+        : null;
+    const planId =
+      typeof data.plan_id === "string" && data.plan_id.trim().length > 0
+        ? data.plan_id
+        : null;
+    const funnelStep =
+      typeof data.funnel_step === "string" && data.funnel_step.trim().length > 0
+        ? data.funnel_step
+        : inferFunnelStepFromPath(pagePath);
+
+    const inlineAssignments = normalizeExperimentAssignments(data.experiment_assignments);
+    const experimentAssignments =
+      inlineAssignments || getExperimentAssignments(getEnabledExperimentIds());
+
+    const standardPayload = {
+      event_name: eventName,
+      page_path: pagePath,
+      session_id: sessionId.current,
+      visitor_id: visitorId.current,
+      experiment_assignments: experimentAssignments,
+      funnel_step: funnelStep,
+      cta_id: ctaId,
+      plan_id: planId,
+      device_type: detectDeviceType(),
+      language: detectLanguage(),
+    };
+
     eventQueue.current.push({
       event_name: eventName,
-      event_data: (eventData || {}) as Json,
-      page_path: window.location.pathname,
+      event_data: {
+        ...data,
+        ...standardPayload,
+      } as Json,
+      page_path: pagePath,
     });
 
     const overflow = eventQueue.current.length - MAX_QUEUE_SIZE;
     if (overflow > 0) {
       eventQueue.current.splice(0, overflow);
     }
-  }, []);
+  }, [ensureRuntimeContext]);
 
   const trackPageView = useCallback(() => {
     trackEvent("page_view", {

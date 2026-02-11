@@ -41,7 +41,7 @@ const NotFound = () => {
             </Link>
           </Button>
           <Button asChild size="lg" variant="outline" className="h-12 gap-2">
-            <Link to="/membresia">
+            <Link to="/plan">
               <Search className="h-4 w-4" />
               {language === "es" ? "Ver planes y precios" : "View plans & pricing"}
             </Link>

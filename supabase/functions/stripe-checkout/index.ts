@@ -85,7 +85,7 @@ const PRODUCTS: Record<ProductKey, ProductConfig> = {
     name: "Acceso Anual - Video Remixes Packs",
     description:
       "Acceso anual a la membresia Video Remix Packs (audio + video + karaoke).",
-    defaultAmountCents: 19700,
+    defaultAmountCents: 19500,
     envAmountKey: "STRIPE_ANUAL_AMOUNT_CENTS",
   },
   plan_1tb_mensual: {

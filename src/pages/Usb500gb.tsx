@@ -357,6 +357,9 @@ export default function Usb500gb() {
                     </Badge>
                   ))}
                 </div>
+                <p className="mt-3 text-xs text-muted-foreground">
+                  También puedes pagar en cuotas al finalizar tu compra.
+                </p>
               </div>
             </div>
           </div>
@@ -633,8 +636,8 @@ export default function Usb500gb() {
             </p>
 
             <p className="mt-3 font-display text-4xl font-black md:text-5xl">
-              ¡Estarías pagando fácilmente más de{" "}
-              <span className="text-gradient-red">$1000 USD!</span>
+              podrías perder{" "}
+              <span className="text-gradient-red">cientos de dólares</span> en tiempo operativo.
             </p>
 
             <p className="mt-5 text-sm text-muted-foreground">
@@ -751,6 +754,11 @@ export default function Usb500gb() {
                 {language === "es"
                   ? "Al continuar aceptas recibir información y soporte sobre tu pedido."
                   : "By continuing you agree to receive information and support about your order."}
+              </p>
+              <p className="text-center text-xs text-muted-foreground">
+                {language === "es"
+                  ? "Puedes darte de baja de mensajes promocionales en cualquier momento."
+                  : "You can opt out of promotional messages at any time."}
               </p>
             </form>
           </div>

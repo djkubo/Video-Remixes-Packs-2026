@@ -13,32 +13,36 @@ interface Translations {
 export const translations: Translations = {
   // Hero Section
   "hero.badge": {
-    es: "ACCESO 100% DIGITAL & INMEDIATO",
-    en: "100% DIGITAL • INSTANT ACCESS",
+    es: "COMUNIDAD + DEMOS GRATIS",
+    en: "COMMUNITY + FREE DEMOS",
   },
   "hero.title": {
-    es: "El Hub Definitivo del",
-    en: "The Ultimate",
+    es: "Únete al grupo de",
+    en: "Join the community of",
   },
   "hero.titleHighlight": {
-    es: "DJ Latino",
-    en: "Latin DJ Hub",
+    es: "DJs latinos",
+    en: "Latin DJs",
   },
   "hero.subtitle": {
-    es: "Deja de pagar 4 membresías. Centralizamos los mejores pools en un solo lugar.",
-    en: "Stop paying for 4 separate memberships. We aggregate the best pools into one destination.",
+    es: "Recibe música nueva cada semana y escucha demos por género antes de comprar.",
+    en: "Get new music every week and listen to genre demos before you buy.",
   },
   "hero.subtitleBold": {
-    es: "1TB de Descarga Masiva vía FTP.",
-    en: "1TB Bulk Downloads via FTP.",
+    es: "Sin spam. Todo en español. Todo listo para mezclar.",
+    en: "No spam. Fully in Spanish. Ready to mix.",
   },
   "hero.cta": {
-    es: "Ver Planes y Precios",
-    en: "View Plans & Pricing",
+    es: "Unirme gratis por WhatsApp",
+    en: "Join free on WhatsApp",
   },
-  "hero.stat1": { es: "Archivos Clean", en: "Clean Files" },
-  "hero.stat2": { es: "Géneros", en: "Genres" },
-  "hero.stat3": { es: "Descarga Mensual", en: "Monthly Download" },
+  "hero.ctaSecondary": {
+    es: "Escuchar demos",
+    en: "Listen to demos",
+  },
+  "hero.stat1": { es: "7,000+ DJs", en: "7,000+ DJs" },
+  "hero.stat2": { es: "50+ Géneros", en: "50+ Genres" },
+  "hero.stat3": { es: "Demos sin registro", en: "No-signup demos" },
 
   // Aggregator Section
   "aggregator.badge": { es: "MODELO AGREGADOR", en: "AGGREGATOR MODEL" },
@@ -234,44 +238,44 @@ export const translations: Translations = {
     en: "Everything you need to know before getting started",
   },
   "faq1.question": {
-    es: "¿Qué diferencia a VideoRemixesPacks de otros pools?",
-    en: "What makes VideoRemixesPacks different from other pools?",
+    es: "¿Cuánto cuesta cada opción?",
+    en: "How much does each option cost?",
   },
   "faq1.answer": {
-    es: "Somos un agregador. Nosotros pagamos las membresías de múltiples pools, filtramos el contenido, corregimos los tags y te lo entregamos limpio en un solo lugar. Tú pagas una sola suscripción y accedes a todo.",
-    en: "We're an aggregator. We pay for multiple pool memberships, filter the content, fix the metadata, and deliver it clean in one place. You pay one subscription and get access to everything.",
+    es: "Pack individual desde $35 USD, membresía desde $19.50/mes y USB física desde $147 USD.",
+    en: "Single packs start at $35 USD, membership starts at $19.50/month, and physical USB starts at $147 USD.",
   },
   "faq2.question": {
-    es: "¿Cómo funciona la descarga masiva?",
-    en: "How does bulk downloading work?",
+    es: "¿Cómo funciona?",
+    en: "How does it work?",
   },
   "faq2.answer": {
-    es: "Te damos acceso FTP directo. Conectas FileZilla o Air Explorer, seleccionas las carpetas que quieres y descargas todo de golpe. Puedes sincronizar hasta 1TB mensual mientras duermes.",
-    en: "We give you direct FTP access. Connect FileZilla or Air Explorer, select the folders you want, and download everything at once. You can sync up to 1TB monthly while you sleep.",
+    es: "Te unes al grupo, escuchas demos por género, eliges tu producto y recibes acceso o envío según tu compra.",
+    en: "You join the group, listen to genre demos, choose your product, and receive access or shipping based on your purchase.",
   },
   "faq3.question": {
-    es: "¿La música tiene sellos o voces de otros pools?",
-    en: "Do the files have pool logos or voice tags?",
+    es: "¿Qué géneros incluyen?",
+    en: "Which genres are included?",
   },
   "faq3.answer": {
-    es: "No. Todo es Clean/Intro-Outro listo para mezclar. Sin logos de otros pools, sin marcas de agua. Archivos profesionales listos para tu set.",
-    en: "No. Everything is Clean/Intro-Outro ready to mix. No pool logos, no watermarks. Professional files ready for your set.",
+    es: "Incluimos géneros latinos como reggaetón, cumbia, salsa, bachata, regional y más. Puedes validar en la sección de demos.",
+    en: "We include Latin genres like reggaeton, cumbia, salsa, bachata, regional, and more. You can validate in the demo section.",
   },
   "faq4.question": {
+    es: "¿Es descarga digital o USB física?",
+    en: "Is it digital download or physical USB?",
+  },
+  "faq4.answer": {
+    es: "Ambas: los packs/membresía son digitales y la USB es física con envío en EE.UU.",
+    en: "Both: packs/membership are digital, and the USB is a physical product shipped in the U.S.",
+  },
+  "faq5.question": {
     es: "¿Funciona con Serato/VirtualDJ/Rekordbox?",
     en: "Does it work with Serato/VirtualDJ/Rekordbox?",
   },
-  "faq4.answer": {
-    es: "Sí, son archivos MP3 320kbps y MP4 1080p universales. Compatibles con cualquier software de DJ: Serato, VirtualDJ, Rekordbox, Traktor.",
-    en: "Yes, these are standard MP3 320kbps and MP4 1080p files. Compatible with any DJ software: Serato, VirtualDJ, Rekordbox, Traktor.",
-  },
-  "faq5.question": {
-    es: "¿Puedo cancelar cuando quiera?",
-    en: "Can I cancel anytime?",
-  },
   "faq5.answer": {
-    es: "Sí. Sin contratos forzosos, sin letras chiquitas. Cancelas desde tu panel con un clic y listo. No hay permanencia mínima.",
-    en: "Yes. No forced contracts, no fine print. Cancel from your dashboard with one click. No minimum commitment.",
+    es: "Sí, los archivos están listos para usarse en software DJ populares como Serato, VirtualDJ y Rekordbox.",
+    en: "Yes, files are ready to use with popular DJ software such as Serato, VirtualDJ, and Rekordbox.",
   },
 
   // Final CTA
@@ -282,7 +286,7 @@ export const translations: Translations = {
   "cta.button": { es: "Ver Planes", en: "View Plans" },
   "cta.benefit1": { es: "Descarga masiva vía FTP (hasta 1TB/mes)", en: "Bulk download via FTP (up to 1TB/month)" },
   "cta.benefit2": { es: "Archivos Clean, listos para mezclar", en: "Clean files, ready to mix" },
-  "cta.benefit3": { es: "Cancela cuando quieras, sin preguntas", en: "Cancel anytime, no questions asked" },
+  "cta.benefit3": { es: "Sin permanencia forzosa", en: "No forced commitment" },
   "cta.benefit4": { es: "Updates semanales con lo más nuevo", en: "Weekly updates with the latest tracks" },
   "cta.support": { es: "SOPORTE INCLUIDO", en: "SUPPORT INCLUDED" },
   "cta.perMonth": { es: "/mes", en: "/mo" },
@@ -290,13 +294,16 @@ export const translations: Translations = {
   // Guarantee
   "guarantee.title": { es: "SIN CONTRATOS. SIN COMPROMISOS.", en: "NO CONTRACTS. NO COMMITMENTS." },
   "guarantee.desc": {
-    es: "Cancela cuando quieras desde tu panel. Un clic y listo. Sin llamadas, sin emails, sin letras chiquitas.",
-    en: "Cancel anytime from your dashboard. One click and you're done. No calls, no emails, no fine print.",
+    es: "Sin contratos forzosos ni permanencia mínima. Si necesitas cancelar o soporte, te ayudamos por WhatsApp.",
+    en: "No forced contracts or minimum term. If you need cancellation or support, we help you via WhatsApp.",
   },
 
   // Footer
   "footer.plans": { es: "Ver Planes", en: "View Plans" },
-  "footer.main": { es: "Sitio Principal", en: "Main Site" },
+  "footer.support": { es: "Soporte", en: "Support" },
+  "footer.terms": { es: "Terminos y condiciones", en: "Terms and conditions" },
+  "footer.privacy": { es: "Politicas de privacidad", en: "Privacy policy" },
+  "footer.main": { es: "Sitio principal", en: "Main site" },
   "footer.rights": { es: "Todos los derechos reservados.", en: "All rights reserved." },
 
   // Settings
@@ -304,7 +311,7 @@ export const translations: Translations = {
   "settings.language": { es: "English", en: "Español" },
 
   // Mobile bar
-  "mobile.ready": { es: "¿Listo para empezar?", en: "Ready to get started?" },
+  "mobile.ready": { es: "¿Listo para elegir plan?", en: "Ready to pick a plan?" },
   "mobile.cta": { es: "Ver Planes", en: "View Plans" },
 
   // Music Explorer

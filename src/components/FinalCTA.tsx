@@ -13,7 +13,13 @@ const FinalCTA = () => {
 
   const handleCTAClick = (buttonText: string) => {
     trackClick(buttonText);
-    trackEvent("click", { button_text: buttonText, section: "final_cta" });
+    trackEvent("click", {
+      button_text: buttonText,
+      section: "final_cta",
+      cta_id: "final_cta_ver_planes",
+      plan_id: "plan_2tb_anual",
+      funnel_step: "decision",
+    });
   };
 
   const benefits = [
@@ -69,9 +75,9 @@ const FinalCTA = () => {
                   asChild
                   size="lg"
                   className="btn-primary-glow animate-pulse-glow group h-16 w-full max-w-md px-10 text-lg font-bold sm:w-auto"
-                  onClick={() => trackClick(t("cta.button"))}
+                  onClick={() => handleCTAClick(t("cta.button"))}
                 >
-                  <Link to="/membresia">
+                  <Link to="/plan">
                     {t("cta.button")}
                     <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                   </Link>

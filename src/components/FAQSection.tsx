@@ -8,15 +8,46 @@ import {
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const FAQSection = () => {
-  const { t } = useLanguage();
+  const { language } = useLanguage();
+  const isSpanish = language === "es";
 
-  const faqs = [
-    { question: t("faq1.question"), answer: t("faq1.answer") },
-    { question: t("faq2.question"), answer: t("faq2.answer") },
-    { question: t("faq3.question"), answer: t("faq3.answer") },
-    { question: t("faq4.question"), answer: t("faq4.answer") },
-    { question: t("faq5.question"), answer: t("faq5.answer") },
-  ];
+  const faqs = isSpanish
+    ? [
+        {
+          question: "¿Puedo cancelar cuando quiera?",
+          answer: "Sí. No hay contrato forzoso ni permanencia mínima.",
+        },
+        {
+          question: "¿Puedo escuchar demos antes de pagar?",
+          answer: "Sí. Puedes validar catálogo, género y calidad antes de elegir plan.",
+        },
+        {
+          question: "¿Funciona con Serato, VirtualDJ y Rekordbox?",
+          answer: "Sí. Entregamos archivos compatibles y listos para mezclar.",
+        },
+        {
+          question: "¿Qué soporte recibo si tengo dudas?",
+          answer: "Soporte en español por WhatsApp y ayuda para acceso/descargas.",
+        },
+      ]
+    : [
+        {
+          question: "Can I cancel anytime?",
+          answer: "Yes. There are no forced contracts or minimum terms.",
+        },
+        {
+          question: "Can I listen to demos before paying?",
+          answer: "Yes. You can validate catalog quality and genres before choosing a plan.",
+        },
+        {
+          question: "Does it work with Serato, VirtualDJ, and Rekordbox?",
+          answer: "Yes. Files are delivered in formats ready to mix.",
+        },
+        {
+          question: "What support do I get if I need help?",
+          answer: "Spanish support via WhatsApp for account and download issues.",
+        },
+      ];
 
   return (
     <section className="relative py-16 md:py-24 bg-background">
@@ -29,11 +60,12 @@ const FAQSection = () => {
           className="mb-12 text-center"
         >
           <h2 className="mb-3 font-display text-4xl font-bold md:text-5xl lg:text-6xl">
-            {t("faq.title")}{" "}
-            <span className="text-gradient-red">{t("faq.titleHighlight")}</span>
+            {isSpanish ? "Objeciones antes de comprar" : "Buying objections answered"}
           </h2>
           <p className="font-sans text-lg text-muted-foreground">
-            {t("faq.subtitle")}
+            {isSpanish
+              ? "Lo esencial sobre pago, compatibilidad, cancelación y soporte."
+              : "The essentials about payment, compatibility, cancellation, and support."}
           </p>
         </motion.div>
 

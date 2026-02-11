@@ -1,7 +1,6 @@
 import { useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Headphones, Zap } from "lucide-react";
-import SettingsToggle from "@/components/SettingsToggle";
 import MusicExplorer from "@/components/MusicExplorer";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -12,18 +11,40 @@ import logoDark from "@/assets/logo-dark.png";
 export default function Explorer() {
   const { language } = useLanguage();
   const { theme } = useTheme();
+  const location = useLocation();
+  const isGenresRoute = location.pathname === "/genres";
+
+  const copy = {
+    title: isGenresRoute
+      ? language === "es"
+        ? "Géneros"
+        : "Genres"
+      : language === "es"
+        ? "Descargas por carpetas"
+        : "Folder downloads",
+    subtitle: isGenresRoute
+      ? language === "es"
+        ? "Explora y filtra por género antes de suscribirte."
+        : "Explore and filter by genre before subscribing."
+      : language === "es"
+        ? "Navega carpetas, escucha previews y valida la calidad del catálogo."
+        : "Browse folders, listen to previews, and validate catalog quality.",
+    badge: isGenresRoute ? "GÉNEROS" : language === "es" ? "EXPLORADOR" : "EXPLORER",
+  };
 
   useEffect(() => {
     document.title =
-      language === "es"
-        ? "Demos | VideoRemixesPacks"
-        : "Demos | VideoRemixesPacks";
-  }, [language]);
+      isGenresRoute
+        ? language === "es"
+          ? "Géneros | VideoRemixesPack"
+          : "Genres | VideoRemixesPack"
+        : language === "es"
+          ? "Descargas por carpetas | VideoRemixesPack"
+          : "Folder downloads | VideoRemixesPack";
+  }, [isGenresRoute, language]);
 
   return (
     <main className="min-h-screen bg-background">
-      <SettingsToggle />
-
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 hero-gradient opacity-60" />
         <div className="pointer-events-none absolute -top-40 left-1/2 h-[520px] w-[820px] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
@@ -39,7 +60,7 @@ export default function Explorer() {
             </Link>
 
             <Button asChild className="btn-primary-glow h-11 gap-2 px-5 font-black">
-              <Link to="/membresia">
+              <Link to="/plan">
                 <Zap className="h-4 w-4" />
                 {language === "es" ? "Ver planes" : "View plans"}
               </Link>
@@ -49,23 +70,20 @@ export default function Explorer() {
           <div className="mt-10 glass-card p-8 md:p-10">
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-black text-primary">
               <Headphones className="h-4 w-4" />
-              {language === "es" ? "PREVIEW" : "PREVIEW"}
+              {copy.badge}
             </div>
             <h1 className="mt-5 font-display text-5xl font-black leading-[0.92] md:text-6xl">
-              {language === "es" ? (
-                <>
-                  Explora <span className="text-gradient-red">los demos</span>
-                </>
+              {isGenresRoute ? (
+                copy.title
               ) : (
                 <>
-                  Explore <span className="text-gradient-red">the demos</span>
+                  {copy.title.split(" ")[0]}{" "}
+                  <span className="text-gradient-red">{copy.title.replace(/^\\S+\\s?/, "")}</span>
                 </>
               )}
             </h1>
             <p className="mt-4 max-w-2xl text-sm text-muted-foreground md:text-base">
-              {language === "es"
-                ? "Busca, escucha y valida la calidad y organización antes de suscribirte."
-                : "Search, listen, and validate the quality and organization before you subscribe."}
+              {copy.subtitle}
             </p>
           </div>
         </div>
@@ -75,4 +93,3 @@ export default function Explorer() {
     </main>
   );
 }
-

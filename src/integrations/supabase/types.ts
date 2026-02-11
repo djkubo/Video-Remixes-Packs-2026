@@ -37,12 +37,18 @@ export type Database = {
       }
       analytics_events: {
         Row: {
+          cta_id: string | null
           country_code: string | null
           created_at: string
+          device_type: string | null
           event_data: Json | null
           event_name: string
+          experiment_assignments: Json | null
+          funnel_step: string | null
           id: string
+          language: string | null
           page_path: string | null
+          plan_id: string | null
           referrer: string | null
           session_id: string | null
           user_agent: string | null
@@ -54,12 +60,18 @@ export type Database = {
           visitor_id: string | null
         }
         Insert: {
+          cta_id?: string | null
           country_code?: string | null
           created_at?: string
+          device_type?: string | null
           event_data?: Json | null
           event_name: string
+          experiment_assignments?: Json | null
+          funnel_step?: string | null
           id?: string
+          language?: string | null
           page_path?: string | null
+          plan_id?: string | null
           referrer?: string | null
           session_id?: string | null
           user_agent?: string | null
@@ -71,12 +83,18 @@ export type Database = {
           visitor_id?: string | null
         }
         Update: {
+          cta_id?: string | null
           country_code?: string | null
           created_at?: string
+          device_type?: string | null
           event_data?: Json | null
           event_name?: string
+          experiment_assignments?: Json | null
+          funnel_step?: string | null
           id?: string
+          language?: string | null
           page_path?: string | null
+          plan_id?: string | null
           referrer?: string | null
           session_id?: string | null
           user_agent?: string | null
@@ -142,12 +160,25 @@ export type Database = {
           country_name: string | null
           created_at: string
           email: string
+          experiment_assignments: Json | null
+          funnel_step: string | null
           id: string
+          intent_plan: string | null
           manychat_subscriber_id: string | null
           manychat_synced: boolean | null
           name: string
+          paid_at: string | null
+          payment_id: string | null
+          payment_provider: string | null
           phone: string
+          shipping_carrier: string | null
+          shipping_label_url: string | null
+          shipping_servicelevel: string | null
+          shipping_status: string | null
+          shipping_to: Json | null
+          shipping_tracking_number: string | null
           source: string | null
+          source_page: string | null
           tags: string[] | null
           updated_at: string
         }
@@ -156,12 +187,25 @@ export type Database = {
           country_name?: string | null
           created_at?: string
           email: string
+          experiment_assignments?: Json | null
+          funnel_step?: string | null
           id?: string
+          intent_plan?: string | null
           manychat_subscriber_id?: string | null
           manychat_synced?: boolean | null
           name: string
+          paid_at?: string | null
+          payment_id?: string | null
+          payment_provider?: string | null
           phone: string
+          shipping_carrier?: string | null
+          shipping_label_url?: string | null
+          shipping_servicelevel?: string | null
+          shipping_status?: string | null
+          shipping_to?: Json | null
+          shipping_tracking_number?: string | null
           source?: string | null
+          source_page?: string | null
           tags?: string[] | null
           updated_at?: string
         }
@@ -170,12 +214,25 @@ export type Database = {
           country_name?: string | null
           created_at?: string
           email?: string
+          experiment_assignments?: Json | null
+          funnel_step?: string | null
           id?: string
+          intent_plan?: string | null
           manychat_subscriber_id?: string | null
           manychat_synced?: boolean | null
           name?: string
+          paid_at?: string | null
+          payment_id?: string | null
+          payment_provider?: string | null
           phone?: string
+          shipping_carrier?: string | null
+          shipping_label_url?: string | null
+          shipping_servicelevel?: string | null
+          shipping_status?: string | null
+          shipping_to?: Json | null
+          shipping_tracking_number?: string | null
           source?: string | null
+          source_page?: string | null
           tags?: string[] | null
           updated_at?: string
         }

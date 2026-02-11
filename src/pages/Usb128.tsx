@@ -355,8 +355,8 @@ export default function Usb128() {
                 </Button>
 
                 <div className="mt-4 rounded-xl border border-border/50 bg-card/60 p-3 text-center text-xs text-muted-foreground">
-                  <span className="font-semibold text-foreground">Quedan</span>{" "}
-                  /300 unidades · <span className="font-semibold text-foreground">para que suba a $197</span>
+                  <span className="font-semibold text-foreground">Envío gratis</span>{" "}
+                  a Estados Unidos · Paga con tarjeta, PayPal o cuotas al checkout
                 </div>
 
                 <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -381,15 +381,15 @@ export default function Usb128() {
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="mt-0.5 h-5 w-5 text-primary" />
-                    <span>Tags BPM &amp; Key: encuentra tu siguiente track en 2 segy explicit.</span>
+                    <span>Tags BPM &amp; Key para encontrar rápido el siguiente track en cabina.</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="mt-0.5 h-5 w-5 text-primary" />
-                    <span>USB 3.1 a 400 MB/s - Carga más raído que el tiempo en que desaparece tu ex</span>
+                    <span>USB 3.1 de alta velocidad para cargar tu librería en segundos.</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="mt-0.5 h-5 w-5 text-primary" />
-                    <span>Metal Resistente al agua, golpes y rayos Gamma - pa&apos; la vida del DJ Callejero.</span>
+                    <span>Diseño metálico resistente para uso intensivo en cabina y eventos.</span>
                   </li>
                 </ul>
               </div>
@@ -501,7 +501,7 @@ export default function Usb128() {
               <span className="text-gradient-red">¡Te lo aclaro!!</span>
             </h2>
             <p className="mt-4 text-sm text-muted-foreground">
-              Si sigues con dudas después de leer esto es que no quieres chingarle
+              Respondemos las dudas más comunes antes de tu compra.
             </p>
           </div>
 
@@ -523,7 +523,7 @@ export default function Usb128() {
               </AccordionItem>
               <AccordionItem value="item-3">
                 <AccordionTrigger>¿Envían fuera de EE. UU.?</AccordionTrigger>
-                <AccordionContent>NO. Sólo territory gringo.</AccordionContent>
+                <AccordionContent>Por ahora solo hacemos envíos dentro de Estados Unidos.</AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-4">
                 <AccordionTrigger>¿Cuánto tarda?</AccordionTrigger>
@@ -686,6 +686,11 @@ export default function Usb128() {
                 {language === "es"
                   ? "Al continuar aceptas recibir información y soporte sobre tu pedido."
                   : "By continuing you agree to receive information and support about your order."}
+              </p>
+              <p className="text-center text-xs text-muted-foreground">
+                {language === "es"
+                  ? "Puedes darte de baja de mensajes promocionales en cualquier momento."
+                  : "You can opt out of promotional messages at any time."}
               </p>
             </form>
           </div>

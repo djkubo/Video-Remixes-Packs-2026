@@ -779,6 +779,11 @@ export default function Gratis() {
                 "JOIN THE WHATSAPP GROUP FOR FREE"
               )}
             </Button>
+            <p className="text-center text-xs text-muted-foreground">
+              {language === "es"
+                ? "Al enviar aceptas recibir mensajes del grupo y soporte. Puedes darte de baja cuando quieras."
+                : "By submitting you agree to receive group and support messages. You can opt out anytime."}
+            </p>
           </form>
         </DialogContent>
       </Dialog>

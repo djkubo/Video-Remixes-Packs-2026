@@ -32,8 +32,8 @@ const GuaranteeSection = () => {
               size="lg"
               className="btn-primary-glow group h-14 px-8 text-base font-bold"
             >
-              <Link to="/membresia">
-                {t("cta.button")}
+              <Link to="/gratis">
+                {t("hero.cta")}
                 <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
               </Link>
             </Button>

@@ -325,11 +325,11 @@ export default function Anual() {
 
               <div className="mt-8 flex items-end gap-6">
                 <div>
-                  <p className="text-sm font-black text-muted-foreground line-through">
-                    De $297 USD
+                  <p className="text-sm font-black text-muted-foreground">
+                    Precio anual
                   </p>
                   <p className="text-2xl font-black text-foreground md:text-3xl">
-                    A sólo <span className="text-gradient-red">$197 USD</span>
+                    A sólo <span className="text-gradient-red">$195 USD</span>
                   </p>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -344,9 +344,9 @@ export default function Anual() {
                   className="btn-primary-glow h-12 w-full text-base font-black md:h-14 md:text-lg"
                 >
                   <span className="flex w-full flex-col items-center leading-tight">
-                    <span>Click para Acceder</span>
+                    <span>Acceder ahora</span>
                     <span className="text-xs font-semibold opacity-90">
-                      Aprovecha el precio especial de $149 USD
+                      Aprovecha el precio especial de $195 USD
                     </span>
                   </span>
                 </Button>
@@ -454,9 +454,9 @@ export default function Anual() {
               </p>
 
               <div className="mt-6">
-                <p className="text-sm font-black text-muted-foreground line-through">De $297 USD</p>
+                <p className="text-sm font-black text-muted-foreground">Precio anual</p>
                 <p className="text-3xl font-black">
-                  a sólo <span className="text-gradient-red">$149 USD</span>
+                  a sólo <span className="text-gradient-red">$195 USD</span>
                 </p>
               </div>
 
@@ -468,7 +468,7 @@ export default function Anual() {
                   <span className="flex w-full flex-col items-center leading-tight">
                     <span>Quiero un año de música ilimitada</span>
                     <span className="text-xs font-semibold opacity-90">
-                      Click para acceder por menos de $12.50 usd/mes
+                      Menos de $16.25 USD por mes
                     </span>
                   </span>
                 </Button>
@@ -555,7 +555,7 @@ export default function Anual() {
 
             <p className="mt-6 text-sm font-semibold text-foreground md:text-base">
               Esta asesoría por separado te costaría más de $500 USD Y la obtienes GRATIS al adquirir tu membresía anual Video
-              Remix Packs ¡Haz click para aprovechar la oferta HOY!
+              Remix Packs. Aprovecha la oferta hoy.
             </p>
 
             <div className="mt-10 flex justify-center">
@@ -566,7 +566,7 @@ export default function Anual() {
                 <span className="flex w-full flex-col items-center leading-tight">
                   <span>Sí, quiero música ilimitada por un año</span>
                   <span className="text-xs font-semibold opacity-90">
-                    Quiero aprovechar el precio especial de $149 USD
+                    Quiero aprovechar el precio especial de $195 USD
                   </span>
                 </span>
               </Button>
@@ -634,7 +634,7 @@ export default function Anual() {
               <span className="flex w-full flex-col items-center leading-tight">
                 <span>Sí, quiero acceso a la membresía anual</span>
                 <span className="text-xs font-semibold opacity-90">
-                  Quiero aprovechar el precio especial de $149 USD
+                  Quiero aprovechar el precio especial de $195 USD
                 </span>
               </span>
             </Button>
@@ -748,9 +748,9 @@ export default function Anual() {
               className="btn-primary-glow h-12 w-full max-w-2xl text-base font-black md:h-14 md:text-lg"
             >
               <span className="flex w-full flex-col items-center leading-tight">
-                <span>Click para acceder a la membresía anual</span>
+                <span>Acceder a la membresía anual</span>
                 <span className="text-xs font-semibold opacity-90">
-                  Quiero aprovechar el precio especial de $149 USD
+                  Quiero aprovechar el precio especial de $195 USD
                 </span>
               </span>
             </Button>
@@ -782,7 +782,7 @@ export default function Anual() {
               <div className="mt-6 space-y-3 text-sm text-muted-foreground md:text-base">
                 <p>
                   Si pasas una hora a la semana (cuando menos) buscando música nueva, estás invirtiendo $29 USD (si ganaras el
-                  salario mínimo en USA). La membresía es más económica (SÓLO $12.4 USD por mes).
+                  salario mínimo en USA). La membresía es más económica (SÓLO $16.25 USD por mes).
                 </p>
                 <p>
                   Como DJ, puedes cobrar 25 USD por hora aproximadamente. Si ahorraras una hora al mes porque tienes música
@@ -790,7 +790,7 @@ export default function Anual() {
                 </p>
                 <p>
                   ¿Te gusta el café de Starbucks? Un café cuesta alrededor de $3 USD. Deja de comprar un café a la semana y tienes
-                  $12 USD para la membresía.
+                  $24 USD al mes para invertir en tu membresía.
                 </p>
                 <p>El tiempo es tu recurso más valioso y NO se recupera.</p>
                 <p>No pongas en riesgo tu reputación, invierte en tu herramienta más importante!</p>
@@ -803,9 +803,9 @@ export default function Anual() {
                   className="btn-primary-glow h-12 w-full max-w-2xl text-base font-black md:h-14 md:text-lg"
                 >
                   <span className="flex w-full flex-col items-center leading-tight">
-                    <span>Click para acceder a la membresía anual</span>
+                    <span>Acceder a la membresía anual</span>
                     <span className="text-xs font-semibold opacity-90">
-                      Quiero aprovechar el precio especial de $149 USD
+                      Quiero aprovechar el precio especial de $195 USD
                     </span>
                   </span>
                 </Button>
@@ -926,6 +926,11 @@ export default function Anual() {
                 {language === "es"
                   ? "Tu información está 100% segura con nosotros"
                   : "Your information is 100% secure with us"}
+              </p>
+              <p className="text-center text-xs text-muted-foreground">
+                {language === "es"
+                  ? "Al enviar aceptas recibir mensajes sobre tu acceso y soporte. Puedes darte de baja cuando quieras."
+                  : "By submitting you agree to receive access and support messages. You can opt out anytime."}
               </p>
             </form>
           </div>

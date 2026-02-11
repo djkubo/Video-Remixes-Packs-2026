@@ -3,6 +3,7 @@ import { Check, ShieldCheck, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 const paymentMethods = [
   { name: "Stripe", logo: "Stripe" },
@@ -13,6 +14,7 @@ const paymentMethods = [
 
 const TrustSecuritySection = () => {
   const { t } = useLanguage();
+  const { trackEvent } = useAnalytics();
 
   return (
     <section className="relative py-20 md:py-28 bg-background overflow-hidden">
@@ -79,8 +81,17 @@ const TrustSecuritySection = () => {
               asChild
               size="lg"
               className="btn-primary-glow group h-14 px-10 text-base font-bold"
+              onClick={() =>
+                trackEvent("click", {
+                  button_text: t("cta.button"),
+                  section: "trust_security",
+                  cta_id: "trust_ver_planes",
+                  plan_id: "plan_2tb_anual",
+                  funnel_step: "decision",
+                })
+              }
             >
-              <Link to="/membresia">
+              <Link to="/plan">
                 {t("cta.button")}
                 <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
               </Link>

@@ -5,12 +5,14 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useAnalytics } from "@/hooks/useAnalytics";
 import logoWhite from "@/assets/logo-white.png";
 import logoDark from "@/assets/logo-dark.png";
 
 const MobileStickyBar = () => {
   const { t } = useLanguage();
   const { theme } = useTheme();
+  const { trackEvent } = useAnalytics();
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -53,9 +55,20 @@ const MobileStickyBar = () => {
               size="sm"
               className="btn-primary-glow h-11 gap-2 px-5 font-bold text-sm flex-shrink-0"
             >
-              <Link to="/membresia">
+              <Link
+                to="/plan"
+                onClick={() =>
+                  trackEvent("click", {
+                    button_text: t("cta.button"),
+                    section: "mobile_sticky",
+                    cta_id: "mobile_sticky_ver_planes",
+                    plan_id: "plan_2tb_anual",
+                    funnel_step: "decision",
+                  })
+                }
+              >
                 <Zap className="h-4 w-4" />
-                {t("mobile.cta")}
+                {t("cta.button")}
               </Link>
             </Button>
           </div>

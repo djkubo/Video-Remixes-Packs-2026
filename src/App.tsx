@@ -26,6 +26,10 @@ import DjEdits from "./pages/DjEdits";
 import AdminLogin from "./pages/AdminLogin";
 import AdminMusic from "./pages/AdminMusic";
 import Admin from "./pages/Admin";
+import Help from "./pages/Help";
+import Login from "./pages/Login";
+import TermsAndConditions from "./pages/TermsAndConditions";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 import RouteMenu from "@/components/RouteMenu";
 
 const queryClient = new QueryClient();
@@ -45,6 +49,13 @@ const App = () => {
                   <RouteMenu />
                   <Routes>
                     <Route path="/" element={<Index />} />
+                    {/* Production route aliases */}
+                    <Route path="/trends" element={<Index />} />
+                    <Route path="/genres" element={<Explorer />} />
+                    <Route path="/help" element={<Help />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/terms_and_conditions" element={<TermsAndConditions />} />
+                    <Route path="/privacy_policy" element={<PrivacyPolicy />} />
 
                     <Route path="/gratis" element={<Gratis />} />
                     <Route path="/gratis/gracias" element={<GratisThankYou />} />

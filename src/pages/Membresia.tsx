@@ -9,7 +9,6 @@ import {
   Sparkles,
   Zap,
 } from "lucide-react";
-import SettingsToggle from "@/components/SettingsToggle";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Button } from "@/components/ui/button";
@@ -31,6 +30,10 @@ import {
 } from "@/components/ui/accordion";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAnalytics } from "@/hooks/useAnalytics";
+import { isExperimentEnabled } from "@/lib/croFlags";
+import { getExperimentAssignment } from "@/lib/experiments";
+import { cn } from "@/lib/utils";
 import logoWhite from "@/assets/logo-white.png";
 import logoDark from "@/assets/logo-dark.png";
 import { countryNameFromCode, detectCountryCodeFromTimezone } from "@/lib/country";
@@ -85,6 +88,18 @@ function normalizePhoneInput(input: string): { clean: string; digits: string } {
   return { clean, digits };
 }
 
+type FormErrors = {
+  name?: string;
+  email?: string;
+  phone?: string;
+};
+
+type LeadFormData = {
+  name: string;
+  email: string;
+  phone: string;
+};
+
 const PLAN_DETAILS: Record<
   PlanId,
   {
@@ -109,6 +124,7 @@ export default function Membresia() {
   const { language } = useLanguage();
   const { theme } = useTheme();
   const { toast } = useToast();
+  const { trackEvent } = useAnalytics();
   const navigate = useNavigate();
 
   const [isJoinOpen, setIsJoinOpen] = useState(false);
@@ -122,21 +138,101 @@ export default function Membresia() {
     dial_code: "+1",
   });
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<LeadFormData>({
     name: "",
     email: "",
     phone: "",
   });
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
+  const [touched, setTouched] = useState<Record<keyof LeadFormData, boolean>>({
+    name: false,
+    email: false,
+    phone: false,
+  });
+
+  const pricingLayoutAssignment = useMemo(
+    () =>
+      isExperimentEnabled("pricing_layout")
+        ? getExperimentAssignment("pricing_layout")
+        : {
+            id: "pricing_layout" as const,
+            variant: "A" as const,
+            assignedAt: new Date(0).toISOString(),
+          },
+    []
+  );
+
+  const leadFormAssignment = useMemo(
+    () =>
+      isExperimentEnabled("lead_form_friction")
+        ? getExperimentAssignment("lead_form_friction")
+        : {
+            id: "lead_form_friction" as const,
+            variant: "A" as const,
+            assignedAt: new Date(0).toISOString(),
+          },
+    []
+  );
+
+  const experimentAssignments = useMemo(
+    () => [pricingLayoutAssignment, leadFormAssignment],
+    [leadFormAssignment, pricingLayoutAssignment]
+  );
+
+  const useInlineValidation = leadFormAssignment.variant === "B";
+  const useStackedPricingLayout = pricingLayoutAssignment.variant === "A";
 
   const paymentBadges = useMemo(
     () => ["VISA", "MASTERCARD", "AMEX", "DISCOVER", "PayPal"],
     []
   );
 
+  const validateLeadForm = useCallback(
+    (data: LeadFormData): FormErrors => {
+      const nextErrors: FormErrors = {};
+      const name = data.name.trim();
+      const email = data.email.trim().toLowerCase();
+      const { clean: cleanPhone, digits: phoneDigits } = normalizePhoneInput(data.phone);
+
+      if (!name) {
+        nextErrors.name = language === "es" ? "Ingresa tu nombre." : "Enter your name.";
+      }
+      if (!email) {
+        nextErrors.email = language === "es" ? "Ingresa tu email." : "Enter your email.";
+      } else if (!isValidEmail(email)) {
+        nextErrors.email = language === "es" ? "Email inválido." : "Invalid email.";
+      }
+
+      if (!cleanPhone) {
+        nextErrors.phone = language === "es" ? "Ingresa tu WhatsApp." : "Enter your WhatsApp.";
+      } else if (
+        cleanPhone.length > 20 ||
+        !/^\+?\d{7,20}$/.test(cleanPhone) ||
+        !/[1-9]/.test(phoneDigits)
+      ) {
+        nextErrors.phone = language === "es" ? "Número inválido." : "Invalid number.";
+      }
+
+      return nextErrors;
+    },
+    [language]
+  );
+
   useEffect(() => {
     document.title =
       "La Membresía DJ Latina #1 | Audio, Video y Karaoke lista para mezclar";
   }, []);
+
+  useEffect(() => {
+    trackEvent("experiment_exposure", {
+      funnel_step: "pricing",
+      experiment_assignments: experimentAssignments,
+    });
+    trackEvent("funnel_step_view", {
+      funnel_step: "pricing",
+      experiment_assignments: experimentAssignments,
+    });
+  }, [experimentAssignments, trackEvent]);
 
   // Detect user's country (best-effort; timezone-based so we avoid CORS/network issues).
   useEffect(() => {
@@ -149,12 +245,38 @@ export default function Membresia() {
     });
   }, [language]);
 
+  useEffect(() => {
+    if (!isJoinOpen) return;
+    setFormErrors({});
+    setTouched({ name: false, email: false, phone: false });
+  }, [isJoinOpen]);
+
   const openJoin = useCallback(
-    (plan?: PlanId) => {
+    (plan?: PlanId, sourceCta: string = "membresia_open_join") => {
+      const nextPlan = plan || selectedPlan;
       if (plan) setSelectedPlan(plan);
       setIsJoinOpen(true);
+      trackEvent("lead_form_open", {
+        cta_id: sourceCta,
+        plan_id: nextPlan,
+        funnel_step: "lead_capture",
+        experiment_assignments: experimentAssignments,
+      });
     },
-    []
+    [experimentAssignments, selectedPlan, trackEvent]
+  );
+
+  const handlePlanClick = useCallback(
+    (plan: PlanId, ctaId: string) => {
+      trackEvent("plan_click", {
+        cta_id: ctaId,
+        plan_id: plan,
+        funnel_step: "pricing",
+        experiment_assignments: experimentAssignments,
+      });
+      openJoin(plan, ctaId);
+    },
+    [experimentAssignments, openJoin, trackEvent]
   );
 
   const onSubmit = useCallback(
@@ -162,57 +284,47 @@ export default function Membresia() {
       e.preventDefault();
       if (isSubmitting) return;
 
+      const validationErrors = validateLeadForm(formData);
+      setFormErrors(validationErrors);
+
+      if (Object.keys(validationErrors).length > 0) {
+        setTouched({ name: true, email: true, phone: true });
+        trackEvent("lead_form_error", {
+          cta_id: "membresia_submit",
+          plan_id: selectedPlan,
+          funnel_step: "lead_capture",
+          error_fields: Object.keys(validationErrors),
+          experiment_assignments: experimentAssignments,
+        });
+
+        if (!useInlineValidation) {
+          toast({
+            title: language === "es" ? "Revisa tus datos" : "Check your details",
+            description:
+              language === "es"
+                ? "Completa correctamente nombre, email y WhatsApp."
+                : "Please fill in a valid name, email, and WhatsApp number.",
+            variant: "destructive",
+          });
+        }
+        return;
+      }
+
       const name = formData.name.trim();
       const email = formData.email.trim().toLowerCase();
-      const { clean: cleanPhone, digits: phoneDigits } = normalizePhoneInput(
-        formData.phone
-      );
-
-      if (!name || !email || !cleanPhone) {
-        toast({
-          title: language === "es" ? "Campos requeridos" : "Required fields",
-          description:
-            language === "es"
-              ? "Por favor completa todos los campos."
-              : "Please fill in all fields.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (!isValidEmail(email)) {
-        toast({
-          title: language === "es" ? "Email inválido" : "Invalid email",
-          description:
-            language === "es"
-              ? "Por favor ingresa un email válido."
-              : "Please enter a valid email.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // NOTE: Supabase RLS policy enforces phone length <= 20.
-      if (
-        cleanPhone.length > 20 ||
-        !/^\+?\d{7,20}$/.test(cleanPhone) ||
-        !/[1-9]/.test(phoneDigits)
-      ) {
-        toast({
-          title: language === "es" ? "WhatsApp inválido" : "Invalid WhatsApp",
-          description:
-            language === "es"
-              ? "Ingresa un número válido."
-              : "Enter a valid number.",
-          variant: "destructive",
-        });
-        return;
-      }
+      const { clean: cleanPhone } = normalizePhoneInput(formData.phone);
 
       setIsSubmitting(true);
+      trackEvent("lead_submit_attempt", {
+        cta_id: "membresia_submit",
+        plan_id: selectedPlan,
+        funnel_step: "lead_capture",
+        experiment_assignments: experimentAssignments,
+      });
+
       try {
         const leadId = crypto.randomUUID();
-
+        const sourcePage = window.location.pathname;
         const planTags = PLAN_DETAILS[selectedPlan].tags;
 
         const { error: insertError } = await supabase.from("leads").insert({
@@ -220,13 +332,24 @@ export default function Membresia() {
           name,
           email,
           phone: cleanPhone,
-          country_code: countryData.dial_code,
+          country_code: countryData.country_code,
           country_name: countryData.country_name,
           source: "membresia",
           tags: planTags,
+          funnel_step: "lead_submit",
+          source_page: sourcePage,
+          experiment_assignments: experimentAssignments,
+          intent_plan: selectedPlan,
         });
 
         if (insertError) throw insertError;
+        trackEvent("lead_submit_success", {
+          cta_id: "membresia_submit",
+          plan_id: selectedPlan,
+          lead_id: leadId,
+          funnel_step: "lead_capture",
+          experiment_assignments: experimentAssignments,
+        });
 
         try {
           const { error: syncError } = await supabase.functions.invoke(
@@ -258,11 +381,35 @@ export default function Membresia() {
 
           const url = (checkout as { url?: unknown } | null)?.url;
           if (typeof url === "string" && url.length > 0) {
+            trackEvent("checkout_redirect", {
+              cta_id: "membresia_checkout_stripe",
+              plan_id: selectedPlan,
+              provider: "stripe",
+              status: "redirected",
+              funnel_step: "checkout_handoff",
+              experiment_assignments: experimentAssignments,
+            });
             window.location.assign(url);
             return;
           }
+          trackEvent("checkout_redirect", {
+            cta_id: "membresia_checkout_stripe",
+            plan_id: selectedPlan,
+            provider: "stripe",
+            status: "missing_url",
+            funnel_step: "checkout_handoff",
+            experiment_assignments: experimentAssignments,
+          });
         } catch (stripeErr) {
           if (import.meta.env.DEV) console.warn("Stripe invoke threw:", stripeErr);
+          trackEvent("checkout_redirect", {
+            cta_id: "membresia_checkout_stripe",
+            plan_id: selectedPlan,
+            provider: "stripe",
+            status: "error",
+            funnel_step: "checkout_handoff",
+            experiment_assignments: experimentAssignments,
+          });
         }
 
         // Fallback: PayPal redirect (if configured).
@@ -280,16 +427,54 @@ export default function Membresia() {
 
           const approveUrl = (paypal as { approveUrl?: unknown } | null)?.approveUrl;
           if (typeof approveUrl === "string" && approveUrl.length > 0) {
+            trackEvent("checkout_redirect", {
+              cta_id: "membresia_checkout_paypal",
+              plan_id: selectedPlan,
+              provider: "paypal",
+              status: "redirected",
+              funnel_step: "checkout_handoff",
+              experiment_assignments: experimentAssignments,
+            });
             window.location.assign(approveUrl);
             return;
           }
+          trackEvent("checkout_redirect", {
+            cta_id: "membresia_checkout_paypal",
+            plan_id: selectedPlan,
+            provider: "paypal",
+            status: "missing_url",
+            funnel_step: "checkout_handoff",
+            experiment_assignments: experimentAssignments,
+          });
         } catch (paypalErr) {
           if (import.meta.env.DEV) console.warn("PayPal invoke threw:", paypalErr);
+          trackEvent("checkout_redirect", {
+            cta_id: "membresia_checkout_paypal",
+            plan_id: selectedPlan,
+            provider: "paypal",
+            status: "error",
+            funnel_step: "checkout_handoff",
+            experiment_assignments: experimentAssignments,
+          });
         }
 
+        trackEvent("checkout_redirect", {
+          cta_id: "membresia_checkout_internal_fallback",
+          plan_id: selectedPlan,
+          provider: "internal",
+          status: "gracias",
+          funnel_step: "post_checkout",
+          experiment_assignments: experimentAssignments,
+        });
         navigate(`/membresia/gracias?plan=${encodeURIComponent(selectedPlan)}`);
       } catch (err) {
         console.error("MEMBRESIA lead submit error:", err);
+        trackEvent("lead_submit_failed", {
+          cta_id: "membresia_submit",
+          plan_id: selectedPlan,
+          funnel_step: "lead_capture",
+          experiment_assignments: experimentAssignments,
+        });
         toast({
           title: language === "es" ? "Error" : "Error",
           description:
@@ -303,23 +488,50 @@ export default function Membresia() {
       }
     },
     [
-      countryData.dial_code,
+      countryData.country_code,
       countryData.country_name,
-      formData.email,
-      formData.name,
-      formData.phone,
+      experimentAssignments,
+      formData,
       isSubmitting,
       language,
       navigate,
       selectedPlan,
+      trackEvent,
       toast,
+      useInlineValidation,
+      validateLeadForm,
     ]
+  );
+
+  const handleFieldChange = useCallback(
+    (field: keyof LeadFormData, value: string) => {
+      setFormData((prev) => {
+        const next = { ...prev, [field]: value };
+        if (useInlineValidation && touched[field]) {
+          const nextErrors = validateLeadForm(next);
+          setFormErrors(nextErrors);
+        }
+        return next;
+      });
+    },
+    [touched, useInlineValidation, validateLeadForm]
+  );
+
+  const handleFieldBlur = useCallback(
+    (field: keyof LeadFormData) => {
+      setTouched((prev) => {
+        const nextTouched = { ...prev, [field]: true };
+        if (useInlineValidation) {
+          setFormErrors(validateLeadForm(formData));
+        }
+        return nextTouched;
+      });
+    },
+    [formData, useInlineValidation, validateLeadForm]
   );
 
   return (
     <main className="min-h-screen bg-background">
-      <SettingsToggle />
-
       {/* Hero */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 hero-gradient opacity-60" />
@@ -360,7 +572,7 @@ export default function Membresia() {
                   "Escucha todos los demos antes de suscribirte",
                   "Actualización semanal con los últimos éxitos",
                   "Compatible con Serato, Rekordbox y VirtualDJ",
-                  "Soporte VIP 24/7 en español",
+                  "Soporte en español por WhatsApp",
                 ].map((t) => (
                   <li key={t} className="flex items-start gap-3">
                     <CheckCircle2 className="mt-0.5 h-5 w-5 text-primary" />
@@ -379,7 +591,7 @@ export default function Membresia() {
                 <Button
                   variant="outline"
                   className="h-12 text-base font-black"
-                  onClick={() => openJoin(selectedPlan)}
+                  onClick={() => openJoin(selectedPlan, "membresia_hero_adquiere")}
                 >
                   <Zap className="mr-2 h-5 w-5 text-primary" />
                   Adquiere tu membresía
@@ -467,7 +679,7 @@ export default function Membresia() {
 
             <div className="mt-10 flex justify-center">
               <Button
-                onClick={() => openJoin(selectedPlan)}
+                onClick={() => openJoin(selectedPlan, "membresia_socialproof_adquiere")}
                 className="btn-primary-glow h-12 w-full max-w-2xl text-base font-black md:h-14 md:text-lg"
               >
                 Adquiere tu membresía
@@ -486,16 +698,34 @@ export default function Membresia() {
               <span className="text-gradient-red">mejor</span> se adapte a tus
               necesidades
             </h2>
+            <p className="mt-3 text-sm text-muted-foreground">
+              {useStackedPricingLayout
+                ? "Vista simple para decidir más rápido."
+                : "Vista comparativa para elegir con más contexto."}
+            </p>
           </div>
 
-          <div className="mt-10 grid gap-6 md:grid-cols-2">
+          <div
+            className={cn(
+              "mt-10 grid gap-6",
+              useStackedPricingLayout ? "mx-auto max-w-3xl grid-cols-1" : "md:grid-cols-2"
+            )}
+          >
             {/* Plan 1TB */}
-            <div className="glass-card p-8 md:p-10">
+            <div
+              className={cn(
+                "glass-card p-8 md:p-10",
+                useStackedPricingLayout ? "order-2" : "order-none"
+              )}
+            >
               <p className="font-display text-3xl font-black">
                 {PLAN_DETAILS.plan_1tb_mensual.label}
               </p>
               <p className="mt-2 text-sm font-semibold text-muted-foreground">
                 {PLAN_DETAILS.plan_1tb_mensual.priceLabel}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Paga con tarjeta, PayPal o en cuotas al checkout.
               </p>
 
               <ul className="mt-6 space-y-3 text-sm text-muted-foreground md:text-base">
@@ -513,7 +743,7 @@ export default function Membresia() {
 
               <div className="mt-8">
                 <Button
-                  onClick={() => openJoin("plan_1tb_mensual")}
+                  onClick={() => handlePlanClick("plan_1tb_mensual", "membresia_plan_1tb")}
                   className="btn-primary-glow h-12 w-full text-base font-black"
                 >
                   Adquiere tu membresía
@@ -522,7 +752,12 @@ export default function Membresia() {
             </div>
 
             {/* Plan 2TB */}
-            <div className="glass-card p-8 md:p-10">
+            <div
+              className={cn(
+                "glass-card p-8 md:p-10",
+                useStackedPricingLayout ? "order-1 ring-1 ring-primary/30" : "order-none"
+              )}
+            >
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <p className="font-display text-3xl font-black">
                   {PLAN_DETAILS.plan_2tb_anual.label}
@@ -533,6 +768,9 @@ export default function Membresia() {
               </div>
               <p className="mt-2 text-sm font-semibold text-muted-foreground">
                 {PLAN_DETAILS.plan_2tb_anual.priceLabel}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Paga con tarjeta, PayPal o en cuotas al checkout.
               </p>
 
               <ul className="mt-6 space-y-3 text-sm text-muted-foreground md:text-base">
@@ -550,7 +788,7 @@ export default function Membresia() {
 
               <div className="mt-8">
                 <Button
-                  onClick={() => openJoin("plan_2tb_anual")}
+                  onClick={() => handlePlanClick("plan_2tb_anual", "membresia_plan_2tb")}
                   className="btn-primary-glow h-12 w-full text-base font-black"
                 >
                   Adquiere tu membresía
@@ -621,7 +859,7 @@ export default function Membresia() {
 
           <div className="mt-10 flex justify-center">
             <Button
-              onClick={() => openJoin(selectedPlan)}
+              onClick={() => openJoin(selectedPlan, "membresia_faq_adquiere")}
               className="btn-primary-glow h-12 w-full max-w-2xl text-base font-black md:h-14 md:text-lg"
             >
               Adquiere tu membresía
@@ -678,7 +916,15 @@ export default function Membresia() {
                     <button
                       key={planId}
                       type="button"
-                      onClick={() => setSelectedPlan(planId)}
+                      onClick={() => {
+                        setSelectedPlan(planId);
+                        trackEvent("plan_select", {
+                          cta_id: "membresia_modal_plan_select",
+                          plan_id: planId,
+                          funnel_step: "lead_capture",
+                          experiment_assignments: experimentAssignments,
+                        });
+                      }}
                       aria-pressed={isActive}
                       className={`rounded-xl border px-4 py-3 text-left transition-colors ${
                         isActive
@@ -702,12 +948,15 @@ export default function Membresia() {
                 <Input
                   id="membresia-name"
                   value={formData.name}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, name: e.target.value }))
-                  }
+                  onChange={(e) => handleFieldChange("name", e.target.value)}
+                  onBlur={() => handleFieldBlur("name")}
                   placeholder={language === "es" ? "Tu nombre completo" : "Your full name"}
                   autoComplete="name"
+                  className={cn(formErrors.name && touched.name && "border-destructive focus-visible:ring-destructive")}
                 />
+                {useInlineValidation && touched.name && formErrors.name && (
+                  <p className="text-xs text-destructive">{formErrors.name}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -716,12 +965,15 @@ export default function Membresia() {
                   id="membresia-email"
                   type="email"
                   value={formData.email}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, email: e.target.value }))
-                  }
+                  onChange={(e) => handleFieldChange("email", e.target.value)}
+                  onBlur={() => handleFieldBlur("email")}
                   placeholder="you@email.com"
                   autoComplete="email"
+                  className={cn(formErrors.email && touched.email && "border-destructive focus-visible:ring-destructive")}
                 />
+                {useInlineValidation && touched.email && formErrors.email && (
+                  <p className="text-xs text-destructive">{formErrors.email}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -739,14 +991,17 @@ export default function Membresia() {
                   <Input
                     id="membresia-phone"
                     value={formData.phone}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, phone: e.target.value }))
-                    }
+                    onChange={(e) => handleFieldChange("phone", e.target.value)}
+                    onBlur={() => handleFieldBlur("phone")}
                     placeholder={language === "es" ? "Tu número" : "Your number"}
                     inputMode="tel"
                     autoComplete="tel"
+                    className={cn(formErrors.phone && touched.phone && "border-destructive focus-visible:ring-destructive")}
                   />
                 </div>
+                {useInlineValidation && touched.phone && formErrors.phone && (
+                  <p className="text-xs text-destructive">{formErrors.phone}</p>
+                )}
               </div>
 
               <Button
@@ -768,6 +1023,11 @@ export default function Membresia() {
                 {language === "es"
                   ? "Tu información está 100% segura con nosotros"
                   : "Your information is 100% secure with us"}
+              </p>
+              <p className="text-center text-xs text-muted-foreground">
+                {language === "es"
+                  ? "Al enviar aceptas recibir mensajes sobre tu acceso y soporte. Puedes darte de baja cuando quieras."
+                  : "By submitting you agree to receive access and support messages. You can opt out anytime."}
               </p>
             </form>
           </div>
