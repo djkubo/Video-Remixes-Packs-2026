@@ -1,5 +1,5 @@
-/* Import condensed display fonts for club/tech aesthetic */
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap');
+/* Import modern editorial fonts tuned for clean light-mode readability */
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -11,28 +11,28 @@
 @layer base {
   :root {
     /* Light theme defaults (production-aligned) */
-    --primary: 349 93% 48%;
+    --primary: 356 78% 46%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 349 93% 54%;
+    --primary-glow: 356 82% 52%;
 
-    --background: 0 0% 100%;
-    --background-carbon: 0 0% 98%;
-    --foreground: 0 0% 13%;
+    --background: 220 30% 99%;
+    --background-carbon: 220 24% 97%;
+    --foreground: 220 24% 13%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 13%;
-    --card-elevated: 0 0% 98%;
+    --card-foreground: 220 24% 13%;
+    --card-elevated: 220 20% 99%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 13%;
+    --popover-foreground: 220 24% 13%;
 
-    --secondary: 0 0% 95%;
-    --secondary-foreground: 0 0% 13%;
+    --secondary: 220 24% 96%;
+    --secondary-foreground: 220 24% 14%;
 
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 38%;
+    --muted: 220 24% 97%;
+    --muted-foreground: 220 11% 42%;
 
-    --accent: 349 93% 48%;
+    --accent: 356 82% 46%;
     --accent-foreground: 0 0% 100%;
 
     --success: 142 62% 34%;
@@ -40,74 +40,74 @@
     --destructive: 0 75% 45%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 92%;
-    --input: 0 0% 94%;
-    --ring: 349 93% 48%;
+    --border: 220 17% 86%;
+    --input: 220 17% 90%;
+    --ring: 356 82% 46%;
 
     --radius: 0.75rem;
 
     --gradient-hero: radial-gradient(
       ellipse 120% 72% at 50% 4%,
-      hsl(349 93% 94% / 0.85) 0%,
+      hsl(356 78% 93% / 0.64) 0%,
       transparent 58%
     );
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(0 0% 99%) 100%);
-    --shadow-glow: 0 6px 24px hsl(0 0% 0% / 0.06);
-    --shadow-glow-strong: 0 10px 34px hsl(349 93% 48% / 0.14);
+    --gradient-card: linear-gradient(180deg, hsl(220 24% 99%) 0%, hsl(220 18% 97%) 100%);
+    --shadow-glow: 0 10px 24px hsl(220 35% 12% / 0.05);
+    --shadow-glow-strong: 0 12px 28px hsl(356 78% 46% / 0.1);
 
     /* Sidebar */
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 0 0% 20%;
-    --sidebar-primary: 349 93% 48%;
+    --sidebar-foreground: 220 14% 20%;
+    --sidebar-primary: 356 82% 46%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 96%;
-    --sidebar-accent-foreground: 0 0% 14%;
-    --sidebar-border: 0 0% 92%;
-    --sidebar-ring: 349 93% 48%;
+    --sidebar-accent: 220 20% 96%;
+    --sidebar-accent-foreground: 220 20% 14%;
+    --sidebar-border: 220 17% 88%;
+    --sidebar-ring: 356 82% 46%;
   }
 
   /* Keep explicit light class for runtime toggles */
   .light {
-    --background: 0 0% 100%;
-    --background-carbon: 0 0% 98%;
-    --foreground: 0 0% 13%;
+    --background: 220 30% 99%;
+    --background-carbon: 220 24% 97%;
+    --foreground: 220 24% 13%;
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 13%;
-    --card-elevated: 0 0% 98%;
+    --card-foreground: 220 24% 13%;
+    --card-elevated: 220 20% 98%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 13%;
-    --primary: 349 93% 48%;
+    --popover-foreground: 220 24% 13%;
+    --primary: 356 78% 46%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 349 93% 54%;
-    --secondary: 0 0% 95%;
-    --secondary-foreground: 0 0% 13%;
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 38%;
-    --accent: 349 93% 48%;
+    --primary-glow: 356 82% 52%;
+    --secondary: 220 24% 96%;
+    --secondary-foreground: 220 24% 14%;
+    --muted: 220 24% 97%;
+    --muted-foreground: 220 11% 42%;
+    --accent: 356 82% 46%;
     --accent-foreground: 0 0% 100%;
     --success: 142 62% 34%;
     --success-foreground: 0 0% 100%;
     --destructive: 0 75% 45%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 92%;
-    --input: 0 0% 94%;
-    --ring: 349 93% 48%;
+    --border: 220 17% 86%;
+    --input: 220 17% 90%;
+    --ring: 356 82% 46%;
     --gradient-hero: radial-gradient(
       ellipse 120% 72% at 50% 4%,
-      hsl(349 93% 94% / 0.85) 0%,
+      hsl(356 78% 93% / 0.64) 0%,
       transparent 58%
     );
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(0 0% 99%) 100%);
-    --shadow-glow: 0 6px 24px hsl(0 0% 0% / 0.06);
-    --shadow-glow-strong: 0 10px 34px hsl(349 93% 48% / 0.14);
+    --gradient-card: linear-gradient(180deg, hsl(220 24% 99%) 0%, hsl(220 18% 97%) 100%);
+    --shadow-glow: 0 10px 24px hsl(220 35% 12% / 0.05);
+    --shadow-glow-strong: 0 12px 28px hsl(356 78% 46% / 0.1);
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 0 0% 20%;
-    --sidebar-primary: 349 93% 48%;
+    --sidebar-foreground: 220 14% 20%;
+    --sidebar-primary: 356 82% 46%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 96%;
-    --sidebar-accent-foreground: 0 0% 14%;
-    --sidebar-border: 0 0% 92%;
-    --sidebar-ring: 349 93% 48%;
+    --sidebar-accent: 220 20% 96%;
+    --sidebar-accent-foreground: 220 20% 14%;
+    --sidebar-border: 220 17% 88%;
+    --sidebar-ring: 356 82% 46%;
   }
 
   .dark {
@@ -162,24 +162,24 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', 'Barlow Condensed', system-ui, sans-serif;
+    font-family: 'Manrope', 'Inter', system-ui, sans-serif;
     font-feature-settings: "cv11", "ss01";
   }
 
   /* Display typography with cleaner light-mode behavior */
   h1, h2, h3 {
-    font-family: 'Barlow Condensed', 'Bebas Neue', system-ui, sans-serif;
+    font-family: 'Sora', 'Manrope', system-ui, sans-serif;
     font-weight: 700;
     text-transform: none;
-    letter-spacing: 0.01em;
-    line-height: 1.02;
+    letter-spacing: -0.015em;
+    line-height: 1.06;
   }
 
   h4, h5, h6 {
-    font-family: 'Barlow Condensed', 'Inter', system-ui, sans-serif;
+    font-family: 'Sora', 'Manrope', system-ui, sans-serif;
     font-weight: 600;
     text-transform: none;
-    letter-spacing: 0.01em;
+    letter-spacing: -0.01em;
   }
 
   /* Improve text rendering */
@@ -215,8 +215,8 @@
 
   .light .glass-card {
     background: hsl(0 0% 100%);
-    border-color: hsl(0 0% 92%);
-    box-shadow: 0 6px 24px hsl(0 0% 0% / 0.06), 0 1px 2px hsl(0 0% 0% / 0.04);
+    border-color: hsl(220 18% 90%);
+    box-shadow: 0 8px 20px hsl(220 30% 12% / 0.05), 0 1px 2px hsl(220 20% 12% / 0.03);
     backdrop-filter: none;
   }
 
@@ -283,7 +283,7 @@
   }
 
   .light .hero-gradient {
-    background: radial-gradient(ellipse 120% 70% at 50% 5%, hsl(349 93% 94% / 0.82) 0%, transparent 54%);
+    background: radial-gradient(ellipse 120% 70% at 50% 5%, hsl(349 86% 95% / 0.72) 0%, transparent 54%);
   }
 
   .text-gradient-red {
@@ -313,23 +313,23 @@
   /* === BUTTONS === */
   .btn-primary-glow {
     @apply relative overflow-hidden;
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(349 87% 40%) 100%);
-    box-shadow: 0 4px 18px hsl(var(--primary) / 0.35);
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(349 80% 40%) 100%);
+    box-shadow: 0 4px 14px hsl(var(--primary) / 0.24);
     transition: all 0.3s ease;
   }
 
   .btn-primary-glow:hover {
-    background: linear-gradient(135deg, hsl(var(--primary-glow)) 0%, hsl(349 87% 44%) 100%);
-    box-shadow: 0 6px 26px hsl(var(--primary) / 0.42);
-    transform: translateY(-2px);
+    background: linear-gradient(135deg, hsl(var(--primary-glow)) 0%, hsl(349 80% 43%) 100%);
+    box-shadow: 0 8px 18px hsl(var(--primary) / 0.3);
+    transform: translateY(-1px);
   }
 
   .light .btn-primary-glow {
-    box-shadow: 0 6px 20px hsl(349 93% 48% / 0.25);
+    box-shadow: 0 6px 14px hsl(349 86% 48% / 0.22);
   }
 
   .light .btn-primary-glow:hover {
-    box-shadow: 0 10px 26px hsl(349 93% 48% / 0.28);
+    box-shadow: 0 10px 20px hsl(349 86% 48% / 0.26);
   }
 
   .btn-gold-glow {

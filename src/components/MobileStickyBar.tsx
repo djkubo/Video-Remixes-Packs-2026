@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAnalytics } from "@/hooks/useAnalytics";
+import { cn } from "@/lib/utils";
 import logoWhite from "@/assets/logo-white.png";
 import logoDark from "@/assets/logo-dark.png";
 
@@ -38,8 +39,15 @@ const MobileStickyBar = () => {
           {/* Top fade */}
           <div className="h-4 bg-gradient-to-t from-background to-transparent" />
           
-          {/* Bar content - Enhanced separation with stronger blur and subtle border */}
-          <div className="flex items-center justify-between gap-3 bg-background/95 px-4 py-3 backdrop-blur-2xl backdrop-saturate-150 border-t border-white/10 shadow-[0_-4px_30px_rgba(0,0,0,0.5)]">
+          {/* Sticky CTA bar tuned for both light and dark themes */}
+          <div
+            className={cn(
+              "flex items-center justify-between gap-3 border-t px-4 py-3 backdrop-blur-xl",
+              theme === "dark"
+                ? "border-white/10 bg-background/90 shadow-[0_-6px_24px_rgba(0,0,0,0.45)]"
+                : "border-border/80 bg-background/96 shadow-[0_-8px_22px_rgba(15,23,42,0.10)]"
+            )}
+          >
             <div className="flex items-center gap-2 min-w-0">
               <img
                 src={theme === "dark" ? logoWhite : logoDark}

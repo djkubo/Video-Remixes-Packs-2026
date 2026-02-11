@@ -91,7 +91,7 @@ const OfferComparisonSection = () => {
             <Badge className="bg-primary/10 px-3 py-1 text-primary hover:bg-primary/10">
               {isEs ? "OFERTA CLARA" : "CLEAR OFFER"}
             </Badge>
-            <h2 className="mt-4 font-display text-4xl font-black md:text-5xl lg:text-6xl">
+            <h2 className="mt-4 font-display text-4xl font-bold md:text-5xl lg:text-6xl">
               {isEs ? (
                 <>
                   Elige la opción con <span className="text-gradient-red">mejor retorno</span>
@@ -128,8 +128,8 @@ const OfferComparisonSection = () => {
                   )}
                 </div>
 
-                <p className="mt-4 font-display text-2xl font-black text-foreground">{offer.title}</p>
-                <p className="mt-2 font-display text-4xl font-black text-gradient-red">{offer.price}</p>
+                <p className="mt-4 font-display text-2xl font-bold text-foreground">{offer.title}</p>
+                <p className="mt-2 font-display text-4xl font-bold text-gradient-red">{offer.price}</p>
                 <p className="mt-1 text-sm text-muted-foreground">{offer.subtitle}</p>
 
                 <ul className="mt-6 space-y-2 text-sm text-foreground/90">
@@ -145,7 +145,7 @@ const OfferComparisonSection = () => {
                   <Button
                     asChild
                     variant={offer.variant}
-                    className={`h-11 w-full font-black ${offer.highlighted ? "btn-primary-glow" : ""}`}
+                    className={`h-11 w-full font-bold ${offer.highlighted ? "btn-primary-glow" : ""}`}
                     onClick={() =>
                       trackEvent("click", {
                         cta_id: offer.ctaId,

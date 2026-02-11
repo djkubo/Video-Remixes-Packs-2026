@@ -34,6 +34,10 @@ type ExplorerTrack = {
   path: string;
 };
 
+type MusicExplorerProps = {
+  compact?: boolean;
+};
+
 function toTrack(file: ProductionFile, index: number): ExplorerTrack {
   const titleFromName = file.name.replace(/\.[^/.]+$/, "");
   const title = file.title?.trim() || titleFromName;
@@ -53,13 +57,14 @@ function toTrack(file: ProductionFile, index: number): ExplorerTrack {
   };
 }
 
-const MusicExplorer = () => {
+const MusicExplorer = ({ compact = false }: MusicExplorerProps) => {
   const { t, language } = useLanguage();
   const { trackClick } = useDataLayer();
   const { trackEvent } = useAnalytics();
   const location = useLocation();
 
   const isGenresRoute = location.pathname === "/genres";
+  const isCompactPreview = compact && !isGenresRoute;
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -149,27 +154,36 @@ const MusicExplorer = () => {
   const normalizedSearch = searchQuery.trim().toLowerCase();
 
   const filteredGenres = useMemo(() => {
+    if (isCompactPreview) return knownGenres;
     if (!normalizedSearch) return knownGenres;
     return knownGenres.filter((genre) => genre.toLowerCase().includes(normalizedSearch));
-  }, [knownGenres, normalizedSearch]);
+  }, [knownGenres, normalizedSearch, isCompactPreview]);
 
   const filteredTracks = useMemo(() => {
     return allTracks.filter((track) => {
       const matchesGenre = selectedGenre ? track.genre === selectedGenre : true;
       if (!matchesGenre) return false;
 
-      if (!normalizedSearch) return true;
+      if (isCompactPreview || !normalizedSearch) return true;
 
       const haystack = `${track.title} ${track.artist} ${track.genre}`.toLowerCase();
       return haystack.includes(normalizedSearch);
     });
-  }, [allTracks, normalizedSearch, selectedGenre]);
+  }, [allTracks, isCompactPreview, normalizedSearch, selectedGenre]);
 
-  const visibleTracks = useMemo(() => filteredTracks.slice(0, 80), [filteredTracks]);
+  const visibleGenrePills = useMemo(
+    () => filteredGenres.slice(0, isCompactPreview ? 10 : 260),
+    [filteredGenres, isCompactPreview],
+  );
+
+  const visibleTracks = useMemo(
+    () => filteredTracks.slice(0, isCompactPreview ? 8 : 80),
+    [filteredTracks, isCompactPreview],
+  );
 
   const showTracksByDefault = !isGenresRoute;
   const shouldShowTrackList =
-    showTracksByDefault || Boolean(selectedGenre) || normalizedSearch.length >= 2;
+    isCompactPreview || showTracksByDefault || Boolean(selectedGenre) || normalizedSearch.length >= 2;
 
   const handleDownloadClick = (track: ExplorerTrack) => {
     setSelectedTrack(track);
@@ -177,7 +191,7 @@ const MusicExplorer = () => {
   };
 
   return (
-    <section className="relative bg-background py-16 md:py-24">
+    <section className={`relative bg-background ${isCompactPreview ? "py-10 md:py-12" : "py-16 md:py-24"}`}>
       <div className="absolute inset-0 hero-gradient opacity-30" />
 
       <div className="container relative z-10 mx-auto px-4">
@@ -186,26 +200,38 @@ const MusicExplorer = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="mb-8 text-center"
+          className={`text-center ${isCompactPreview ? "mb-6" : "mb-8"}`}
         >
-          <h2 className="mb-4 font-display text-3xl font-bold md:text-4xl lg:text-5xl">
+          <h2
+            className={`mb-4 font-display font-bold ${
+              isCompactPreview ? "text-3xl md:text-4xl" : "text-3xl md:text-4xl lg:text-5xl"
+            }`}
+          >
             {isGenresRoute
               ? language === "es"
                 ? "Géneros en vivo"
                 : "Live genres"
-              : (
+              : isCompactPreview
+                ? language === "es"
+                  ? "Preview del catálogo en vivo"
+                  : "Live catalog preview"
+                : (
                   <>
                     {t("explorer.title")} <span className="text-gradient-red">{t("explorer.titleHighlight")}</span>
                   </>
                 )}
           </h2>
 
-          <p className="mx-auto max-w-3xl text-muted-foreground">
+          <p className={`mx-auto text-muted-foreground ${isCompactPreview ? "max-w-2xl text-sm md:text-base" : "max-w-3xl"}`}>
             {isGenresRoute
               ? language === "es"
                 ? "Listado actualizado desde la API de producción. Selecciona un género para ver ejemplos recientes."
                 : "Live list from the production API. Select a genre to view recent examples."
-              : t("explorer.subtitle")}
+              : isCompactPreview
+                ? language === "es"
+                  ? "Muestra real y simplificada del contenido actualizado. Para búsqueda avanzada usa el explorador completo."
+                  : "Real and simplified sample of updated content. Use full explorer for advanced search."
+                : t("explorer.subtitle")}
           </p>
 
           <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-2 text-xs font-bold text-primary">
@@ -216,37 +242,41 @@ const MusicExplorer = () => {
           </div>
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="mx-auto mb-8 max-w-3xl"
-        >
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder={
-                isGenresRoute
-                  ? language === "es"
-                    ? "Buscar género..."
-                    : "Search genre..."
-                  : t("explorer.search")
-              }
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              className="h-14 border-border/50 bg-card/50 pl-12 text-lg backdrop-blur-sm focus:border-primary"
-            />
-          </div>
-        </motion.div>
+        {!isCompactPreview && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="mx-auto mb-8 max-w-3xl"
+          >
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder={
+                  isGenresRoute
+                    ? language === "es"
+                      ? "Buscar género..."
+                      : "Search genre..."
+                    : t("explorer.search")
+                }
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                className="h-14 border-border/50 bg-card/50 pl-12 text-lg backdrop-blur-sm focus:border-primary"
+              />
+            </div>
+          </motion.div>
+        )}
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.15 }}
-          className="glass-card mx-auto max-w-6xl overflow-hidden"
+          className={`mx-auto overflow-hidden rounded-3xl border border-border/70 bg-card shadow-[0_14px_32px_rgba(15,23,42,0.06)] ${
+            isCompactPreview ? "max-w-5xl" : "max-w-6xl"
+          }`}
         >
           {loading ? (
             <div className="flex items-center justify-center py-16">
@@ -256,7 +286,7 @@ const MusicExplorer = () => {
             <div className="px-6 py-12 text-center text-sm text-destructive">{error}</div>
           ) : (
             <>
-              <div className="border-b border-border/30 bg-card/20 p-4">
+              <div className={`border-b border-border/60 bg-muted/20 ${isCompactPreview ? "p-4" : "p-4"}`}>
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <div className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground">
                     <Filter className="h-4 w-4" />
@@ -276,9 +306,9 @@ const MusicExplorer = () => {
                   </button>
                 </div>
 
-                <div className="max-h-52 overflow-y-auto pr-1">
+                <div className={`${isCompactPreview ? "" : "max-h-52 overflow-y-auto pr-1"}`}>
                   <div className="flex flex-wrap gap-2">
-                    {filteredGenres.slice(0, 260).map((genre) => (
+                    {visibleGenrePills.map((genre) => (
                       <button
                         key={genre}
                         type="button"
@@ -286,12 +316,12 @@ const MusicExplorer = () => {
                         className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
                           selectedGenre === genre
                             ? "border-primary bg-primary/15 text-primary"
-                            : "border-border bg-background/60 text-muted-foreground hover:border-primary/30 hover:text-foreground"
+                            : "border-border bg-background/80 text-muted-foreground hover:border-primary/30 hover:text-foreground"
                         }`}
                       >
                         <Folder className="h-3.5 w-3.5" />
                         {genre}
-                        {genreCounts.has(genre) && (
+                        {!isCompactPreview && genreCounts.has(genre) && (
                           <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px]">
                             {genreCounts.get(genre)}
                           </span>
@@ -303,64 +333,106 @@ const MusicExplorer = () => {
               </div>
 
               {shouldShowTrackList ? (
-                <>
-                  {visibleTracks.length > 0 && (
-                    <div className="grid grid-cols-12 gap-4 border-b border-border/30 bg-card/30 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground md:px-6">
-                      <div className="col-span-6 md:col-span-4">{language === "es" ? "Título" : "Title"}</div>
-                      <div className="col-span-3 hidden md:block">{language === "es" ? "Género" : "Genre"}</div>
-                      <div className="col-span-2 hidden md:block">{language === "es" ? "Duración" : "Duration"}</div>
-                      <div className="col-span-6 md:col-span-3 text-right">{language === "es" ? "Acción" : "Action"}</div>
-                    </div>
-                  )}
-
-                  <div className="max-h-[480px] overflow-y-auto">
+                isCompactPreview ? (
+                  <div className="grid gap-3 p-4 md:grid-cols-2 md:p-5">
                     {visibleTracks.map((track, index) => (
-                      <div
+                      <article
                         key={`${track.id}-${index}`}
-                        className="grid grid-cols-12 gap-4 border-b border-border/10 px-4 py-4 transition-colors hover:bg-card/40 md:px-6"
+                        className="flex items-start justify-between gap-3 rounded-2xl border border-border/70 bg-background px-4 py-3"
                       >
-                        <div className="col-span-6 md:col-span-4">
+                        <div className="min-w-0">
                           <button
                             type="button"
                             onClick={() => handleDownloadClick(track)}
-                            className="text-left font-medium text-foreground transition-colors hover:text-primary"
+                            className="truncate text-left text-sm font-semibold text-foreground transition-colors hover:text-primary"
                           >
                             {track.title}
                           </button>
-                          <p className="mt-1 truncate text-sm text-muted-foreground">{track.artist}</p>
+                          <p className="mt-0.5 truncate text-xs text-muted-foreground">{track.artist}</p>
+                          <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                            <span className="rounded-full bg-secondary px-2.5 py-1 text-secondary-foreground">
+                              {track.genre}
+                            </span>
+                            <span>{track.durationFormatted}</span>
+                            {track.bpm ? <span>{track.bpm} BPM</span> : null}
+                          </div>
                         </div>
 
-                        <div className="col-span-3 hidden md:flex md:items-center">
-                          <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
-                            {track.genre}
-                          </span>
-                        </div>
-
-                        <div className="col-span-2 hidden md:flex md:items-center text-sm text-muted-foreground">
-                          {track.durationFormatted}
-                        </div>
-
-                        <div className="col-span-6 md:col-span-3 flex items-center justify-end gap-2">
-                          {track.bpm && (
-                            <span className="hidden text-xs text-muted-foreground md:block">{track.bpm} BPM</span>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => handleDownloadClick(track)}
-                            aria-label={
-                              language === "es"
-                                ? `Ver como descargar: ${track.title}`
-                                : `See how to download: ${track.title}`
-                            }
-                            className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/20 text-primary transition-all hover:bg-primary hover:text-primary-foreground"
-                          >
-                            <Download className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </div>
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadClick(track)}
+                          aria-label={
+                            language === "es"
+                              ? `Ver como descargar: ${track.title}`
+                              : `See how to download: ${track.title}`
+                          }
+                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary transition-all hover:bg-primary hover:text-primary-foreground"
+                        >
+                          <Download className="h-4 w-4" />
+                        </button>
+                      </article>
                     ))}
                   </div>
-                </>
+                ) : (
+                  <>
+                    {visibleTracks.length > 0 && (
+                      <div className="grid grid-cols-12 gap-4 border-b border-border/30 bg-card/30 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground md:px-6">
+                        <div className="col-span-6 md:col-span-4">{language === "es" ? "Título" : "Title"}</div>
+                        <div className="col-span-3 hidden md:block">{language === "es" ? "Género" : "Genre"}</div>
+                        <div className="col-span-2 hidden md:block">{language === "es" ? "Duración" : "Duration"}</div>
+                        <div className="col-span-6 text-right md:col-span-3">{language === "es" ? "Acción" : "Action"}</div>
+                      </div>
+                    )}
+
+                    <div className="max-h-[480px] overflow-y-auto">
+                      {visibleTracks.map((track, index) => (
+                        <div
+                          key={`${track.id}-${index}`}
+                          className="grid grid-cols-12 gap-4 border-b border-border/10 px-4 py-4 transition-colors hover:bg-card/40 md:px-6"
+                        >
+                          <div className="col-span-6 md:col-span-4">
+                            <button
+                              type="button"
+                              onClick={() => handleDownloadClick(track)}
+                              className="text-left font-medium text-foreground transition-colors hover:text-primary"
+                            >
+                              {track.title}
+                            </button>
+                            <p className="mt-1 truncate text-sm text-muted-foreground">{track.artist}</p>
+                          </div>
+
+                          <div className="col-span-3 hidden items-center md:flex">
+                            <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
+                              {track.genre}
+                            </span>
+                          </div>
+
+                          <div className="col-span-2 hidden items-center text-sm text-muted-foreground md:flex">
+                            {track.durationFormatted}
+                          </div>
+
+                          <div className="col-span-6 flex items-center justify-end gap-2 md:col-span-3">
+                            {track.bpm && (
+                              <span className="hidden text-xs text-muted-foreground md:block">{track.bpm} BPM</span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => handleDownloadClick(track)}
+                              aria-label={
+                                language === "es"
+                                  ? `Ver como descargar: ${track.title}`
+                                  : `See how to download: ${track.title}`
+                              }
+                              className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/20 text-primary transition-all hover:bg-primary hover:text-primary-foreground"
+                            >
+                              <Download className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )
               ) : (
                 <div className="flex flex-col items-center justify-center gap-3 px-6 py-16 text-center text-muted-foreground">
                   <Music2 className="h-10 w-10 opacity-60" />
@@ -386,17 +458,26 @@ const MusicExplorer = () => {
           )}
         </motion.div>
 
-        <motion.p
+        <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="mt-6 text-center text-sm text-muted-foreground"
+          className="mt-6 text-center"
         >
-          {language === "es"
-            ? `Mostrando ${visibleTracks.length} de ${filteredTracks.length} resultados (${allTracks.length.toLocaleString()} tracks recientes).`
-            : `Showing ${visibleTracks.length} of ${filteredTracks.length} results (${allTracks.length.toLocaleString()} recent tracks).`}
-        </motion.p>
+          <p className="text-sm text-muted-foreground">
+            {language === "es"
+              ? `Mostrando ${visibleTracks.length} de ${filteredTracks.length} resultados (${allTracks.length.toLocaleString()} tracks recientes).`
+              : `Showing ${visibleTracks.length} of ${filteredTracks.length} results (${allTracks.length.toLocaleString()} recent tracks).`}
+          </p>
+          {isCompactPreview && (
+            <Button asChild variant="outline" className="mt-4 h-10 font-semibold">
+              <Link to="/explorer">
+                {language === "es" ? "Abrir explorador completo" : "Open full explorer"}
+              </Link>
+            </Button>
+          )}
+        </motion.div>
       </div>
 
       <Dialog open={showModal} onOpenChange={setShowModal}>

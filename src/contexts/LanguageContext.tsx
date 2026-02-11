@@ -279,8 +279,8 @@ export const translations: Translations = {
   },
 
   // Final CTA
-  "cta.title": { es: "¿LISTO PARA DEJAR DE BUSCAR", en: "READY TO STOP HUNTING" },
-  "cta.titleHighlight": { es: "EN 5 POOLS?", en: "ACROSS 5 POOLS?" },
+  "cta.title": { es: "¿Listo para dejar de buscar", en: "Ready to stop searching" },
+  "cta.titleHighlight": { es: "en 5 pools?", en: "across 5 pools?" },
   "cta.subtitle": { es: "Una sola suscripción. Todo el contenido que necesitas. Desde", en: "One subscription. All the content you need. Starting at" },
   "cta.subtitleSimple": { es: "Una sola suscripción. Todo el contenido que necesitas.", en: "One subscription. All the content you need." },
   "cta.button": { es: "Ver Planes", en: "View Plans" },
@@ -292,7 +292,7 @@ export const translations: Translations = {
   "cta.perMonth": { es: "/mes", en: "/mo" },
 
   // Guarantee
-  "guarantee.title": { es: "SIN CONTRATOS. SIN COMPROMISOS.", en: "NO CONTRACTS. NO COMMITMENTS." },
+  "guarantee.title": { es: "Sin contratos ni compromisos", en: "No contracts, no lock-ins" },
   "guarantee.desc": {
     es: "Sin contratos forzosos ni permanencia mínima. Si necesitas cancelar o soporte, te ayudamos por WhatsApp.",
     en: "No forced contracts or minimum term. If you need cancellation or support, we help you via WhatsApp.",

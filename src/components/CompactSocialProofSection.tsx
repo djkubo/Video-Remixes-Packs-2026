@@ -41,14 +41,14 @@ const CompactSocialProofSection = () => {
                 <Star className="h-3.5 w-3.5" />
                 {isSpanish ? "Prueba social" : "Social proof"}
               </p>
-              <h2 className="mt-3 font-display text-3xl font-black md:text-4xl">
+              <h2 className="mt-3 font-display text-3xl font-bold md:text-4xl">
                 {isSpanish ? "DJs reales, resultados medibles" : "Real DJs, measurable results"}
               </h2>
             </div>
             <div className="grid w-full gap-3 sm:grid-cols-3 md:w-auto">
               {highlights.map((item) => (
                 <div key={item.value} className="rounded-xl border border-border/70 bg-background px-4 py-3 text-center">
-                  <p className="font-display text-2xl font-black text-primary">{item.value}</p>
+                  <p className="font-display text-2xl font-bold text-primary">{item.value}</p>
                   <p className="text-xs text-muted-foreground">{item.label}</p>
                 </div>
               ))}

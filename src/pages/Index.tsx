@@ -65,7 +65,7 @@ const Index = () => {
 
         {!showSocialProofEarly && <CompactSocialProofSection />}
 
-        <MusicExplorer />
+        <MusicExplorer compact />
 
         <TrustSecuritySection />
 

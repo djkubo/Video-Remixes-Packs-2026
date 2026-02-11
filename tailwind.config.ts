@@ -20,8 +20,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
-        display: ["Barlow Condensed", "Bebas Neue", "system-ui", "sans-serif"],
+        sans: ["Manrope", "Inter", "system-ui", "sans-serif"],
+        display: ["Sora", "Manrope", "system-ui", "sans-serif"],
         bebas: ["Bebas Neue", "system-ui", "sans-serif"],
       },
       colors: {

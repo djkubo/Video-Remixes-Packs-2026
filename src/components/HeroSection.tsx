@@ -98,7 +98,7 @@ const HeroSection = () => {
               {isSpanish ? "DJs latinos USA · actualización semanal" : "US Latin DJs · weekly updates"}
             </p>
 
-            <h1 className="mt-4 max-w-xl font-display text-5xl font-black leading-[0.92] text-foreground md:text-6xl">
+            <h1 className="mt-4 max-w-xl font-display text-5xl font-bold leading-tight text-foreground md:text-6xl">
               {isSpanish ? "Tu música lista para tocar" : "Your music ready to perform"}
             </h1>
 
@@ -179,7 +179,7 @@ const HeroSection = () => {
                   {isSpanish ? "Más vendido" : "Best seller"}
                 </span>
               </div>
-              <p className="mt-3 font-display text-3xl font-black text-foreground">
+              <p className="mt-3 font-display text-3xl font-bold text-foreground">
                 {isSpanish ? "Membresía 2TB" : "2TB Membership"}
               </p>
               <p className="text-sm text-muted-foreground">{isSpanish ? "$195 anual" : "$195 yearly"}</p>
@@ -205,7 +205,7 @@ const HeroSection = () => {
                 { value: "4.9", label: isSpanish ? "Rating" : "Rating" },
               ].map((stat) => (
                 <div key={stat.label} className="rounded-xl border border-border/70 bg-background px-2 py-3 text-center">
-                  <p className="font-display text-xl font-black text-foreground">{stat.value}</p>
+                  <p className="font-display text-xl font-bold text-foreground">{stat.value}</p>
                   <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{stat.label}</p>
                 </div>
               ))}

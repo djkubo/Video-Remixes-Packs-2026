@@ -30,7 +30,7 @@ const FinalCTA = () => {
   ];
 
   return (
-    <section className="relative border-y border-border/60 bg-muted/20 py-20 md:py-24">
+    <section className="relative border-y border-border/60 bg-muted/30 py-18 md:py-22">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -42,10 +42,9 @@ const FinalCTA = () => {
           <div className="rounded-3xl border border-border/80 bg-card p-8 shadow-[0_16px_32px_rgba(15,23,42,0.07)] md:p-12">
             <div className="grid gap-8 md:grid-cols-[1.15fr_1fr] md:items-center">
               <div>
-                <h2 className="font-display text-4xl font-black leading-[0.95] text-foreground md:text-5xl">
-                {t("cta.title")}{" "}
-                <span className="text-gradient-red">{t("cta.titleHighlight")}</span>
-              </h2>
+                <h2 className="font-display text-4xl font-bold leading-tight text-foreground md:text-5xl">
+                  {t("cta.title")} <span className="text-gradient-red">{t("cta.titleHighlight")}</span>
+                </h2>
 
                 <p className="mt-4 max-w-lg text-sm leading-relaxed text-muted-foreground md:text-base">
                   {t("cta.subtitleSimple")}
@@ -63,9 +62,10 @@ const FinalCTA = () => {
                   </Link>
                 </Button>
 
-                <p className="mt-4 font-bebas text-xs tracking-[0.14em] text-muted-foreground">
-                FTP / AIR EXPLORER • 320KBPS / 1080P • {language === "es" ? "SOPORTE INCLUIDO" : "SUPPORT INCLUDED"}
-              </p>
+                <p className="mt-4 text-xs tracking-wide text-muted-foreground">
+                  FTP / AIR EXPLORER • 320KBPS / 1080P •{" "}
+                  {language === "es" ? "soporte incluido" : "support included"}
+                </p>
               </div>
 
               <div className="grid gap-3">
