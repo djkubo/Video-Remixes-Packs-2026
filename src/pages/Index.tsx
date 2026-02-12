@@ -388,14 +388,6 @@ const Index = () => {
       </a>
 
       <main id="main-content" className="relative isolate min-h-screen overflow-hidden bg-[#fafafa] pb-24 md:pb-0">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-[#050505] via-[#120102] to-transparent md:w-16"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-[#4d0007] via-[#1f0003] to-transparent md:w-16"
-        />
         <section className="relative overflow-hidden border-b border-[#780008] bg-gradient-to-br from-[#2d0003] via-[#e10613] to-[#740009] px-4 pb-16 pt-12 text-white md:pb-20 md:pt-20">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.2),transparent_34%),radial-gradient(circle_at_80%_10%,rgba(0,0,0,0.25),transparent_38%)]" />
           <div className="container relative z-10 mx-auto max-w-6xl">
