@@ -347,7 +347,7 @@ const Index = () => {
         <div className="rounded-[28px] border border-[#242424] bg-[#111111] p-6 text-white shadow-[0_18px_40px_rgba(0,0,0,0.35)] md:p-8">
           <div className="grid gap-6 md:grid-cols-[1.2fr_1fr] md:items-center">
             <div>
-              <p className="inline-flex items-center gap-2 rounded-full border border-[#c30010] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#ff3b49]">
+              <p className="inline-flex items-center gap-2 rounded-full border border-[#e10613] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#ff2a2a]">
                 <Sparkles className="h-3.5 w-3.5" />
                 {isSpanish ? "Prueba social real" : "Real social proof"}
               </p>
@@ -367,7 +367,7 @@ const Index = () => {
                 { value: "50K+", label: isSpanish ? "Tracks" : "Tracks" },
               ].map((item) => (
                 <div key={item.value} className="rounded-xl border border-[#2f2f2f] bg-[#181818] px-3 py-3 text-center">
-                  <p className="font-display text-2xl font-black text-[#ff2738]">{item.value}</p>
+                  <p className="font-display text-2xl font-black text-[#e10613]">{item.value}</p>
                   <p className="text-[11px] uppercase tracking-wide text-white/60">{item.label}</p>
                 </div>
               ))}
@@ -382,13 +382,21 @@ const Index = () => {
     <>
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-[#c30010] focus:px-4 focus:py-2 focus:text-white"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-[#e10613] focus:px-4 focus:py-2 focus:text-white"
       >
         {isSpanish ? "Saltar al contenido" : "Skip to content"}
       </a>
 
-      <main id="main-content" className="min-h-screen bg-[#ffffff] pb-24 md:pb-0">
-        <section className="relative overflow-hidden border-b border-[#780008] bg-gradient-to-br from-[#2d0003] via-[#c30010] to-[#740009] px-4 pb-16 pt-12 text-white md:pb-20 md:pt-20">
+      <main id="main-content" className="relative isolate min-h-screen overflow-hidden bg-[#fafafa] pb-24 md:pb-0">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-[#050505] via-[#120102] to-transparent md:w-16"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-[#4d0007] via-[#1f0003] to-transparent md:w-16"
+        />
+        <section className="relative overflow-hidden border-b border-[#780008] bg-gradient-to-br from-[#2d0003] via-[#e10613] to-[#740009] px-4 pb-16 pt-12 text-white md:pb-20 md:pt-20">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.2),transparent_34%),radial-gradient(circle_at_80%_10%,rgba(0,0,0,0.25),transparent_38%)]" />
           <div className="container relative z-10 mx-auto max-w-6xl">
             <div className="grid gap-10 md:grid-cols-2 md:items-center">
@@ -424,7 +432,7 @@ const Index = () => {
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                   <Button
                     asChild
-                    className="h-12 bg-white px-6 text-sm font-black text-[#c30010] hover:bg-white/92 md:text-base"
+                    className="h-12 bg-white px-6 text-sm font-black text-[#e10613] hover:bg-white/92 md:text-base"
                     onClick={() =>
                       handleCta(primaryCta.label, primaryCta.ctaId, "hero", primaryCta.planId, primaryCta.to)
                     }
@@ -461,7 +469,7 @@ const Index = () => {
                   <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[#7d7d7d]">
                     {isSpanish ? "Plan recomendado" : "Recommended plan"}
                   </p>
-                  <span className="rounded-full bg-[#c30010] px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white">
+                  <span className="rounded-full bg-[#e10613] px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white">
                     {isSpanish ? "Más vendido" : "Best seller"}
                   </span>
                 </div>
@@ -476,14 +484,14 @@ const Index = () => {
                   ].map((item) => (
                     <div key={item} className="flex items-center justify-between rounded-xl border border-[#e3e3e3] bg-[#fafafa] px-3 py-2.5">
                       <span className="text-sm font-semibold text-[#1f1f1f]">{item}</span>
-                      <Check className="h-4.5 w-4.5 text-[#c30010]" />
+                      <Check className="h-4.5 w-4.5 text-[#e10613]" />
                     </div>
                   ))}
                 </div>
 
                 <Button
                   asChild
-                  className="mt-5 h-11 w-full bg-[#c30010] text-sm font-black text-white hover:bg-[#91000c]"
+                  className="mt-5 h-11 w-full bg-[#e10613] text-sm font-black text-white hover:bg-[#ad000a]"
                   onClick={() =>
                     handleCta(
                       isSpanish ? "Ver membresía" : "View membership",
@@ -529,9 +537,13 @@ const Index = () => {
               ].map((item) => (
                 <article
                   key={item.title}
-                  className="rounded-2xl border border-[#ddd7d7] bg-white p-5 shadow-[0_10px_24px_rgba(0,0,0,0.06)]"
+                  className="relative overflow-hidden rounded-2xl border border-[#ddd7d7] bg-white p-5 shadow-[0_10px_24px_rgba(0,0,0,0.06)]"
                 >
-                  <p className="text-xs font-black uppercase tracking-[0.14em] text-[#c30010]">{item.title}</p>
+                  <div
+                    aria-hidden
+                    className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#280003] via-[#e10613] to-[#7d000a]"
+                  />
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-[#e10613]">{item.title}</p>
                   <p className="mt-2 text-sm leading-relaxed text-[#3a3a3a] md:text-base">{item.text}</p>
                 </article>
               ))}
@@ -544,17 +556,17 @@ const Index = () => {
         <section id="planes" className="border-y border-[#dfd9d9] bg-white px-4 py-12 md:py-16">
           <div className="container mx-auto max-w-6xl">
             <div className="text-center">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#c30010]">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#e10613]">
                 {isSpanish ? "Oferta clara" : "Clear offer"}
               </p>
               <h2 className="mt-3 font-display text-4xl font-black text-[#111111] md:text-5xl">
                 {isSpanish ? (
                   <>
-                    Elige la opción con <span className="text-[#c30010]">mejor retorno</span>
+                    Elige la opción con <span className="text-[#e10613]">mejor retorno</span>
                   </>
                 ) : (
                   <>
-                    Choose the option with <span className="text-[#c30010]">best return</span>
+                    Choose the option with <span className="text-[#e10613]">best return</span>
                   </>
                 )}
               </h2>
@@ -569,27 +581,35 @@ const Index = () => {
               {plans.map((plan) => (
                 <article
                   key={plan.key}
-                  className={`rounded-2xl border p-6 shadow-[0_10px_28px_rgba(0,0,0,0.07)] ${
+                  className={`relative overflow-hidden rounded-2xl border p-6 shadow-[0_10px_28px_rgba(0,0,0,0.07)] ${
                     plan.highlighted
-                      ? "border-[#c30010] bg-white ring-2 ring-[#c30010]/15"
+                      ? "border-[#e10613] bg-white shadow-[0_14px_30px_rgba(120,0,10,0.22)]"
                       : "border-[#ded8d8] bg-[#fdfdfd]"
                   }`}
                 >
+                  <div
+                    aria-hidden
+                    className={`absolute inset-x-0 top-0 h-1 ${
+                      plan.highlighted
+                        ? "bg-gradient-to-r from-[#270003] via-[#e10613] to-[#8e000b]"
+                        : "bg-gradient-to-r from-[#1a1a1a] via-[#5f5f5f] to-[#1a1a1a]"
+                    }`}
+                  />
                   <div className="flex items-center justify-between">
                     <p className="font-display text-2xl font-black text-[#171717] md:text-3xl">{plan.title}</p>
                     {plan.highlighted && (
-                      <span className="rounded-full bg-[#c30010] px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white">
+                      <span className="rounded-full bg-[#e10613] px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white">
                         {isSpanish ? "Recomendado" : "Recommended"}
                       </span>
                     )}
                   </div>
-                  <p className="mt-3 font-display text-4xl font-black leading-none text-[#c30010]">{plan.price}</p>
+                  <p className="mt-3 font-display text-4xl font-black leading-none text-[#e10613]">{plan.price}</p>
                   <p className="mt-1 text-sm font-semibold text-[#6a6a6a]">{plan.subtitle}</p>
 
                   <ul className="mt-5 space-y-2.5">
                     {plan.bullets.map((bullet) => (
                       <li key={bullet} className="flex items-start gap-2.5 text-sm text-[#2a2a2a]">
-                        <Check className="mt-0.5 h-4 w-4 text-[#c30010]" />
+                        <Check className="mt-0.5 h-4 w-4 text-[#e10613]" />
                         <span>{bullet}</span>
                       </li>
                     ))}
@@ -599,8 +619,8 @@ const Index = () => {
                     asChild
                     className={`mt-6 h-11 w-full font-black ${
                       plan.highlighted
-                        ? "bg-[#c30010] text-white hover:bg-[#91000c]"
-                        : "border border-[#d5cfcf] bg-white text-[#111111] hover:border-[#c30010] hover:text-[#c30010]"
+                        ? "bg-[#e10613] text-white hover:bg-[#ad000a]"
+                        : "border border-[#d5cfcf] bg-white text-[#111111] hover:border-[#e10613] hover:text-[#e10613]"
                     }`}
                     onClick={() => handleCta(plan.cta, plan.ctaId, "pricing", plan.planId, plan.to)}
                   >
@@ -620,7 +640,7 @@ const Index = () => {
         <section id="catalogo" className="px-4 py-12 md:py-16">
           <div className="container mx-auto max-w-6xl">
             <div className="text-center">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#c30010]">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#e10613]">
                 {isSpanish ? "Preview de catálogo" : "Catalog preview"}
               </p>
               <h2 className="mt-3 font-display text-4xl font-black text-[#111111] md:text-5xl">
@@ -633,7 +653,11 @@ const Index = () => {
               </p>
             </div>
 
-            <div className="mt-8 rounded-3xl border border-[#ddd6d6] bg-white p-4 shadow-[0_12px_30px_rgba(0,0,0,0.06)] md:p-6">
+            <div className="relative mt-8 overflow-hidden rounded-3xl border border-[#ddd6d6] bg-white p-4 shadow-[0_12px_30px_rgba(0,0,0,0.06)] md:p-6">
+              <div
+                aria-hidden
+                className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#1a1a1a] via-[#e10613] to-[#1a1a1a]"
+              />
               <div className="mb-4 flex flex-wrap items-center gap-2">
                 {genres.map((genre) => {
                   const active = selectedGenre === genre;
@@ -645,8 +669,8 @@ const Index = () => {
                       onClick={() => setSelectedGenre(genre)}
                       className={`rounded-full border px-3 py-1.5 text-xs font-bold transition-colors ${
                         active
-                          ? "border-[#c30010] bg-[#c30010] text-white"
-                          : "border-[#d8d1d1] bg-white text-[#5a5a5a] hover:border-[#c30010] hover:text-[#c30010]"
+                          ? "border-[#e10613] bg-[#e10613] text-white"
+                          : "border-[#d8d1d1] bg-white text-[#5a5a5a] hover:border-[#e10613] hover:text-[#e10613]"
                       }`}
                     >
                       {label}
@@ -681,7 +705,7 @@ const Index = () => {
                         </div>
                         <button
                           type="button"
-                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#c30010]/50 bg-white text-[#c30010] transition-colors hover:bg-[#c30010] hover:text-white"
+                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#e10613]/50 bg-white text-[#e10613] transition-colors hover:bg-[#e10613] hover:text-white"
                           aria-label={isSpanish ? "Descargar con plan" : "Download with plan"}
                         >
                           <Download className="h-4 w-4" />
@@ -695,7 +719,7 @@ const Index = () => {
               <div className="mt-5 text-center">
                 <Button
                   asChild
-                  className="h-11 bg-[#c30010] px-6 text-sm font-black text-white hover:bg-[#91000c]"
+                  className="h-11 bg-[#e10613] px-6 text-sm font-black text-white hover:bg-[#ad000a]"
                   onClick={() =>
                     handleCta(
                       isSpanish ? "Abrir explorador" : "Open explorer",
@@ -718,20 +742,24 @@ const Index = () => {
 
         <section className="px-4 py-10">
           <div className="container mx-auto max-w-6xl">
-            <div className="rounded-[30px] border border-[#1d1d1d] bg-gradient-to-br from-[#171717] to-[#070707] p-8 text-white shadow-[0_18px_44px_rgba(0,0,0,0.4)] md:p-10">
+            <div className="relative overflow-hidden rounded-[30px] border border-[#1d1d1d] bg-gradient-to-br from-[#171717] to-[#070707] p-8 text-white shadow-[0_18px_44px_rgba(0,0,0,0.4)] md:p-10">
+              <div
+                aria-hidden
+                className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#2a0003] via-[#e10613] to-[#2a0003]"
+              />
               <div className="grid gap-8 md:grid-cols-[1.2fr_1fr] md:items-center">
                 <div>
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[#ff2738]">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[#e10613]">
                     {isSpanish ? "Pagos protegidos" : "Secure payments"}
                   </p>
                   <h2 className="mt-3 font-display text-4xl font-black leading-tight md:text-5xl">
                     {isSpanish ? (
                       <>
-                        Miles de DJs <span className="text-[#ff2738]">confían en nosotros</span>
+                        Miles de DJs <span className="text-[#e10613]">confían en nosotros</span>
                       </>
                     ) : (
                       <>
-                        Thousands of DJs <span className="text-[#ff2738]">trust us</span>
+                        Thousands of DJs <span className="text-[#e10613]">trust us</span>
                       </>
                     )}
                   </h2>
@@ -749,7 +777,7 @@ const Index = () => {
                   </ul>
                   <Button
                     asChild
-                    className="mt-5 h-11 w-full bg-[#c30010] text-sm font-black text-white hover:bg-[#91000c]"
+                    className="mt-5 h-11 w-full bg-[#e10613] text-sm font-black text-white hover:bg-[#ad000a]"
                     onClick={() =>
                       handleCta(
                         isSpanish ? "Ver planes" : "View plans",
@@ -774,7 +802,7 @@ const Index = () => {
         <section id="faq" className="px-4 py-10 md:py-14">
           <div className="container mx-auto max-w-4xl">
             <div className="mb-8 text-center">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#c30010]">FAQ</p>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#e10613]">FAQ</p>
               <h2 className="mt-3 font-display text-4xl font-black text-[#111111] md:text-5xl">
                 {isSpanish ? "Objeciones antes de comprar" : "Questions before buying"}
               </h2>
@@ -782,8 +810,12 @@ const Index = () => {
 
             <Accordion type="single" collapsible className="space-y-3">
               {faqs.map((faq, index) => (
-                <AccordionItem key={faq.q} value={`faq-${index}`} className="rounded-2xl border border-[#ddd6d6] bg-white px-5 data-[state=open]:border-[#c30010]">
-                  <AccordionTrigger className="py-4 text-left text-base font-bold text-[#181818] hover:text-[#c30010] hover:no-underline">
+                <AccordionItem
+                  key={faq.q}
+                  value={`faq-${index}`}
+                  className="rounded-2xl border border-[#ddd6d6] bg-white px-5 data-[state=open]:border-[#e10613] data-[state=open]:shadow-[0_10px_24px_rgba(120,0,10,0.18)]"
+                >
+                  <AccordionTrigger className="py-4 text-left text-base font-bold text-[#181818] hover:text-[#e10613] hover:no-underline">
                     {faq.q}
                   </AccordionTrigger>
                   <AccordionContent className="pb-4 text-sm leading-relaxed text-[#555555] md:text-base">
@@ -797,17 +829,21 @@ const Index = () => {
 
         <section className="px-4 pb-12 pt-4 md:pb-16">
           <div className="container mx-auto max-w-5xl">
-            <div className="rounded-[28px] border border-[#cfcbcb] bg-white p-8 shadow-[0_14px_34px_rgba(0,0,0,0.08)] md:p-10">
+            <div className="relative overflow-hidden rounded-[28px] border border-[#cfcbcb] bg-white p-8 shadow-[0_14px_34px_rgba(0,0,0,0.08)] md:p-10">
+              <div
+                aria-hidden
+                className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#2c0003] via-[#e10613] to-[#780008]"
+              />
               <div className="grid gap-6 md:grid-cols-[1.15fr_1fr] md:items-center">
                 <div>
                   <h2 className="font-display text-4xl font-black leading-tight text-[#111111] md:text-5xl">
                     {isSpanish ? (
                       <>
-                        ¿Listo para dejar de buscar en <span className="text-[#c30010]">5 pools</span>?
+                        ¿Listo para dejar de buscar en <span className="text-[#e10613]">5 pools</span>?
                       </>
                     ) : (
                       <>
-                        Ready to stop searching across <span className="text-[#c30010]">5 pools</span>?
+                        Ready to stop searching across <span className="text-[#e10613]">5 pools</span>?
                       </>
                     )}
                   </h2>
@@ -820,7 +856,7 @@ const Index = () => {
 
                 <Button
                   asChild
-                  className="h-12 w-full bg-[#c30010] text-sm font-black text-white hover:bg-[#91000c] md:w-auto md:px-8"
+                  className="h-12 w-full bg-[#e10613] text-sm font-black text-white hover:bg-[#ad000a] md:w-auto md:px-8"
                   onClick={() =>
                     handleCta(
                       isSpanish ? "Ver planes" : "View plans",
@@ -847,13 +883,13 @@ const Index = () => {
               <img src={logoDark} alt="VideoRemixesPack" className="h-14 w-auto object-contain" />
 
               <div className="flex flex-wrap items-center justify-center gap-5 text-sm font-semibold text-[#5a5a5a]">
-                <Link to="/plan" className="hover:text-[#c30010]">{isSpanish ? "Planes" : "Plans"}</Link>
-                <Link to="/explorer" className="hover:text-[#c30010]">{isSpanish ? "Demos" : "Demos"}</Link>
-                <Link to="/help" className="hover:text-[#c30010]">{isSpanish ? "Soporte" : "Support"}</Link>
-                <Link to="/terms_and_conditions" className="hover:text-[#c30010]">
+                <Link to="/plan" className="hover:text-[#e10613]">{isSpanish ? "Planes" : "Plans"}</Link>
+                <Link to="/explorer" className="hover:text-[#e10613]">{isSpanish ? "Demos" : "Demos"}</Link>
+                <Link to="/help" className="hover:text-[#e10613]">{isSpanish ? "Soporte" : "Support"}</Link>
+                <Link to="/terms_and_conditions" className="hover:text-[#e10613]">
                   {isSpanish ? "Términos" : "Terms"}
                 </Link>
-                <Link to="/privacy_policy" className="hover:text-[#c30010]">
+                <Link to="/privacy_policy" className="hover:text-[#e10613]">
                   {isSpanish ? "Privacidad" : "Privacy"}
                 </Link>
               </div>
@@ -875,7 +911,7 @@ const Index = () => {
             </div>
             <Button
               asChild
-              className="h-10 bg-[#c30010] px-4 text-xs font-black text-white hover:bg-[#91000c]"
+              className="h-10 bg-[#e10613] px-4 text-xs font-black text-white hover:bg-[#ad000a]"
               onClick={() =>
                 handleCta(
                   isSpanish ? "Ver planes" : "View plans",

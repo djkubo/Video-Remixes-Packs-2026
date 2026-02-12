@@ -55,12 +55,11 @@ export default function PrivacyPolicy() {
   const isSpanish = language === "es";
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="brand-frame min-h-screen bg-background">
       <SettingsToggle />
 
       <section className="relative overflow-hidden py-12 md:py-16">
-        <div className="absolute inset-0 hero-gradient opacity-55" />
-        <div className="pointer-events-none absolute -top-40 left-1/2 h-[520px] w-[820px] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
+        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#1a1a1a] via-[#e10613] to-[#1a1a1a]" />
 
         <div className="container relative z-10 mx-auto max-w-4xl px-4">
           <div className="mb-8 flex justify-center">
@@ -73,7 +72,7 @@ export default function PrivacyPolicy() {
             </Link>
           </div>
 
-          <article className="rounded-2xl border border-border/60 bg-card/90 p-6 shadow-xl backdrop-blur-sm md:p-8">
+          <article className="rounded-2xl border border-border/60 bg-card p-6 shadow-xl md:p-8">
             <h1 className="font-display text-4xl font-black md:text-5xl">PRIVACY POLICY</h1>
 
             <p className="mt-6 text-muted-foreground">

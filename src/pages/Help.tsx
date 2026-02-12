@@ -109,10 +109,9 @@ export default function Help() {
   const isSpanish = language === "es";
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="brand-frame min-h-screen bg-background">
       <section className="relative overflow-hidden py-12 md:py-16">
-        <div className="absolute inset-0 hero-gradient opacity-55" />
-        <div className="pointer-events-none absolute -top-40 left-1/2 h-[540px] w-[840px] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
+        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#1a1a1a] via-[#e10613] to-[#1a1a1a]" />
 
         <div className="container relative z-10 mx-auto max-w-4xl px-4">
           <div className="mb-8 flex justify-center">
@@ -125,7 +124,7 @@ export default function Help() {
             </Link>
           </div>
 
-          <div className="rounded-2xl border border-border/60 bg-card/90 p-6 shadow-xl backdrop-blur-sm md:p-8">
+          <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-xl md:p-8">
             <h1 className="font-display text-4xl font-black md:text-5xl">
               {isSpanish ? "Preguntas frecuentes" : "Frequently asked questions"}
             </h1>

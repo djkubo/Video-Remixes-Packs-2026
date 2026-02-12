@@ -269,13 +269,12 @@ export default function Anual() {
   );
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="brand-frame min-h-screen bg-background">
       <SettingsToggle />
 
       {/* Hero */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 hero-gradient opacity-60" />
-        <div className="pointer-events-none absolute -top-40 left-1/2 h-[520px] w-[820px] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
+        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#1a1a1a] via-[#e10613] to-[#1a1a1a]" />
 
         <div className="container relative z-10 mx-auto max-w-6xl px-4 pb-14 pt-10 md:pb-20 md:pt-14">
           <div className="flex items-center justify-between gap-4">
