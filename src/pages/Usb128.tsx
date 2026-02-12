@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   ArrowRight,
   CheckCircle2,
   CreditCard,
   Loader2,
-  MessageCircle,
   Package,
   ShieldCheck,
   Truck,
@@ -102,12 +101,12 @@ export default function Usb128() {
   const { language } = useLanguage();
   const { trackEvent } = useAnalytics();
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   const isSpanish = language === "es";
 
   const [isOrderOpen, setIsOrderOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createdLeadId, setCreatedLeadId] = useState<string | null>(null);
 
   const [countryData, setCountryData] = useState<CountryData>({
     country_code: "US",
@@ -331,9 +330,8 @@ export default function Usb128() {
     [formData, validateLeadForm]
   );
 
-  const onSubmit = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
+  const startCheckout = useCallback(
+    async (preferredProvider: "stripe" | "paypal") => {
       if (isSubmitting) return;
 
       const validationErrors = validateLeadForm(formData);
@@ -356,142 +354,171 @@ export default function Usb128() {
 
       setIsSubmitting(true);
       trackEvent("lead_submit_attempt", {
-        cta_id: "usb128_submit",
+        cta_id: preferredProvider === "paypal" ? "usb128_submit_paypal" : "usb128_submit",
         plan_id: "usb128",
         funnel_step: "lead_capture",
       });
 
+      let leadId = createdLeadId;
+
       try {
-        const leadId = crypto.randomUUID();
-        const sourcePage = window.location.pathname;
+        if (!leadId) {
+          leadId = crypto.randomUUID();
+          const sourcePage = window.location.pathname;
 
-        const { error: insertError } = await supabase.from("leads").insert({
-          id: leadId,
-          name,
-          email,
-          phone: cleanPhone,
-          // ManyChat expects dial code (e.g. +1) not ISO country code (e.g. US).
-          country_code: countryData.dial_code,
-          country_name: countryData.country_name,
-          source: "usb128",
-          tags: ["usb128", "usb_order", "lead_hot"],
-          funnel_step: "lead_submit",
-          source_page: sourcePage,
-          experiment_assignments: [],
-          intent_plan: "usb128",
-        });
-
-        if (insertError) throw insertError;
-
-        trackEvent("lead_submit_success", {
-          cta_id: "usb128_submit",
-          plan_id: "usb128",
-          lead_id: leadId,
-          funnel_step: "lead_capture",
-        });
-
-        try {
-          const { error: syncError } = await supabase.functions.invoke("sync-manychat", {
-            body: { leadId },
+          const { error: insertError } = await supabase.from("leads").insert({
+            id: leadId,
+            name,
+            email,
+            phone: cleanPhone,
+            // ManyChat expects dial code (e.g. +1) not ISO country code (e.g. US).
+            country_code: countryData.dial_code,
+            country_name: countryData.country_name,
+            source: "usb128",
+            tags: ["usb128", "usb_order", "lead_hot"],
+            funnel_step: "lead_submit",
+            source_page: sourcePage,
+            experiment_assignments: [],
+            intent_plan: "usb128",
           });
-          if (syncError && import.meta.env.DEV) {
-            console.warn("ManyChat sync error:", syncError);
+
+          if (insertError) throw insertError;
+          setCreatedLeadId(leadId);
+
+          trackEvent("lead_submit_success", {
+            cta_id: preferredProvider === "paypal" ? "usb128_submit_paypal" : "usb128_submit",
+            plan_id: "usb128",
+            lead_id: leadId,
+            funnel_step: "lead_capture",
+          });
+
+          // Best-effort ManyChat sync (should never block checkout).
+          try {
+            const { error: syncError } = await supabase.functions.invoke("sync-manychat", {
+              body: { leadId },
+            });
+            if (syncError && import.meta.env.DEV) {
+              console.warn("ManyChat sync error:", syncError);
+            }
+          } catch (syncErr) {
+            if (import.meta.env.DEV) console.warn("ManyChat sync threw:", syncErr);
           }
-        } catch (syncErr) {
-          if (import.meta.env.DEV) console.warn("ManyChat sync threw:", syncErr);
         }
 
-        setIsOrderOpen(false);
+        const tryStripe = async (): Promise<string | null> => {
+          try {
+            const { data: checkout, error: checkoutError } = await supabase.functions.invoke(
+              "stripe-checkout",
+              { body: { leadId, product: "usb128" } }
+            );
 
-        try {
-          const { data: checkout, error: checkoutError } = await supabase.functions.invoke(
-            "stripe-checkout",
-            {
-              body: { leadId, product: "usb128" },
+            if (checkoutError && import.meta.env.DEV) {
+              console.warn("Stripe checkout error:", checkoutError);
             }
-          );
 
-          if (checkoutError && import.meta.env.DEV) {
-            console.warn("Stripe checkout error:", checkoutError);
-          }
+            const url = (checkout as { url?: unknown } | null)?.url;
+            if (typeof url === "string" && url.length > 0) {
+              trackEvent("checkout_redirect", {
+                cta_id: "usb128_checkout_stripe",
+                plan_id: "usb128",
+                provider: "stripe",
+                status: "redirected",
+                funnel_step: "checkout_handoff",
+              });
+              return url;
+            }
 
-          const url = (checkout as { url?: unknown } | null)?.url;
-          if (typeof url === "string" && url.length > 0) {
             trackEvent("checkout_redirect", {
               cta_id: "usb128_checkout_stripe",
               plan_id: "usb128",
               provider: "stripe",
-              status: "redirected",
+              status: "missing_url",
               funnel_step: "checkout_handoff",
             });
-            window.location.assign(url);
-            return;
+          } catch (stripeErr) {
+            if (import.meta.env.DEV) console.warn("Stripe invoke threw:", stripeErr);
+            trackEvent("checkout_redirect", {
+              cta_id: "usb128_checkout_stripe",
+              plan_id: "usb128",
+              provider: "stripe",
+              status: "error",
+              funnel_step: "checkout_handoff",
+            });
           }
+          return null;
+        };
 
-          trackEvent("checkout_redirect", {
-            cta_id: "usb128_checkout_stripe",
-            plan_id: "usb128",
-            provider: "stripe",
-            status: "missing_url",
-            funnel_step: "checkout_handoff",
-          });
-        } catch (stripeErr) {
-          if (import.meta.env.DEV) console.warn("Stripe invoke threw:", stripeErr);
-          trackEvent("checkout_redirect", {
-            cta_id: "usb128_checkout_stripe",
-            plan_id: "usb128",
-            provider: "stripe",
-            status: "error",
-            funnel_step: "checkout_handoff",
-          });
-        }
+        const tryPayPal = async (): Promise<string | null> => {
+          try {
+            const { data: paypal, error: paypalError } = await supabase.functions.invoke(
+              "paypal-checkout",
+              { body: { action: "create", leadId, product: "usb128" } }
+            );
 
-        try {
-          const { data: paypal, error: paypalError } = await supabase.functions.invoke(
-            "paypal-checkout",
-            {
-              body: { action: "create", leadId, product: "usb128" },
+            if (paypalError && import.meta.env.DEV) {
+              console.warn("PayPal checkout error:", paypalError);
             }
-          );
 
-          if (paypalError && import.meta.env.DEV) {
-            console.warn("PayPal checkout error:", paypalError);
-          }
+            const approveUrl = (paypal as { approveUrl?: unknown } | null)?.approveUrl;
+            if (typeof approveUrl === "string" && approveUrl.length > 0) {
+              trackEvent("checkout_redirect", {
+                cta_id: "usb128_checkout_paypal",
+                plan_id: "usb128",
+                provider: "paypal",
+                status: "redirected",
+                funnel_step: "checkout_handoff",
+              });
+              return approveUrl;
+            }
 
-          const approveUrl = (paypal as { approveUrl?: unknown } | null)?.approveUrl;
-          if (typeof approveUrl === "string" && approveUrl.length > 0) {
             trackEvent("checkout_redirect", {
               cta_id: "usb128_checkout_paypal",
               plan_id: "usb128",
               provider: "paypal",
-              status: "redirected",
+              status: "missing_url",
               funnel_step: "checkout_handoff",
             });
-            window.location.assign(approveUrl);
-            return;
+          } catch (paypalErr) {
+            if (import.meta.env.DEV) console.warn("PayPal invoke threw:", paypalErr);
+            trackEvent("checkout_redirect", {
+              cta_id: "usb128_checkout_paypal",
+              plan_id: "usb128",
+              provider: "paypal",
+              status: "error",
+              funnel_step: "checkout_handoff",
+            });
           }
+          return null;
+        };
 
-          trackEvent("checkout_redirect", {
-            cta_id: "usb128_checkout_paypal",
-            plan_id: "usb128",
-            provider: "paypal",
-            status: "missing_url",
-            funnel_step: "checkout_handoff",
-          });
-        } catch (paypalErr) {
-          if (import.meta.env.DEV) console.warn("PayPal invoke threw:", paypalErr);
-          trackEvent("checkout_redirect", {
-            cta_id: "usb128_checkout_paypal",
-            plan_id: "usb128",
-            provider: "paypal",
-            status: "error",
-            funnel_step: "checkout_handoff",
-          });
+        // Preferred provider first, then fallback.
+        const primary = preferredProvider === "paypal" ? tryPayPal : tryStripe;
+        const secondary = preferredProvider === "paypal" ? tryStripe : tryPayPal;
+
+        const primaryUrl = await primary();
+        if (primaryUrl) {
+          setIsOrderOpen(false);
+          window.location.assign(primaryUrl);
+          return;
         }
 
-        navigate("/usb128/gracias");
+        const secondaryUrl = await secondary();
+        if (secondaryUrl) {
+          setIsOrderOpen(false);
+          window.location.assign(secondaryUrl);
+          return;
+        }
+
+        // No redirect: keep the user in the modal and show a clear error.
+        toast({
+          title: isSpanish ? "No pudimos abrir el checkout" : "Checkout unavailable",
+          description: isSpanish
+            ? "Intenta de nuevo en unos segundos. Si continúa, contáctanos en Soporte."
+            : "Please try again in a few seconds. If it continues, contact Support.",
+          variant: "destructive",
+        });
       } catch (err) {
-        console.error("USB128 lead submit error:", err);
+        console.error("USB128 lead/checkout error:", err);
         trackEvent("lead_submit_failed", {
           cta_id: "usb128_submit",
           plan_id: "usb128",
@@ -500,8 +527,8 @@ export default function Usb128() {
         toast({
           title: isSpanish ? "Error" : "Error",
           description: isSpanish
-            ? "No pudimos enviar tus datos. Intenta de nuevo."
-            : "We couldn't submit your details. Please try again.",
+            ? "No pudimos procesar tu solicitud. Intenta de nuevo."
+            : "We couldn't process your request. Please try again.",
           variant: "destructive",
         });
       } finally {
@@ -509,12 +536,12 @@ export default function Usb128() {
       }
     },
     [
-      countryData.country_code,
       countryData.country_name,
+      countryData.dial_code,
+      createdLeadId,
       formData,
       isSpanish,
       isSubmitting,
-      navigate,
       toast,
       trackEvent,
       validateLeadForm,
@@ -632,8 +659,8 @@ export default function Usb128() {
                     </p>
                   </div>
 
-                  <Badge className="border border-[#f8c8cd] bg-[#fff1f2] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#b10010]">
-                    {isSpanish ? "Recomendada" : "Recommended"}
+                  <Badge className="border border-[#d90413] bg-[#d90413] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-white shadow-sm">
+                    {isSpanish ? "Top oferta" : "Top offer"}
                   </Badge>
                 </div>
 
@@ -808,7 +835,7 @@ export default function Usb128() {
             </article>
 
             <article className="rounded-3xl border border-[#151924] bg-[#0f131b] p-6 text-white shadow-[0_18px_40px_rgba(0,0,0,0.32)] md:p-8">
-              <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#ff8d97]">
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#ff5a66]">
                 {isSpanish ? "Prueba social" : "Social proof"}
               </p>
               <h2 className="mt-2 text-3xl font-black leading-tight md:text-4xl">
@@ -885,7 +912,7 @@ export default function Usb128() {
           <div className="rounded-3xl border border-[#141823] bg-[#0c1018] p-6 text-white shadow-[0_20px_45px_rgba(0,0,0,0.35)] md:p-8">
             <div className="grid gap-6 md:grid-cols-[1.1fr_0.9fr] md:items-center">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#ff8d97]">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#ff5a66]">
                   {isSpanish ? "Cierre" : "Final step"}
                 </p>
                 <h2 className="mt-2 text-3xl font-black leading-tight md:text-4xl">
@@ -909,8 +936,8 @@ export default function Usb128() {
                 </Button>
                 <p className="mt-3 text-center text-xs text-white/70">
                   {isSpanish
-                    ? "Al continuar aceptas mensajes de confirmación y soporte de tu pedido."
-                    : "By continuing, you accept order confirmation and support messages."}
+                    ? "Al continuar, te enviaremos confirmación y seguimiento por email."
+                    : "By continuing, we’ll send confirmation and tracking by email."}
                 </p>
               </div>
             </div>
@@ -961,11 +988,17 @@ export default function Usb128() {
             </h3>
             <p className="mt-2 text-sm text-[#667085]">
               {isSpanish
-                ? "Solo pedimos datos esenciales para confirmación, tracking y soporte."
-                : "We only ask for essentials for confirmation, tracking, and support."}
+                ? "Solo pedimos lo esencial para confirmar tu pedido y enviarte el tracking por email."
+                : "We only ask for essentials to confirm your order and email your tracking."}
             </p>
 
-            <form className="mt-6 space-y-4" onSubmit={onSubmit}>
+            <form
+              className="mt-6 space-y-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void startCheckout("stripe");
+              }}
+            >
               <div className="space-y-2">
                 <Label htmlFor="usb128-name">{isSpanish ? "Nombre" : "Name"}</Label>
                 <Input
@@ -1000,7 +1033,9 @@ export default function Usb128() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="usb128-phone">WhatsApp</Label>
+                <Label htmlFor="usb128-phone">
+                  {isSpanish ? "WhatsApp (soporte)" : "WhatsApp (support)"}
+                </Label>
                 <div className="flex items-center gap-2">
                   <Badge
                     variant="outline"
@@ -1025,8 +1060,8 @@ export default function Usb128() {
                 )}
                 <p className="text-xs text-[#667085]">
                   {isSpanish
-                    ? "Envío gratis aplica en Estados Unidos para esta oferta USB."
-                    : "Free shipping applies in the United States for this USB offer."}
+                    ? "Usaremos WhatsApp solo si hace falta para soporte o confirmar detalles del envío."
+                    : "We’ll only use WhatsApp if needed for support or to confirm shipping details."}
                 </p>
               </div>
 
@@ -1041,19 +1076,38 @@ export default function Usb128() {
                     {isSpanish ? "Enviando..." : "Submitting..."}
                   </>
                 ) : (
-                  isSpanish ? "Continuar al checkout" : "Continue to checkout"
+                  isSpanish ? "Pagar con tarjeta" : "Pay with card"
                 )}
+              </Button>
+
+              <div className="relative py-1">
+                <div className="absolute inset-x-0 top-1/2 h-px bg-[#e5e7eb]" />
+                <p className="relative mx-auto w-fit bg-white px-3 text-xs font-bold uppercase tracking-[0.12em] text-[#667085]">
+                  {isSpanish ? "o" : "or"}
+                </p>
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="h-12 w-full border-[#cfd7e3] bg-white text-base font-black text-[#111827] hover:bg-[#f8fafc]"
+                disabled={isSubmitting}
+                onClick={() => void startCheckout("paypal")}
+              >
+                {isSpanish ? "Pagar con PayPal" : "Pay with PayPal"}
               </Button>
 
               <p className="text-center text-xs text-[#667085]">
                 {isSpanish
-                  ? "Al continuar aceptas mensajes de confirmación y soporte de tu pedido."
-                  : "By continuing, you accept confirmation and support messages for your order."}
-              </p>
-              <p className="text-center text-xs text-[#667085]">
-                {isSpanish
-                  ? "Si no quieres mensajes promocionales, puedes solicitar baja (STOP/BAJA) en cualquier momento."
-                  : "If you don't want promotional messages, you can opt out anytime (STOP/BAJA)."}
+                  ? "Confirmación y seguimiento se envían por email."
+                  : "Confirmation and tracking are sent by email."}{" "}
+                <Link to="/privacy" className="font-semibold text-[#d90413] underline underline-offset-2">
+                  {isSpanish ? "Privacidad" : "Privacy"}
+                </Link>{" "}
+                ·{" "}
+                <Link to="/terms" className="font-semibold text-[#d90413] underline underline-offset-2">
+                  {isSpanish ? "Términos" : "Terms"}
+                </Link>
               </p>
             </form>
           </div>
