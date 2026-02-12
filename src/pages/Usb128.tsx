@@ -1,20 +1,29 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   CheckCircle2,
+  ChevronRight,
   CreditCard,
   Loader2,
+  MessageCircle,
   Package,
   ShieldCheck,
   Truck,
   Usb,
   Zap,
 } from "lucide-react";
-import SettingsToggle from "@/components/SettingsToggle";
+
+import Footer from "@/components/Footer";
+import { useAnalytics } from "@/hooks/useAnalytics";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useTheme } from "@/contexts/ThemeContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import {
   Dialog,
   DialogContent,
@@ -24,22 +33,27 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import logoWhite from "@/assets/logo-white.png";
-import logoDark from "@/assets/logo-dark.png";
 import { countryNameFromCode, detectCountryCodeFromTimezone } from "@/lib/country";
+import usbSamsungBarPlus from "@/assets/usb128-samsung-bar-plus.jpg";
 
 type CountryData = {
   country_code: string;
   country_name: string;
   dial_code: string;
+};
+
+type LeadFormData = {
+  name: string;
+  email: string;
+  phone: string;
+};
+
+type FormErrors = {
+  name?: string;
+  email?: string;
+  phone?: string;
 };
 
 const COUNTRY_DIAL_CODES: Record<string, string> = {
@@ -86,9 +100,11 @@ function normalizePhoneInput(input: string): { clean: string; digits: string } {
 
 export default function Usb128() {
   const { language } = useLanguage();
-  const { theme } = useTheme();
+  const { trackEvent } = useAnalytics();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  const isSpanish = language === "es";
 
   const [isOrderOpen, setIsOrderOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -99,103 +115,233 @@ export default function Usb128() {
     dial_code: "+1",
   });
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<LeadFormData>({
     name: "",
     email: "",
     phone: "",
   });
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
+  const [touched, setTouched] = useState<Record<keyof LeadFormData, boolean>>({
+    name: false,
+    email: false,
+    phone: false,
+  });
 
   const paymentBadges = useMemo(
-    () => ["VISA", "MASTERCARD", "AMEX", "DISCOVER", "PayPal"],
+    () => ["VISA", "MASTERCARD", "AMEX", "DISCOVER", "PayPal", "Klarna", "Afterpay"],
     []
   );
 
+  const faqItems = useMemo(
+    () => [
+      {
+        id: "faq-1",
+        q: isSpanish ? "¿Cuánto cuesta la USB 128 GB?" : "How much is the 128 GB USB?",
+        a: isSpanish
+          ? "La oferta es $147 USD pago único. Puedes pagar en checkout con tarjeta o PayPal, y si aplica, en cuotas con Klarna/Afterpay."
+          : "The offer is a one-time $147 USD payment. You can pay at checkout with card or PayPal, and if available, in installments via Klarna/Afterpay.",
+      },
+      {
+        id: "faq-2",
+        q: isSpanish ? "¿Qué incluye exactamente?" : "What exactly is included?",
+        a: isSpanish
+          ? "+10,000 canciones latinas en MP3 (320 kbps), organizadas por género para DJs. Incluye acceso al grupo y soporte en español por WhatsApp."
+          : "+10,000 Latin MP3 songs (320 kbps), organized by genre for DJs. Includes group access and Spanish WhatsApp support.",
+      },
+      {
+        id: "faq-3",
+        q: isSpanish
+          ? "¿Funciona con Serato, VirtualDJ y Rekordbox?"
+          : "Does it work with Serato, VirtualDJ, and Rekordbox?",
+        a: isSpanish
+          ? "Sí. El formato MP3 es compatible con Serato, VirtualDJ, Rekordbox y setups DJ estándar en Mac/Windows."
+          : "Yes. MP3 format is compatible with Serato, VirtualDJ, Rekordbox, and standard DJ setups on Mac/Windows.",
+      },
+      {
+        id: "faq-4",
+        q: isSpanish ? "¿Envían fuera de Estados Unidos?" : "Do you ship outside the United States?",
+        a: isSpanish
+          ? "Esta oferta de envío gratis aplica dentro de EE. UU. Si necesitas otro país, escríbenos antes de pagar para revisar opciones."
+          : "This free-shipping offer applies within the U.S. If you need another country, contact us before paying to check options.",
+      },
+      {
+        id: "faq-5",
+        q: isSpanish ? "¿Puedo escuchar demos antes?" : "Can I hear demos first?",
+        a: isSpanish
+          ? "Sí. Puedes ir al explorador y escuchar previews por género antes de pagar."
+          : "Yes. You can go to the explorer and hear genre previews before paying.",
+      },
+      {
+        id: "faq-6",
+        q: isSpanish ? "¿Qué pasa si tengo problemas de acceso o soporte?" : "What if I need technical support?",
+        a: isSpanish
+          ? "Te atendemos por WhatsApp en español. El objetivo es que quedes listo para tocar, no dejarte solo con un link."
+          : "You get Spanish WhatsApp support. The goal is to get you ready to play, not leave you with just a link.",
+      },
+    ],
+    [isSpanish]
+  );
+
+  const testimonials = useMemo(
+    () => [
+      {
+        quote: "Ya lo compré bro, ya hasta me llegó.",
+        who: "DJ Carlos · Miami, FL",
+      },
+      {
+        quote: "Muy buena música. Todo más ordenado para tocar.",
+        who: "DJ Andrea · Los Angeles, CA",
+      },
+      {
+        quote: "Excelente, gracias. Me ahorró horas de búsqueda.",
+        who: "DJ Javier · Houston, TX",
+      },
+    ],
+    []
+  );
+
+  const validateLeadForm = useCallback(
+    (data: LeadFormData): FormErrors => {
+      const nextErrors: FormErrors = {};
+      const name = data.name.trim();
+      const email = data.email.trim().toLowerCase();
+      const { clean: cleanPhone, digits: phoneDigits } = normalizePhoneInput(data.phone);
+
+      if (!name) {
+        nextErrors.name = isSpanish ? "Ingresa tu nombre." : "Enter your name.";
+      }
+
+      if (!email) {
+        nextErrors.email = isSpanish ? "Ingresa tu email." : "Enter your email.";
+      } else if (!isValidEmail(email)) {
+        nextErrors.email = isSpanish ? "Email inválido." : "Invalid email.";
+      }
+
+      if (!cleanPhone) {
+        nextErrors.phone = isSpanish ? "Ingresa tu WhatsApp." : "Enter your WhatsApp.";
+      } else if (
+        cleanPhone.length > 20 ||
+        !/^\+?\d{7,20}$/.test(cleanPhone) ||
+        !/[1-9]/.test(phoneDigits)
+      ) {
+        nextErrors.phone = isSpanish ? "Número inválido." : "Invalid number.";
+      }
+
+      return nextErrors;
+    },
+    [isSpanish]
+  );
+
   useEffect(() => {
-    // Basic page title for this route (SPA).
-    document.title = "USB LATIN POWER 128 GB – 10 000 hits latinos HQ por $147";
+    document.title =
+      "USB 128 GB para DJs Latinos en USA | +10,000 canciones organizadas por $147";
   }, []);
 
-  // Detect user's country (best-effort; timezone-based so we avoid CORS/network issues).
   useEffect(() => {
     const code = detectCountryCodeFromTimezone() || "US";
     const dialCode = COUNTRY_DIAL_CODES[code] || "+1";
+
     setCountryData({
       country_code: code,
-      country_name: countryNameFromCode(code, language === "es" ? "es" : "en"),
+      country_name: countryNameFromCode(code, isSpanish ? "es" : "en"),
       dial_code: dialCode,
     });
-  }, [language]);
+  }, [isSpanish]);
 
-  const openOrder = useCallback(() => setIsOrderOpen(true), []);
+  const openOrder = useCallback(
+    (ctaId: string) => {
+      setIsOrderOpen(true);
+      trackEvent("lead_form_open", {
+        cta_id: ctaId,
+        plan_id: "usb128",
+        funnel_step: "lead_capture",
+      });
+    },
+    [trackEvent]
+  );
+
+  const handleFieldChange = useCallback(
+    (field: keyof LeadFormData, value: string) => {
+      setFormData((prev) => {
+        const next = { ...prev, [field]: value };
+        if (touched[field]) {
+          setFormErrors(validateLeadForm(next));
+        }
+        return next;
+      });
+    },
+    [touched, validateLeadForm]
+  );
+
+  const handleFieldBlur = useCallback(
+    (field: keyof LeadFormData) => {
+      setTouched((prev) => {
+        const nextTouched = { ...prev, [field]: true };
+        setFormErrors(validateLeadForm(formData));
+        return nextTouched;
+      });
+    },
+    [formData, validateLeadForm]
+  );
 
   const onSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
       if (isSubmitting) return;
 
+      const validationErrors = validateLeadForm(formData);
+      setFormErrors(validationErrors);
+
+      if (Object.keys(validationErrors).length > 0) {
+        setTouched({ name: true, email: true, phone: true });
+        trackEvent("lead_form_error", {
+          cta_id: "usb128_submit",
+          plan_id: "usb128",
+          funnel_step: "lead_capture",
+          error_fields: Object.keys(validationErrors),
+        });
+        return;
+      }
+
       const name = formData.name.trim();
       const email = formData.email.trim().toLowerCase();
-      const { clean: cleanPhone, digits: phoneDigits } = normalizePhoneInput(formData.phone);
-
-      if (!name || !email || !cleanPhone) {
-        toast({
-          title: language === "es" ? "Campos requeridos" : "Required fields",
-          description:
-            language === "es"
-              ? "Por favor completa todos los campos."
-              : "Please fill in all fields.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (!isValidEmail(email)) {
-        toast({
-          title: language === "es" ? "Email inválido" : "Invalid email",
-          description:
-            language === "es"
-              ? "Por favor ingresa un email válido."
-              : "Please enter a valid email.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // NOTE: Supabase RLS policy enforces phone length <= 20.
-      if (
-        cleanPhone.length > 20 ||
-        !/^\+?\d{7,20}$/.test(cleanPhone) ||
-        !/[1-9]/.test(phoneDigits)
-      ) {
-        toast({
-          title: language === "es" ? "WhatsApp inválido" : "Invalid WhatsApp",
-          description:
-            language === "es"
-              ? "Número de teléfono no válido."
-              : "Phone number is not valid.",
-          variant: "destructive",
-        });
-        return;
-      }
+      const { clean: cleanPhone } = normalizePhoneInput(formData.phone);
 
       setIsSubmitting(true);
+      trackEvent("lead_submit_attempt", {
+        cta_id: "usb128_submit",
+        plan_id: "usb128",
+        funnel_step: "lead_capture",
+      });
+
       try {
         const leadId = crypto.randomUUID();
+        const sourcePage = window.location.pathname;
 
         const { error: insertError } = await supabase.from("leads").insert({
           id: leadId,
           name,
           email,
           phone: cleanPhone,
-          country_code: countryData.dial_code,
+          country_code: countryData.country_code,
           country_name: countryData.country_name,
           source: "usb128",
-          tags: ["usb128", "usb_order"],
+          tags: ["usb128", "usb_order", "lead_hot"],
+          funnel_step: "lead_submit",
+          source_page: sourcePage,
+          experiment_assignments: [],
+          intent_plan: "usb128",
         });
 
         if (insertError) throw insertError;
 
-        // Best-effort ManyChat sync (don't block checkout on a transient error).
+        trackEvent("lead_submit_success", {
+          cta_id: "usb128_submit",
+          plan_id: "usb128",
+          lead_id: leadId,
+          funnel_step: "lead_capture",
+        });
+
         try {
           const { error: syncError } = await supabase.functions.invoke("sync-manychat", {
             body: { leadId },
@@ -209,7 +355,6 @@ export default function Usb128() {
 
         setIsOrderOpen(false);
 
-        // Try to redirect to Stripe Checkout (if configured). If not, fallback to thank-you.
         try {
           const { data: checkout, error: checkoutError } = await supabase.functions.invoke(
             "stripe-checkout",
@@ -224,14 +369,35 @@ export default function Usb128() {
 
           const url = (checkout as { url?: unknown } | null)?.url;
           if (typeof url === "string" && url.length > 0) {
+            trackEvent("checkout_redirect", {
+              cta_id: "usb128_checkout_stripe",
+              plan_id: "usb128",
+              provider: "stripe",
+              status: "redirected",
+              funnel_step: "checkout_handoff",
+            });
             window.location.assign(url);
             return;
           }
+
+          trackEvent("checkout_redirect", {
+            cta_id: "usb128_checkout_stripe",
+            plan_id: "usb128",
+            provider: "stripe",
+            status: "missing_url",
+            funnel_step: "checkout_handoff",
+          });
         } catch (stripeErr) {
           if (import.meta.env.DEV) console.warn("Stripe invoke threw:", stripeErr);
+          trackEvent("checkout_redirect", {
+            cta_id: "usb128_checkout_stripe",
+            plan_id: "usb128",
+            provider: "stripe",
+            status: "error",
+            funnel_step: "checkout_handoff",
+          });
         }
 
-        // Fallback: PayPal redirect (if configured).
         try {
           const { data: paypal, error: paypalError } = await supabase.functions.invoke(
             "paypal-checkout",
@@ -246,384 +412,535 @@ export default function Usb128() {
 
           const approveUrl = (paypal as { approveUrl?: unknown } | null)?.approveUrl;
           if (typeof approveUrl === "string" && approveUrl.length > 0) {
+            trackEvent("checkout_redirect", {
+              cta_id: "usb128_checkout_paypal",
+              plan_id: "usb128",
+              provider: "paypal",
+              status: "redirected",
+              funnel_step: "checkout_handoff",
+            });
             window.location.assign(approveUrl);
             return;
           }
+
+          trackEvent("checkout_redirect", {
+            cta_id: "usb128_checkout_paypal",
+            plan_id: "usb128",
+            provider: "paypal",
+            status: "missing_url",
+            funnel_step: "checkout_handoff",
+          });
         } catch (paypalErr) {
           if (import.meta.env.DEV) console.warn("PayPal invoke threw:", paypalErr);
+          trackEvent("checkout_redirect", {
+            cta_id: "usb128_checkout_paypal",
+            plan_id: "usb128",
+            provider: "paypal",
+            status: "error",
+            funnel_step: "checkout_handoff",
+          });
         }
 
         navigate("/usb128/gracias");
       } catch (err) {
         console.error("USB128 lead submit error:", err);
+        trackEvent("lead_submit_failed", {
+          cta_id: "usb128_submit",
+          plan_id: "usb128",
+          funnel_step: "lead_capture",
+        });
         toast({
-          title: language === "es" ? "Error" : "Error",
-          description:
-            language === "es"
-              ? "Hubo un problema al enviar tus datos. Intenta de nuevo."
-              : "There was a problem submitting your data. Please try again.",
+          title: isSpanish ? "Error" : "Error",
+          description: isSpanish
+            ? "No pudimos enviar tus datos. Intenta de nuevo."
+            : "We couldn't submit your details. Please try again.",
           variant: "destructive",
         });
       } finally {
         setIsSubmitting(false);
       }
     },
-    [countryData.dial_code, countryData.country_name, formData, isSubmitting, language, navigate, toast]
+    [
+      countryData.country_code,
+      countryData.country_name,
+      formData,
+      isSpanish,
+      isSubmitting,
+      navigate,
+      toast,
+      trackEvent,
+      validateLeadForm,
+    ]
   );
 
   return (
-    <main className="brand-frame min-h-screen bg-background">
-      <SettingsToggle />
-
-      {/* Top feature strip */}
-      <div className="border-b border-border/40 bg-card/40 backdrop-blur">
-        <div className="container mx-auto grid max-w-6xl grid-cols-1 gap-2 px-4 py-4 text-center text-xs text-muted-foreground md:grid-cols-3 md:text-sm">
-          <div className="flex items-center justify-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-primary" />
-            <span>+10,000 Canciones en MP3 (320 kbps) listas para mezclar</span>
-          </div>
-          <div className="flex items-center justify-center gap-2">
-            <Package className="h-4 w-4 text-primary" />
-            <span>Organizadas por géneros para máxima facilidad</span>
-          </div>
-          <div className="flex items-center justify-center gap-2">
-            <Usb className="h-4 w-4 text-primary" />
-            <span>Compatible con Serato, Virtual DJ, Rekordbox y más</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#1a1a1a] via-[#e10613] to-[#1a1a1a]" />
-
-        <div className="container relative z-10 mx-auto max-w-6xl px-4 pb-12 pt-16 md:pb-20 md:pt-24">
-          <div className="flex items-center justify-center">
-            <img
-              src={theme === "dark" ? logoWhite : logoDark}
-              alt="VideoRemixesPacks"
-              className="h-14 w-auto object-contain md:h-16"
-            />
-          </div>
-
-          <div className="mt-10 grid gap-8 md:grid-cols-2 md:items-start">
-            {/* Product visual (stylized) */}
-            <div className="glass-card overflow-hidden p-5">
-              <div className="relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-gradient-to-br from-primary/25 via-background to-background">
-                <div className="absolute inset-0 opacity-70">
-                  <div className="absolute -left-10 top-16 h-48 w-48 rounded-full bg-primary/20 blur-3xl" />
-                  <div className="absolute -right-12 bottom-8 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
-                </div>
-                <div className="relative flex h-full flex-col items-center justify-center p-6 text-center">
-                  <div className="inline-flex h-20 w-20 items-center justify-center rounded-2xl border border-primary/20 bg-card/40">
-                    <Usb className="h-10 w-10 text-primary" />
-                  </div>
-                  <p className="mt-6 text-sm text-muted-foreground">
-                    Samsung BAR Plus
-                  </p>
-                  <p className="font-display text-4xl font-black tracking-wide">
-                    128 GB
-                  </p>
-                  <p className="mt-3 text-xs text-muted-foreground">
-                    USB 3.1 • Metal • Lista para gigs
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Copy */}
+    <main className="min-h-screen bg-[#f3f4f6] text-[#111827] dark:bg-background dark:text-foreground">
+      <section className="relative overflow-hidden bg-[#0f1115]">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_16%_12%,rgba(224,6,19,0.55),transparent_55%),radial-gradient(circle_at_82%_18%,rgba(224,6,19,0.3),transparent_46%),linear-gradient(135deg,#1a0005_0%,#71010b_30%,#ba0916_62%,#e10613_100%)]" />
+        <div className="relative container mx-auto max-w-6xl px-4 pb-12 pt-10 md:pb-16 md:pt-14">
+          <div className="grid items-start gap-8 lg:grid-cols-[1.05fr_0.95fr]">
             <div>
-              <h1 className="font-display text-4xl font-black leading-[0.95] md:text-5xl">
-                DJ, deja el Wi‑Fi y conecta{" "}
-                <span className="text-gradient-red">10,000</span> hits latinos en
-                5 segundos.
+              <Badge className="border border-white/30 bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-white">
+                <ShieldCheck className="mr-2 h-3.5 w-3.5" />
+                {isSpanish ? "USB física · envío gratis USA" : "Physical USB · free USA shipping"}
+              </Badge>
+
+              <h1 className="mt-5 max-w-3xl text-4xl font-black leading-[0.95] text-white sm:text-5xl lg:text-6xl">
+                {isSpanish ? "Tu música latina lista para conectar y mezclar" : "Your Latin library ready to plug and mix"}
               </h1>
 
-              <p className="mt-4 text-sm text-muted-foreground md:text-base">
-                Samsung BAR Plus 128 GB · 30 géneros curados ·{" "}
-                <span className="font-bold text-primary">$147</span> envío gratis
-                solo a <span className="font-bold text-primary">Estados Unidos</span>
+              <p className="mt-5 max-w-2xl text-sm text-white/88 sm:text-base">
+                {isSpanish
+                  ? "+10,000 canciones en MP3 (320 kbps), organizadas por género para DJs latinos en Estados Unidos."
+                  : "+10,000 MP3 songs (320 kbps), organized by genre for Latino DJs in the United States."}
               </p>
 
-              <div className="mt-6">
+              <div className="mt-7 flex flex-wrap items-center gap-2">
+                {[
+                  isSpanish ? "Pago único" : "One-time payment",
+                  "$147 USD",
+                  isSpanish ? "4 pagos de $36.75" : "4 payments of $36.75",
+                ].map((pill) => (
+                  <span
+                    key={pill}
+                    className="rounded-full border border-white/28 bg-black/25 px-4 py-1.5 text-xs font-semibold text-white"
+                  >
+                    {pill}
+                  </span>
+                ))}
+              </div>
+
+              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <Button
-                  onClick={openOrder}
-                  className="btn-primary-glow h-12 w-full text-base font-black md:w-auto md:px-10"
+                  onClick={() => openOrder("usb128_hero_buy")}
+                  className="btn-primary-glow h-12 px-8 text-base font-black"
                 >
-                  👉¡LO QUIERO YA👈 Por tan solo $147
+                  {isSpanish ? "Comprar USB 128GB" : "Buy USB 128GB"}
+                  <ChevronRight className="ml-2 h-4 w-4" />
                 </Button>
 
-                <div className="mt-4 rounded-xl border border-border/50 bg-card/60 p-3 text-center text-xs text-muted-foreground">
-                  <span className="font-semibold text-foreground">Envío gratis</span>{" "}
-                  a Estados Unidos · Paga con tarjeta, PayPal o cuotas al checkout
-                </div>
-
-                <div className="mt-4 flex flex-wrap items-center gap-2">
-                  {paymentBadges.map((label) => (
-                    <Badge
-                      key={label}
-                      variant="outline"
-                      className="border-border/60 bg-card/40 px-3 py-1 text-[11px] text-muted-foreground"
-                    >
-                      <CreditCard className="mr-2 h-3 w-3 text-primary" />
-                      {label}
-                    </Badge>
-                  ))}
-                </div>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="h-12 border-white/45 bg-white/10 px-8 text-base font-bold text-white hover:bg-white/18"
+                >
+                  <Link
+                    to="/explorer"
+                    onClick={() =>
+                      trackEvent("cta_click", {
+                        cta_id: "usb128_hero_demos",
+                        plan_id: "usb128",
+                        funnel_step: "consideration",
+                      })
+                    }
+                  >
+                    {isSpanish ? "Escuchar demos" : "Listen to demos"}
+                  </Link>
+                </Button>
               </div>
 
-              <div className="mt-8 glass-card p-5">
-                <ul className="space-y-3 text-sm text-muted-foreground">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="mt-0.5 h-5 w-5 text-primary" />
-                    <span>10,000 MP3 320 kbps – sonido nítido, sin rips chafas.</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="mt-0.5 h-5 w-5 text-primary" />
-                    <span>Tags BPM &amp; Key para encontrar rápido el siguiente track en cabina.</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="mt-0.5 h-5 w-5 text-primary" />
-                    <span>USB 3.1 de alta velocidad para cargar tu librería en segundos.</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="mt-0.5 h-5 w-5 text-primary" />
-                    <span>Diseño metálico resistente para uso intensivo en cabina y eventos.</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Genres */}
-      <section className="relative py-14 md:py-20">
-        <div className="container mx-auto max-w-6xl px-4">
-          <h2 className="text-center font-display text-4xl font-black md:text-5xl">
-            Tus clientes piden TODO esto (y ya viene en la USB)
-          </h2>
-
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-            {["Bachata", "Merengue", "Cumbia", "Norteño", "Mariachi"].map((g) => (
-              <Badge
-                key={g}
-                className="rounded-full bg-primary/10 px-4 py-2 text-sm font-bold text-primary hover:bg-primary/15"
-              >
-                {g}
-              </Badge>
-            ))}
-          </div>
-
-          <p className="mt-8 text-center font-display text-4xl font-black text-gradient-red md:text-5xl">
-            Y muchos más
-          </p>
-        </div>
-      </section>
-
-      {/* Speed / Benefits */}
-      <section className="relative py-14 md:py-20">
-        <div className="container mx-auto max-w-6xl px-4">
-          <div className="grid gap-10 md:grid-cols-2 md:items-center">
-            <div className="glass-card p-7">
-              <div className="flex items-center gap-3">
-                <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-primary/20 bg-card/60">
-                  <Zap className="h-6 w-6 text-primary" />
-                </div>
-                <p className="font-display text-2xl font-black">Carga en 5 seg</p>
-              </div>
-
-              <h3 className="mt-6 font-display text-4xl font-black leading-[0.95] md:text-5xl">
-                Menos espera, más mezcla,{" "}
-                <span className="text-gradient-red">más propinas</span>.
-              </h3>
-
-              <ul className="mt-6 space-y-3 text-sm text-muted-foreground">
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-5 w-5 text-primary" />
-                  <span>Ahorra 10 h/sem | La curaduría está lista; dedícalas a vender.</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-5 w-5 text-primary" />
-                  <span>La BAR Plus metálica se ve 🔥 en cabina.</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-5 w-5 text-primary" />
-                  <span>Diseñada pa’ USA‑Latino gigs | Bodas, quince y clubs hispanos cubiertos.</span>
-                </li>
-              </ul>
-            </div>
-
-            <div className="grid gap-4">
-              <div className="glass-card p-6">
-                <p className="font-display text-2xl font-black">dj&apos;s que han ganado con la USB</p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Lo Que Dicen Nuestros Clientes <span className="font-semibold">(Testimonios Reales)</span>
-                </p>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-1">
-                {[
-                  {
-                    quote:
-                      "“Olvidé lo que es descargar música cada fin de semana. Ahora solo conecto y listo, puro éxito en cada evento.\"",
-                    who: "- Ricardo (Houston tx)",
-                  },
-                  {
-                    quote:
-                      "\"La mejor inversión que hice en mi carrera de DJ. Calidad de primera, organización increíble y un soporte genial.\"",
-                    who: "- Javier (Miami fl)",
-                  },
-                  {
-                    quote:
-                      "\"Esta USB cambió totalmente mi negocio. Ahora tengo más eventos y gano más dinero sin estrés. ¡Súper recomendada!\"",
-                    who: "- Carlos (Los Angeles, CA)",
-                  },
-                ].map((t) => (
-                  <div key={t.who} className="glass-card p-6">
-                    <p className="text-sm text-muted-foreground">{t.quote}</p>
-                    <p className="mt-4 font-display text-xl font-black">{t.who}</p>
-                  </div>
+              <div className="mt-6 flex flex-wrap items-center gap-2">
+                {paymentBadges.map((label) => (
+                  <Badge
+                    key={label}
+                    className="border border-white/30 bg-white/8 px-3 py-1 text-[11px] font-semibold text-white"
+                  >
+                    <CreditCard className="mr-1.5 h-3 w-3" />
+                    {label}
+                  </Badge>
                 ))}
               </div>
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* FAQ */}
-      <section className="relative py-14 md:py-20">
-        <div className="container mx-auto max-w-4xl px-4">
-          <div className="text-center">
-            <p className="font-display text-2xl font-black">¿No te sientes seguro?</p>
-            <h2 className="mt-2 font-display text-5xl font-black">
-              <span className="text-gradient-red">¡Te lo aclaro!!</span>
-            </h2>
-            <p className="mt-4 text-sm text-muted-foreground">
-              Respondemos las dudas más comunes antes de tu compra.
-            </p>
-          </div>
+            <div className="rounded-3xl border border-white/20 bg-white p-4 text-[#121722] shadow-[0_24px_54px_rgba(0,0,0,0.35)] md:p-5">
+              <div className="overflow-hidden rounded-2xl border border-[#d7dbe1] bg-[#eef1f4] p-2">
+                <img
+                  src={usbSamsungBarPlus}
+                  alt="Samsung BAR Plus 128GB"
+                  className="h-auto w-full rounded-xl object-contain"
+                  loading="eager"
+                />
+              </div>
 
-          <div className="mt-10 glass-card p-6">
-            <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="item-1">
-                <AccordionTrigger>
-                  ¿Funciona con Serato, Rekordbox, VDJ, Traktor?
-                </AccordionTrigger>
-                <AccordionContent>
-                  Sí, plug‑and‑play. Formateada exFAT para Mac &amp; Windows.
-                </AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="item-2">
-                <AccordionTrigger>¿Formato de los archivos?</AccordionTrigger>
-                <AccordionContent>
-                  MP3 320 kbps etiquetados con BPM, Key y género.
-                </AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="item-3">
-                <AccordionTrigger>¿Envían fuera de EE. UU.?</AccordionTrigger>
-                <AccordionContent>Por ahora solo hacemos envíos dentro de Estados Unidos.</AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="item-4">
-                <AccordionTrigger>¿Cuánto tarda?</AccordionTrigger>
-                <AccordionContent>
-                  USPS Priority: 3‑5 días hábiles. Tracking en 24 h.
-                </AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="item-5">
-                <AccordionTrigger>¿Y si la USB llega dañada?</AccordionTrigger>
-                <AccordionContent>Te mandamos otra sin costo. Punto.</AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="item-6">
-                <AccordionTrigger>¿Puedo devolverla?</AccordionTrigger>
-                <AccordionContent>Sólo si está sellada y sin copiar. 14 días.</AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          </div>
+              <div className="mt-4 rounded-2xl border border-[#e4e7eb] bg-[#f8fafc] p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.1em] text-[#6b7280]">USB 128 GB</p>
+                    <p className="mt-1 text-3xl font-black text-[#e10613]">$147 USD</p>
+                    <p className="text-xs text-[#667085]">
+                      {isSpanish ? "Envío gratis USA · pago único" : "Free USA shipping · one-time payment"}
+                    </p>
+                  </div>
+                  <Badge className="border border-[#f8c9cf] bg-[#fff1f2] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#b10010]">
+                    {isSpanish ? "Top oferta" : "Top offer"}
+                  </Badge>
+                </div>
 
-          <div className="mt-10 flex justify-center">
-            <Button
-              onClick={openOrder}
-              className="btn-primary-glow h-12 w-full max-w-xl text-base font-black"
-            >
-              👉¡LO QUIERO YA👈 Por tan solo $147
-            </Button>
-          </div>
-        </div>
-      </section>
+                <ul className="mt-4 space-y-2 text-sm text-[#374151]">
+                  {[
+                    isSpanish ? "+10,000 canciones listas para evento" : "+10,000 event-ready songs",
+                    isSpanish ? "Organizada por género para DJ" : "Genre-organized for DJs",
+                    isSpanish ? "Compatible con Serato / VDJ / Rekordbox" : "Works with Serato / VDJ / Rekordbox",
+                    isSpanish ? "Incluye acceso al grupo de WhatsApp" : "Includes WhatsApp group access",
+                  ].map((item) => (
+                    <li key={item} className="flex items-start gap-2">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#e10613]" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
 
-      {/* Guarantee */}
-      <section className="relative py-14 md:py-20">
-        <div className="container mx-auto max-w-4xl px-4">
-          <div className="glass-card p-8">
-            <h2 className="text-center font-display text-4xl font-black md:text-5xl">
-              Nuestra Garantía de Confianza Total
-            </h2>
-
-            <ul className="mt-8 space-y-4 text-sm text-muted-foreground">
-              <li className="flex items-start gap-3">
-                <Truck className="mt-0.5 h-5 w-5 text-primary" />
-                <span>USPS Priority incluido. Directo hasta tu casa en aproximadamente 5 días.</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <ShieldCheck className="mt-0.5 h-5 w-5 text-primary" />
-                <span>Si tu USB no llega en 7 días hábiles, enviamos otra gratis.</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <Package className="mt-0.5 h-5 w-5 text-primary" />
-                <span>Garantía Samsung 5 años.</span>
-              </li>
-            </ul>
-
-            <div className="mt-10 flex justify-center">
-              <Button
-                onClick={openOrder}
-                className="btn-primary-glow h-12 w-full max-w-xl text-base font-black"
-              >
-                ¡ORDENA TU USB AHORA MISMO! No pierdas más tiempo buscando música
-              </Button>
+                <Button
+                  onClick={() => openOrder("usb128_card_buy")}
+                  className="btn-primary-glow mt-4 h-11 w-full text-sm font-black"
+                >
+                  {isSpanish ? "Quiero mi USB ahora" : "I want my USB now"}
+                </Button>
+              </div>
             </div>
           </div>
-
-          <p className="mt-10 text-center text-xs text-muted-foreground">
-            Copyrights 2025 |Gustavo Garcia™ | Terms &amp; Conditions
-          </p>
         </div>
       </section>
 
-      {/* Order modal */}
-      <Dialog open={isOrderOpen} onOpenChange={setIsOrderOpen}>
-        <DialogContent className="glass-card border-border/60 p-0 sm:max-w-lg">
+      <section className="py-10 md:py-14">
+        <div className="container mx-auto max-w-6xl px-4">
+          <div className="grid gap-4 md:grid-cols-3">
+            {[
+              {
+                icon: MessageCircle,
+                title: isSpanish ? "Comunidad real" : "Real community",
+                desc: isSpanish
+                  ? "+7,000 DJs latinos ya están en el grupo"
+                  : "+7,000 Latino DJs are already in the group",
+              },
+              {
+                icon: Usb,
+                title: isSpanish ? "Catálogo organizado" : "Organized catalog",
+                desc: isSpanish
+                  ? "Lo encuentras por género en segundos"
+                  : "Find tracks by genre in seconds",
+              },
+              {
+                icon: Truck,
+                title: isSpanish ? "Entrega física" : "Physical delivery",
+                desc: isSpanish
+                  ? "USB Samsung BAR Plus con envío USA"
+                  : "Samsung BAR Plus USB with USA shipping",
+              },
+            ].map((item) => (
+              <article
+                key={item.title}
+                className="rounded-2xl border border-[#d8dde5] bg-white p-5 shadow-[0_10px_24px_rgba(10,20,40,0.08)]"
+              >
+                <item.icon className="h-5 w-5 text-[#e10613]" />
+                <h2 className="mt-3 text-xl font-black text-[#111827]">{item.title}</h2>
+                <p className="mt-1 text-sm text-[#4b5563]">{item.desc}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-10 md:py-16">
+        <div className="container mx-auto max-w-6xl px-4">
+          <div className="rounded-3xl border border-[#d8dde5] bg-white p-6 shadow-[0_14px_34px_rgba(10,20,40,0.08)] md:p-8">
+            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#e10613]">
+                  {isSpanish ? "Cómo funciona" : "How it works"}
+                </p>
+                <h2 className="mt-2 text-3xl font-black leading-tight text-[#111827] md:text-4xl">
+                  {isSpanish ? "Compra en 3 pasos, sin fricción" : "Buy in 3 steps, friction-free"}
+                </h2>
+              </div>
+
+              <Button
+                asChild
+                variant="outline"
+                className="h-11 border-[#d2d8e2] bg-[#f8fafc] font-bold text-[#111827] hover:bg-[#f2f5fa]"
+              >
+                <Link
+                  to="/gratis"
+                  onClick={() =>
+                    trackEvent("cta_click", {
+                      cta_id: "usb128_howto_join_group",
+                      plan_id: "usb128",
+                      funnel_step: "consideration",
+                    })
+                  }
+                >
+                  {isSpanish ? "Primero quiero entrar gratis al grupo" : "I want to join the free group first"}
+                </Link>
+              </Button>
+            </div>
+
+            <div className="mt-7 grid gap-4 md:grid-cols-3">
+              {[
+                {
+                  n: "01",
+                  title: isSpanish ? "Deja tus datos" : "Leave your details",
+                  desc: isSpanish
+                    ? "Nombre, email y WhatsApp para confirmar pedido y soporte."
+                    : "Name, email, and WhatsApp for order confirmation and support.",
+                },
+                {
+                  n: "02",
+                  title: isSpanish ? "Checkout seguro" : "Secure checkout",
+                  desc: isSpanish
+                    ? "Pagas con Stripe o PayPal. Klarna/Afterpay disponibles según país."
+                    : "Pay with Stripe or PayPal. Klarna/Afterpay available by country.",
+                },
+                {
+                  n: "03",
+                  title: isSpanish ? "Recibes y tocas" : "Receive and play",
+                  desc: isSpanish
+                    ? "Te enviamos tracking y quedas listo para tus próximos eventos."
+                    : "You get tracking and stay ready for upcoming events.",
+                },
+              ].map((step) => (
+                <article key={step.n} className="rounded-2xl border border-[#e3e8ef] bg-[#f9fbff] p-5">
+                  <p className="text-sm font-black text-[#e10613]">{step.n}</p>
+                  <h3 className="mt-2 text-xl font-black text-[#111827]">{step.title}</h3>
+                  <p className="mt-2 text-sm text-[#4b5563]">{step.desc}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-10 md:py-16">
+        <div className="container mx-auto max-w-6xl px-4">
+          <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+            <article className="rounded-3xl border border-[#d8dde5] bg-white p-6 shadow-[0_14px_34px_rgba(10,20,40,0.08)] md:p-8">
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#e10613]">
+                {isSpanish ? "Comparación honesta" : "Honest comparison"}
+              </p>
+              <h2 className="mt-2 text-3xl font-black text-[#111827] md:text-4xl">
+                {isSpanish ? "Lo que ganas con la USB vs alternativas" : "What you get with USB vs alternatives"}
+              </h2>
+
+              <div className="mt-6 overflow-hidden rounded-2xl border border-[#e1e6ee]">
+                <div className="grid grid-cols-[1.2fr_1fr_1fr] bg-[#111827] px-4 py-3 text-xs font-bold uppercase tracking-[0.07em] text-white">
+                  <span>{isSpanish ? "Criterio" : "Criteria"}</span>
+                  <span className="text-center">USB 128</span>
+                  <span className="text-center">YouTube/DIY</span>
+                </div>
+
+                {[
+                  {
+                    label: isSpanish ? "Organización por género" : "Genre organization",
+                    left: isSpanish ? "Sí, lista para DJ" : "Yes, DJ-ready",
+                    right: isSpanish ? "Manual" : "Manual",
+                  },
+                  {
+                    label: isSpanish ? "Calidad de audio" : "Audio quality",
+                    left: "MP3 320 kbps",
+                    right: isSpanish ? "Variable" : "Variable",
+                  },
+                  {
+                    label: isSpanish ? "Compatibilidad DJ" : "DJ compatibility",
+                    left: "Serato / VDJ / Rekordbox",
+                    right: isSpanish ? "No optimizada" : "Not optimized",
+                  },
+                  {
+                    label: isSpanish ? "Tiempo de preparación" : "Prep time",
+                    left: isSpanish ? "Rápido" : "Fast",
+                    right: isSpanish ? "Horas" : "Hours",
+                  },
+                  {
+                    label: isSpanish ? "Soporte en español" : "Spanish support",
+                    left: isSpanish ? "Sí" : "Yes",
+                    right: isSpanish ? "No" : "No",
+                  },
+                ].map((row, idx) => (
+                  <div
+                    key={row.label}
+                    className={`grid grid-cols-[1.2fr_1fr_1fr] px-4 py-3 text-sm ${
+                      idx % 2 === 0 ? "bg-white" : "bg-[#f8fafc]"
+                    }`}
+                  >
+                    <span className="font-semibold text-[#1f2937]">{row.label}</span>
+                    <span className="text-center font-semibold text-[#b10010]">{row.left}</span>
+                    <span className="text-center text-[#6b7280]">{row.right}</span>
+                  </div>
+                ))}
+              </div>
+            </article>
+
+            <article className="rounded-3xl border border-[#d8dde5] bg-white p-6 shadow-[0_14px_34px_rgba(10,20,40,0.08)] md:p-8">
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#e10613]">
+                {isSpanish ? "Prueba social" : "Social proof"}
+              </p>
+              <h2 className="mt-2 text-3xl font-black text-[#111827]">
+                {isSpanish ? "DJs reales, resultados reales" : "Real DJs, real outcomes"}
+              </h2>
+
+              <div className="mt-5 grid gap-3">
+                {testimonials.map((item) => (
+                  <blockquote
+                    key={item.who}
+                    className="rounded-2xl border border-[#e2e8f0] bg-[#f9fbff] p-4"
+                  >
+                    <p className="text-sm text-[#1f2937]">“{item.quote}”</p>
+                    <footer className="mt-2 text-xs font-bold uppercase tracking-[0.07em] text-[#b10010]">
+                      {item.who}
+                    </footer>
+                  </blockquote>
+                ))}
+              </div>
+
+              <Button
+                onClick={() => openOrder("usb128_social_buy")}
+                className="btn-primary-glow mt-6 h-11 w-full text-sm font-black"
+              >
+                {isSpanish ? "Asegurar mi USB" : "Secure my USB"}
+              </Button>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-10 md:py-16">
+        <div className="container mx-auto max-w-4xl px-4">
+          <div className="rounded-3xl border border-[#d8dde5] bg-white p-6 shadow-[0_14px_34px_rgba(10,20,40,0.08)] md:p-8">
+            <h2 className="text-center text-3xl font-black text-[#111827] md:text-4xl">
+              {isSpanish ? "Preguntas frecuentes" : "Frequently asked questions"}
+            </h2>
+            <p className="mt-2 text-center text-sm text-[#6b7280]">
+              {isSpanish
+                ? "Respuestas directas basadas en dudas reales de compra."
+                : "Direct answers based on real purchase questions."}
+            </p>
+
+            <Accordion type="single" collapsible className="mt-6 w-full">
+              {faqItems.map((item) => (
+                <AccordionItem key={item.id} value={item.id}>
+                  <AccordionTrigger
+                    onClick={() =>
+                      trackEvent("faq_toggle", {
+                        cta_id: `usb128_${item.id}`,
+                        plan_id: "usb128",
+                        funnel_step: "objection_handling",
+                      })
+                    }
+                  >
+                    {item.q}
+                  </AccordionTrigger>
+                  <AccordionContent>{item.a}</AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
+        </div>
+      </section>
+
+      <section className="pb-28 pt-6 md:pb-16">
+        <div className="container mx-auto max-w-4xl px-4">
+          <div className="rounded-3xl border border-[#121212] bg-[#0d0f14] p-6 text-white shadow-[0_20px_45px_rgba(0,0,0,0.35)] md:p-8">
+            <div className="grid gap-6 md:grid-cols-[1.1fr_0.9fr] md:items-center">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#ff7a84]">
+                  {isSpanish ? "Oferta USB 128" : "USB 128 offer"}
+                </p>
+                <h2 className="mt-2 text-3xl font-black leading-tight md:text-4xl">
+                  {isSpanish
+                    ? "¿Listo para dejar de buscar música en 5 pools?"
+                    : "Ready to stop searching across 5 pools?"}
+                </h2>
+                <p className="mt-3 text-sm text-white/80">
+                  {isSpanish
+                    ? "Pago único, envío gratis en USA y soporte en español por WhatsApp."
+                    : "One-time payment, free USA shipping, and Spanish WhatsApp support."}
+                </p>
+              </div>
+
+              <div>
+                <Button
+                  onClick={() => openOrder("usb128_final_buy")}
+                  className="btn-primary-glow h-12 w-full text-base font-black"
+                >
+                  {isSpanish ? "Comprar ahora por $147" : "Buy now for $147"}
+                </Button>
+                <p className="mt-3 text-center text-xs text-white/70">
+                  {isSpanish
+                    ? "Al continuar aceptas recibir confirmaciones de pedido y soporte."
+                    : "By continuing, you agree to receive order confirmations and support messages."}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#240306] bg-[#ffffffee] p-3 backdrop-blur md:hidden">
+        <div className="mx-auto flex max-w-md items-center gap-2">
+          <Button
+            onClick={() => openOrder("usb128_mobile_sticky_buy")}
+            className="btn-primary-glow h-11 flex-1 text-sm font-black"
+          >
+            <Zap className="mr-2 h-4 w-4" />
+            {isSpanish ? "Comprar USB $147" : "Buy USB $147"}
+          </Button>
+          <Button
+            asChild
+            variant="outline"
+            className="h-11 border-[#cfd6df] bg-white px-3"
+          >
+            <Link
+              to="/explorer"
+              onClick={() =>
+                trackEvent("cta_click", {
+                  cta_id: "usb128_mobile_sticky_demos",
+                  plan_id: "usb128",
+                  funnel_step: "consideration",
+                })
+              }
+            >
+              <Package className="h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
+      </div>
+
+      <Footer />
+
+      <Dialog open={isOrderOpen} onOpenChange={(open) => !isSubmitting && setIsOrderOpen(open)}>
+        <DialogContent className="border border-[#d9dfe8] bg-white p-0 sm:max-w-lg">
           <DialogHeader className="sr-only">
-            <DialogTitle>
-              {language === "es" ? "Antes de pagar" : "Before checkout"}
-            </DialogTitle>
+            <DialogTitle>{isSpanish ? "Finalizar pedido" : "Complete order"}</DialogTitle>
             <DialogDescription>
-              {language === "es"
-                ? "Déjanos tus datos para confirmación, tracking y soporte."
-                : "Leave your details for confirmation, tracking, and support."}
+              {isSpanish
+                ? "Déjanos tus datos para confirmar el pedido y enviarte al checkout."
+                : "Leave your details to confirm your order and continue to checkout."}
             </DialogDescription>
           </DialogHeader>
+
           <div className="p-6 md:p-7">
-            <h3 className="font-display text-3xl font-black">
-              {language === "es" ? "Antes de pagar" : "Before checkout"}
+            <h3 className="text-3xl font-black text-[#111827]">
+              {isSpanish ? "Finalizar pedido" : "Complete order"}
             </h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {language === "es"
-                ? "Déjanos tus datos para confirmación, tracking y soporte. Después te enviamos al checkout."
-                : "Leave your details for confirmation, tracking, and support. Then we’ll send you to checkout."}
+            <p className="mt-2 text-sm text-[#6b7280]">
+              {isSpanish
+                ? "Solo pedimos lo esencial para confirmación, tracking y soporte en español."
+                : "We only ask for essentials for confirmation, tracking, and Spanish support."}
             </p>
 
             <form className="mt-6 space-y-4" onSubmit={onSubmit}>
               <div className="space-y-2">
-                <Label htmlFor="usb128-name">{language === "es" ? "Nombre" : "Name"}</Label>
+                <Label htmlFor="usb128-name">{isSpanish ? "Nombre" : "Name"}</Label>
                 <Input
                   id="usb128-name"
                   value={formData.name}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                  placeholder={language === "es" ? "Tu nombre completo" : "Your full name"}
+                  onChange={(e) => handleFieldChange("name", e.target.value)}
+                  onBlur={() => handleFieldBlur("name")}
+                  placeholder={isSpanish ? "Tu nombre completo" : "Your full name"}
                   autoComplete="name"
+                  aria-invalid={Boolean(formErrors.name)}
                 />
+                {touched.name && formErrors.name && (
+                  <p className="text-xs font-semibold text-[#b10010]">{formErrors.name}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -632,20 +949,23 @@ export default function Usb128() {
                   id="usb128-email"
                   type="email"
                   value={formData.email}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
+                  onChange={(e) => handleFieldChange("email", e.target.value)}
+                  onBlur={() => handleFieldBlur("email")}
                   placeholder="you@email.com"
                   autoComplete="email"
+                  aria-invalid={Boolean(formErrors.email)}
                 />
+                {touched.email && formErrors.email && (
+                  <p className="text-xs font-semibold text-[#b10010]">{formErrors.email}</p>
+                )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="usb128-phone">
-                  {language === "es" ? "WhatsApp" : "WhatsApp"}
-                </Label>
+                <Label htmlFor="usb128-phone">WhatsApp</Label>
                 <div className="flex items-center gap-2">
                   <Badge
                     variant="outline"
-                    className="h-10 shrink-0 border-border/60 bg-card/40 px-3 text-sm text-muted-foreground"
+                    className="h-10 shrink-0 border-[#d1d7e0] bg-[#f8fafc] px-3 text-sm text-[#4b5563]"
                     title={countryData.country_name}
                   >
                     {countryData.dial_code}
@@ -653,43 +973,44 @@ export default function Usb128() {
                   <Input
                     id="usb128-phone"
                     value={formData.phone}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
-                    placeholder={language === "es" ? "Tu número" : "Your number"}
+                    onChange={(e) => handleFieldChange("phone", e.target.value)}
+                    onBlur={() => handleFieldBlur("phone")}
+                    placeholder={isSpanish ? "Tu número" : "Your number"}
                     inputMode="tel"
                     autoComplete="tel"
+                    aria-invalid={Boolean(formErrors.phone)}
                   />
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {language === "es"
-                    ? "Envío gratis solo a Estados Unidos (EE. UU.)."
-                    : "Free shipping only to the United States (US)."}
+                {touched.phone && formErrors.phone && (
+                  <p className="text-xs font-semibold text-[#b10010]">{formErrors.phone}</p>
+                )}
+                <p className="text-xs text-[#667085]">
+                  {isSpanish
+                    ? "Envío gratis solo dentro de Estados Unidos para esta oferta USB."
+                    : "Free shipping for this USB offer applies only within the United States."}
                 </p>
               </div>
 
-              <Button
-                type="submit"
-                className="btn-primary-glow h-12 w-full text-base font-black"
-                disabled={isSubmitting}
-              >
+              <Button type="submit" className="btn-primary-glow h-12 w-full text-base font-black" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {language === "es" ? "Enviando..." : "Submitting..."}
+                    {isSpanish ? "Enviando..." : "Submitting..."}
                   </>
                 ) : (
-                  language === "es" ? "Continuar al checkout" : "Continue to checkout"
+                  isSpanish ? "Continuar al checkout" : "Continue to checkout"
                 )}
               </Button>
 
-              <p className="text-center text-xs text-muted-foreground">
-                {language === "es"
-                  ? "Al continuar aceptas recibir información y soporte sobre tu pedido."
-                  : "By continuing you agree to receive information and support about your order."}
+              <p className="text-center text-xs text-[#6b7280]">
+                {isSpanish
+                  ? "Al continuar, aceptas mensajes de confirmación y soporte sobre tu pedido."
+                  : "By continuing, you accept confirmation and support messages about your order."}
               </p>
-              <p className="text-center text-xs text-muted-foreground">
-                {language === "es"
-                  ? "Puedes darte de baja de mensajes promocionales en cualquier momento."
-                  : "You can opt out of promotional messages at any time."}
+              <p className="text-center text-xs text-[#6b7280]">
+                {isSpanish
+                  ? "Si ya no quieres mensajes promocionales, puedes solicitar baja (STOP/BAJA) en cualquier momento."
+                  : "If you no longer want promotional messages, you can opt out anytime (STOP/BAJA)."}
               </p>
             </form>
           </div>
