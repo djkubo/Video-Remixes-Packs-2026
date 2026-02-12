@@ -54,9 +54,8 @@ const FAQSection = () => {
       <div className="container mx-auto max-w-4xl px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35 }}
-          viewport={{ once: true }}
           className="mb-12 text-center"
         >
           <h2 className="mb-3 font-display text-4xl font-black md:text-5xl">
@@ -71,16 +70,15 @@ const FAQSection = () => {
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, delay: 0.06 }}
-          viewport={{ once: true }}
         >
           <Accordion type="single" collapsible className="space-y-3">
             {faqs.map((faq, index) => (
               <AccordionItem
                 key={index}
                 value={`item-${index}`}
-                className="rounded-2xl border border-border/80 bg-card px-5 transition-all data-[state=open]:border-primary/35"
+                className="rounded-2xl border border-border/88 bg-card px-5 transition-all data-[state=open]:border-primary/55"
               >
                 <AccordionTrigger className="py-4 text-left font-sans text-base font-semibold text-foreground hover:text-primary hover:no-underline">
                   {faq.question}

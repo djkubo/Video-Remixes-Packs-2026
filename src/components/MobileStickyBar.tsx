@@ -45,7 +45,7 @@ const MobileStickyBar = () => {
               "flex items-center justify-between gap-3 border-t px-4 py-3 backdrop-blur-xl",
               theme === "dark"
                 ? "border-white/10 bg-background/90 shadow-[0_-6px_24px_rgba(0,0,0,0.45)]"
-                : "border-border/80 bg-background/96 shadow-[0_-8px_22px_rgba(15,23,42,0.10)]"
+                : "border-border bg-card/98 shadow-[0_-10px_22px_rgba(15,23,42,0.14)]"
             )}
           >
             <div className="flex items-center gap-2 min-w-0">
@@ -82,7 +82,7 @@ const MobileStickyBar = () => {
           </div>
           
           {/* Safe area for iOS */}
-          <div className="h-[env(safe-area-inset-bottom)] bg-background" />
+          <div className="h-[env(safe-area-inset-bottom)] bg-card" />
         </motion.div>
       )}
     </AnimatePresence>

@@ -191,14 +191,13 @@ const MusicExplorer = ({ compact = false }: MusicExplorerProps) => {
   };
 
   return (
-    <section className={`relative bg-background ${isCompactPreview ? "py-10 md:py-12" : "py-16 md:py-24"}`}>
-      <div className="absolute inset-0 hero-gradient opacity-30" />
+    <section className={`relative ${isCompactPreview ? "bg-background-carbon/58 py-10 md:py-12" : "bg-background py-16 md:py-24"}`}>
+      <div className="absolute inset-0 hero-gradient opacity-8" />
 
       <div className="container relative z-10 mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className={`text-center ${isCompactPreview ? "mb-6" : "mb-8"}`}
         >
@@ -234,7 +233,7 @@ const MusicExplorer = ({ compact = false }: MusicExplorerProps) => {
                 : t("explorer.subtitle")}
           </p>
 
-          <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-2 text-xs font-bold text-primary">
+          <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-primary/55 bg-card px-4 py-2 text-xs font-bold text-primary">
             <Sparkles className="h-4 w-4" />
             {language === "es"
               ? `${knownGenres.length.toLocaleString()} géneros disponibles`
@@ -245,8 +244,7 @@ const MusicExplorer = ({ compact = false }: MusicExplorerProps) => {
         {!isCompactPreview && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
             className="mx-auto mb-8 max-w-3xl"
           >
@@ -263,7 +261,7 @@ const MusicExplorer = ({ compact = false }: MusicExplorerProps) => {
                 }
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                className="h-14 border-border/50 bg-card/50 pl-12 text-lg backdrop-blur-sm focus:border-primary"
+                className="h-14 border-border/70 bg-card pl-12 text-lg focus:border-primary"
               />
             </div>
           </motion.div>
@@ -271,10 +269,9 @@ const MusicExplorer = ({ compact = false }: MusicExplorerProps) => {
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.15 }}
-          className={`mx-auto overflow-hidden rounded-3xl border border-border/70 bg-card shadow-[0_14px_32px_rgba(15,23,42,0.06)] ${
+          className={`mx-auto overflow-hidden rounded-3xl border border-border/80 bg-card shadow-[0_12px_26px_rgba(15,23,42,0.1)] ${
             isCompactPreview ? "max-w-5xl" : "max-w-6xl"
           }`}
         >
@@ -286,7 +283,7 @@ const MusicExplorer = ({ compact = false }: MusicExplorerProps) => {
             <div className="px-6 py-12 text-center text-sm text-destructive">{error}</div>
           ) : (
             <>
-              <div className={`border-b border-border/60 bg-muted/20 ${isCompactPreview ? "p-4" : "p-4"}`}>
+              <div className={`border-b border-border/75 bg-background-carbon/52 ${isCompactPreview ? "p-4" : "p-4"}`}>
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <div className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground">
                     <Filter className="h-4 w-4" />
@@ -298,7 +295,7 @@ const MusicExplorer = ({ compact = false }: MusicExplorerProps) => {
                     onClick={() => setSelectedGenre(null)}
                     className={`rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
                       selectedGenre === null
-                        ? "border-primary bg-primary/10 text-primary"
+                        ? "border-primary/60 bg-card text-primary"
                         : "border-border text-muted-foreground hover:border-primary/30 hover:text-foreground"
                     }`}
                   >
@@ -315,8 +312,8 @@ const MusicExplorer = ({ compact = false }: MusicExplorerProps) => {
                         onClick={() => setSelectedGenre(genre)}
                         className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
                           selectedGenre === genre
-                            ? "border-primary bg-primary/15 text-primary"
-                            : "border-border bg-background/80 text-muted-foreground hover:border-primary/30 hover:text-foreground"
+                            ? "border-primary/60 bg-card text-primary"
+                            : "border-border/90 bg-background text-muted-foreground hover:border-primary/30 hover:text-foreground"
                         }`}
                       >
                         <Folder className="h-3.5 w-3.5" />
@@ -338,7 +335,7 @@ const MusicExplorer = ({ compact = false }: MusicExplorerProps) => {
                     {visibleTracks.map((track, index) => (
                       <article
                         key={`${track.id}-${index}`}
-                        className="flex items-start justify-between gap-3 rounded-2xl border border-border/70 bg-background px-4 py-3"
+                        className="flex items-start justify-between gap-3 rounded-2xl border border-border/75 bg-background px-4 py-3"
                       >
                         <div className="min-w-0">
                           <button
@@ -366,7 +363,7 @@ const MusicExplorer = ({ compact = false }: MusicExplorerProps) => {
                               ? `Ver como descargar: ${track.title}`
                               : `See how to download: ${track.title}`
                           }
-                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary transition-all hover:bg-primary hover:text-primary-foreground"
+                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-primary/40 bg-background text-primary transition-all hover:bg-primary hover:text-primary-foreground"
                         >
                           <Download className="h-4 w-4" />
                         </button>
@@ -376,7 +373,7 @@ const MusicExplorer = ({ compact = false }: MusicExplorerProps) => {
                 ) : (
                   <>
                     {visibleTracks.length > 0 && (
-                      <div className="grid grid-cols-12 gap-4 border-b border-border/30 bg-card/30 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground md:px-6">
+                      <div className="grid grid-cols-12 gap-4 border-b border-border/55 bg-background-carbon/52 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground md:px-6">
                         <div className="col-span-6 md:col-span-4">{language === "es" ? "Título" : "Title"}</div>
                         <div className="col-span-3 hidden md:block">{language === "es" ? "Género" : "Genre"}</div>
                         <div className="col-span-2 hidden md:block">{language === "es" ? "Duración" : "Duration"}</div>
@@ -388,7 +385,7 @@ const MusicExplorer = ({ compact = false }: MusicExplorerProps) => {
                       {visibleTracks.map((track, index) => (
                         <div
                           key={`${track.id}-${index}`}
-                          className="grid grid-cols-12 gap-4 border-b border-border/10 px-4 py-4 transition-colors hover:bg-card/40 md:px-6"
+                          className="grid grid-cols-12 gap-4 border-b border-border/28 px-4 py-4 transition-colors hover:bg-background-carbon/24 md:px-6"
                         >
                           <div className="col-span-6 md:col-span-4">
                             <button
@@ -423,7 +420,7 @@ const MusicExplorer = ({ compact = false }: MusicExplorerProps) => {
                                   ? `Ver como descargar: ${track.title}`
                                   : `See how to download: ${track.title}`
                               }
-                              className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/20 text-primary transition-all hover:bg-primary hover:text-primary-foreground"
+                              className="flex h-9 w-9 items-center justify-center rounded-lg border border-primary/40 bg-background text-primary transition-all hover:bg-primary hover:text-primary-foreground"
                             >
                               <Download className="h-4 w-4" />
                             </button>
@@ -460,8 +457,7 @@ const MusicExplorer = ({ compact = false }: MusicExplorerProps) => {
 
         <motion.div
           initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
+          animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
           className="mt-6 text-center"
         >
@@ -483,7 +479,7 @@ const MusicExplorer = ({ compact = false }: MusicExplorerProps) => {
       <Dialog open={showModal} onOpenChange={setShowModal}>
         <DialogContent className="glass-card border-primary/30 sm:max-w-md">
           <DialogHeader className="text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/20">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-primary/45 bg-card">
               <Download className="h-8 w-8 text-primary" />
             </div>
             <DialogTitle className="text-2xl font-bold">🔒 {t("explorer.modalTitle")}</DialogTitle>
@@ -495,7 +491,7 @@ const MusicExplorer = ({ compact = false }: MusicExplorerProps) => {
           </DialogHeader>
 
           {selectedTrack && (
-            <div className="my-4 rounded-lg bg-card/50 p-4">
+            <div className="my-4 rounded-lg border border-border/70 bg-background-carbon/38 p-4">
               <p className="font-medium text-foreground">{selectedTrack.title}</p>
               <p className="text-sm text-muted-foreground">{selectedTrack.artist}</p>
               <p className="mt-1 text-xs text-muted-foreground">{selectedTrack.path}</p>
@@ -506,7 +502,7 @@ const MusicExplorer = ({ compact = false }: MusicExplorerProps) => {
             <Button
               asChild
               size="lg"
-              className="h-14 bg-gradient-to-r from-primary via-red-600 to-orange-500 text-lg font-bold shadow-lg transition-transform hover:scale-105"
+              className="btn-primary-glow h-14 text-lg font-bold transition-transform hover:scale-[1.02]"
               onClick={() => {
                 trackClick(t("explorer.modalCta"));
                 trackEvent("click", { button_text: t("explorer.modalCta"), section: "music_explorer" });

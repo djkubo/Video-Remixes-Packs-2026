@@ -30,20 +30,19 @@ const FinalCTA = () => {
   ];
 
   return (
-    <section className="relative border-y border-border/60 bg-muted/30 py-18 md:py-22">
+    <section className="relative border-y border-border/75 bg-background-carbon/58 py-18 md:py-22">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35 }}
           className="mx-auto max-w-5xl"
         >
-          <div className="rounded-3xl border border-border/80 bg-card p-8 shadow-[0_16px_32px_rgba(15,23,42,0.07)] md:p-12">
+          <div className="rounded-3xl border border-border/88 bg-card p-8 shadow-[0_14px_30px_rgba(15,23,42,0.1)] md:p-12">
             <div className="grid gap-8 md:grid-cols-[1.15fr_1fr] md:items-center">
               <div>
                 <h2 className="font-display text-4xl font-bold leading-tight text-foreground md:text-5xl">
-                  {t("cta.title")} <span className="text-gradient-red">{t("cta.titleHighlight")}</span>
+                  {t("cta.title")} <span className="text-primary">{t("cta.titleHighlight")}</span>
                 </h2>
 
                 <p className="mt-4 max-w-lg text-sm leading-relaxed text-muted-foreground md:text-base">
@@ -72,12 +71,12 @@ const FinalCTA = () => {
                 {benefits.map((benefit) => (
                   <div
                     key={benefit.text}
-                    className="flex items-center gap-3 rounded-xl border border-border/70 bg-background px-4 py-3 text-left"
+                    className="flex items-center gap-3 rounded-xl border border-border/85 bg-background px-4 py-3 text-left"
                   >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-primary/45 bg-card">
                       <benefit.icon className="h-4.5 w-4.5 text-primary" strokeWidth={1.8} />
                     </div>
-                    <span className="text-sm font-medium text-foreground/90">{benefit.text}</span>
+                    <span className="text-sm font-medium text-foreground/95">{benefit.text}</span>
                   </div>
                 ))}
               </div>

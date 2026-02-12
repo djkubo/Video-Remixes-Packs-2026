@@ -9,16 +9,15 @@ const GuaranteeSection = () => {
   const isSpanish = language === "es";
 
   return (
-    <section className="relative bg-background py-14 md:py-18">
+    <section className="relative bg-background-carbon/56 py-14 md:py-18">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
+          animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.35 }}
-          viewport={{ once: true }}
-          className="mx-auto flex max-w-3xl flex-col items-center rounded-3xl border border-border/80 bg-card p-8 text-center shadow-[0_10px_24px_rgba(15,23,42,0.05)]"
+          className="mx-auto flex max-w-3xl flex-col items-center rounded-3xl border border-border/88 bg-card p-8 text-center shadow-[0_12px_24px_rgba(15,23,42,0.1)]"
         >
-          <div className="mb-4 flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-primary/10">
+          <div className="mb-4 flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full border border-primary/45 bg-card">
             <ShieldCheck className="h-7 w-7 text-primary" strokeWidth={1.6} />
           </div>
           <div className="text-center">

@@ -78,8 +78,8 @@ const HeroSection = () => {
   };
 
   return (
-    <section className="relative overflow-hidden border-b border-border/60 bg-background">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(225,29,72,0.12),transparent_58%)]" />
+    <section className="relative overflow-hidden border-b border-border/75 bg-background">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(236,9,50,0.035),transparent_70%)]" />
       <div className="container relative z-10 mx-auto max-w-6xl px-4 pb-14 pt-10 md:pb-20 md:pt-16">
         <div className="grid items-center gap-9 md:grid-cols-2">
           <motion.div
@@ -93,7 +93,7 @@ const HeroSection = () => {
               className="mb-7 h-11 w-auto object-contain"
             />
 
-            <p className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/5 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-primary">
+            <p className="inline-flex items-center gap-2 rounded-full border border-primary/55 bg-card px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-primary">
               <ShieldCheck className="h-3.5 w-3.5" />
               {isSpanish ? "DJs latinos USA · actualización semanal" : "US Latin DJs · weekly updates"}
             </p>
@@ -114,7 +114,7 @@ const HeroSection = () => {
                 isSpanish ? "Compatible con Serato, Rekordbox y VirtualDJ" : "Compatible with Serato, Rekordbox, and VirtualDJ",
                 isSpanish ? "Soporte real en español por WhatsApp" : "Real Spanish support on WhatsApp",
               ].map((point) => (
-                <li key={point} className="flex items-center gap-2.5 text-sm text-foreground/85">
+                <li key={point} className="flex items-center gap-2.5 text-sm text-foreground/92">
                   <CheckCircle2 className="h-4.5 w-4.5 text-primary" />
                   <span>{point}</span>
                 </li>
@@ -136,11 +136,11 @@ const HeroSection = () => {
                 </Link>
               </Button>
 
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="h-12 gap-2.5 px-6 text-sm font-bold md:text-base"
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="h-12 gap-2.5 border-border bg-background px-6 text-sm font-bold hover:bg-muted md:text-base"
                 onClick={() =>
                   handleCTAClick(
                     secondaryCta.label,
@@ -168,9 +168,9 @@ const HeroSection = () => {
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: 0.08 }}
-            className="rounded-3xl border border-border bg-card p-5 shadow-[0_16px_36px_rgba(15,23,42,0.08)]"
+            className="rounded-3xl border border-border/90 bg-card p-5 shadow-[0_18px_36px_rgba(15,23,42,0.12)]"
           >
-            <div className="rounded-2xl border border-border/80 bg-background p-4">
+            <div className="rounded-2xl border border-border/85 bg-background p-4">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
                   {isSpanish ? "Plan recomendado" : "Recommended plan"}
@@ -190,7 +190,7 @@ const HeroSection = () => {
                   isSpanish ? "Acceso por carpetas y FTP" : "Folder and FTP access",
                   isSpanish ? "Soporte VIP en español" : "VIP Spanish support",
                 ].map((item) => (
-                  <div key={item} className="flex items-center justify-between rounded-xl border border-border/60 bg-muted/20 px-3 py-2.5">
+                  <div key={item} className="flex items-center justify-between rounded-xl border border-border/75 bg-card px-3 py-2.5">
                     <span className="text-sm text-foreground/90">{item}</span>
                     <CheckCircle2 className="h-4 w-4 text-primary" />
                   </div>
@@ -204,7 +204,7 @@ const HeroSection = () => {
                 { value: "50K+", label: isSpanish ? "Tracks" : "Tracks" },
                 { value: "4.9", label: isSpanish ? "Rating" : "Rating" },
               ].map((stat) => (
-                <div key={stat.label} className="rounded-xl border border-border/70 bg-background px-2 py-3 text-center">
+                <div key={stat.label} className="rounded-xl border border-border/80 bg-background px-2 py-3 text-center">
                   <p className="font-display text-xl font-bold text-foreground">{stat.value}</p>
                   <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{stat.label}</p>
                 </div>

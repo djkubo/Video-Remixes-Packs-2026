@@ -34,7 +34,7 @@ const CompactSocialProofSection = () => {
   return (
     <section className="relative bg-background py-10 md:py-14">
       <div className="container mx-auto max-w-6xl px-4">
-        <div className="rounded-3xl border border-border/70 bg-card p-6 shadow-[0_12px_28px_rgba(15,23,42,0.06)] md:p-8">
+        <div className="rounded-3xl border border-border/90 bg-card p-6 shadow-[0_12px_24px_rgba(15,23,42,0.09)] md:p-8">
           <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
             <div>
               <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-primary">
@@ -47,7 +47,7 @@ const CompactSocialProofSection = () => {
             </div>
             <div className="grid w-full gap-3 sm:grid-cols-3 md:w-auto">
               {highlights.map((item) => (
-                <div key={item.value} className="rounded-xl border border-border/70 bg-background px-4 py-3 text-center">
+                <div key={item.value} className="rounded-xl border border-border/80 bg-background px-4 py-3 text-center">
                   <p className="font-display text-2xl font-bold text-primary">{item.value}</p>
                   <p className="text-xs text-muted-foreground">{item.label}</p>
                 </div>
@@ -60,10 +60,9 @@ const CompactSocialProofSection = () => {
               <motion.blockquote
                 key={quote}
                 initial={{ opacity: 0, y: 8 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.08 }}
-                viewport={{ once: true }}
-                className="rounded-xl border border-border/70 bg-muted/20 px-4 py-3 text-sm text-muted-foreground"
+                className="rounded-xl border border-border/85 bg-background px-4 py-3 text-sm text-muted-foreground"
               >
                 {quote}
               </motion.blockquote>

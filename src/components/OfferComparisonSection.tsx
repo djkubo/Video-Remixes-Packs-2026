@@ -84,21 +84,21 @@ const OfferComparisonSection = () => {
   ];
 
   return (
-    <section className="relative border-y border-border/60 bg-muted/20 py-16 md:py-24">
+    <section className="relative border-y border-border/75 bg-background-carbon/58 py-16 md:py-24">
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-6xl">
           <div className="text-center">
-            <Badge className="bg-primary/10 px-3 py-1 text-primary hover:bg-primary/10">
+            <Badge variant="outline" className="border border-primary/60 bg-card px-3 py-1 text-primary hover:bg-card">
               {isEs ? "OFERTA CLARA" : "CLEAR OFFER"}
             </Badge>
             <h2 className="mt-4 font-display text-4xl font-bold md:text-5xl lg:text-6xl">
               {isEs ? (
                 <>
-                  Elige la opción con <span className="text-gradient-red">mejor retorno</span>
+                  Elige la opción con <span className="text-primary">mejor retorno</span>
                 </>
               ) : (
                 <>
-                  Choose the option with <span className="text-gradient-red">best ROI</span>
+                  Choose the option with <span className="text-primary">best ROI</span>
                 </>
               )}
             </h2>
@@ -113,12 +113,14 @@ const OfferComparisonSection = () => {
             {offers.map((offer) => (
               <div
                 key={offer.key}
-                className={`rounded-2xl border bg-card p-6 shadow-[0_12px_28px_rgba(15,23,42,0.06)] ${
-                  offer.highlighted ? "border-primary/40 ring-2 ring-primary/15" : "border-border/80"
+                className={`rounded-2xl border bg-card p-6 shadow-[0_12px_28px_rgba(15,23,42,0.1)] ${
+                  offer.highlighted
+                    ? "border-primary/65 ring-1 ring-primary/28 shadow-[0_16px_32px_rgba(236,9,50,0.16)]"
+                    : "border-border/88"
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+                  <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-primary/45 bg-card">
                     <offer.icon className="h-5 w-5 text-primary" />
                   </div>
                   {offer.highlighted && (
@@ -129,7 +131,7 @@ const OfferComparisonSection = () => {
                 </div>
 
                 <p className="mt-4 font-display text-2xl font-bold text-foreground">{offer.title}</p>
-                <p className="mt-2 font-display text-4xl font-bold text-gradient-red">{offer.price}</p>
+                <p className="mt-2 font-display text-4xl font-bold text-primary">{offer.price}</p>
                 <p className="mt-1 text-sm text-muted-foreground">{offer.subtitle}</p>
 
                 <ul className="mt-6 space-y-2 text-sm text-foreground/90">

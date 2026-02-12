@@ -56,7 +56,7 @@ export default function RouteMenu() {
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/60 bg-background/95 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-border/90 bg-card shadow-[0_8px_16px_rgba(15,23,42,0.06)]">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link to="/" className="inline-flex items-center" onClick={() => handleNavClick("header_logo")}>
           <img
@@ -79,7 +79,7 @@ export default function RouteMenu() {
                 onClick={() => handleNavClick(item.ctaId)}
                 className={cn(
                   "text-sm font-semibold transition-colors",
-                  isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                  isActive ? "text-primary" : "text-foreground/72 hover:text-foreground"
                 )}
               >
                 {isSpanish ? item.label.es : item.label.en}
@@ -92,7 +92,7 @@ export default function RouteMenu() {
           <button
             type="button"
             onClick={handleLanguageToggle}
-            className="h-10 rounded-lg border border-border px-3 text-sm font-semibold text-foreground transition-colors hover:bg-secondary"
+            className="h-10 rounded-lg border border-border/90 bg-background px-3 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
             aria-label={isSpanish ? "Cambiar idioma a inglés" : "Switch language to Spanish"}
           >
             {isSpanish ? "EN" : "ES"}
@@ -119,13 +119,13 @@ export default function RouteMenu() {
             <SheetTrigger asChild>
               <button
                 type="button"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-border bg-card"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-border/85 bg-card"
                 aria-label={isSpanish ? "Abrir menú" : "Open menu"}
               >
                 <Menu className="h-5 w-5" />
               </button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] border-border/60 bg-background/95">
+            <SheetContent side="right" className="w-[300px] border-border/80 bg-card">
               <SheetHeader>
                 <SheetTitle>{isSpanish ? "Navegación" : "Navigation"}</SheetTitle>
               </SheetHeader>
@@ -142,8 +142,8 @@ export default function RouteMenu() {
                         className={cn(
                           "block rounded-lg border px-4 py-3 text-sm font-semibold",
                           isActive
-                            ? "border-primary/40 bg-primary/10 text-primary"
-                            : "border-border text-foreground hover:bg-secondary"
+                            ? "border-primary/60 bg-card text-primary"
+                            : "border-border/85 text-foreground hover:bg-background"
                         )}
                       >
                         {isSpanish ? item.label.es : item.label.en}
