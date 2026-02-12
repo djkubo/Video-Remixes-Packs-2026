@@ -6,17 +6,6 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 
-// Optional: if you have payment/checkout links, put them here.
-// If empty, the page will instruct the user to check WhatsApp.
-const PLAN_1TB_MENSUAL_PAYMENT_URL = "";
-const PLAN_2TB_ANUAL_PAYMENT_URL = "";
-
-function getPaymentUrl(plan: string | null): string {
-  if (plan === "plan_1tb_mensual") return PLAN_1TB_MENSUAL_PAYMENT_URL;
-  if (plan === "plan_2tb_anual") return PLAN_2TB_ANUAL_PAYMENT_URL;
-  return "";
-}
-
 export default function MembresiaThankYou() {
   const { language } = useLanguage();
   const [params] = useSearchParams();
@@ -37,7 +26,6 @@ export default function MembresiaThankYou() {
   const [paypalCaptureState, setPaypalCaptureState] = useState<
     "idle" | "processing" | "success" | "error"
   >("idle");
-  const paymentUrl = getPaymentUrl(plan);
 
   useEffect(() => {
     if (!stripeSessionId || !leadId) return;
@@ -129,8 +117,8 @@ export default function MembresiaThankYou() {
           <p className="text-lg text-muted-foreground mb-8">
             {paidConfirmed
               ? language === "es"
-                ? "Pago recibido. En breve te enviaremos por WhatsApp (y/o email) tu acceso a la membresía."
-                : "Payment received. You’ll receive your membership access via WhatsApp (and/or email) shortly."
+                ? "Pago confirmado. Revisa tu email: ahí llega tu confirmación. Si ya tienes cuenta con ese correo, inicia sesión ahora."
+                : "Payment confirmed. Check your email for confirmation. If you already have an account with that email, you can sign in now."
               : hasStripeSession && stripeVerifyState === "processing"
                 ? language === "es"
                   ? "Estamos confirmando tu pago con Stripe. No cierres esta página."
@@ -148,36 +136,45 @@ export default function MembresiaThankYou() {
                     ? "Tu pago con PayPal está pendiente de confirmación. Revisa tu email de PayPal o intenta de nuevo."
                     : "Your PayPal payment is pending confirmation. Check your PayPal email or try again."
               : language === "es"
-                ? "Ya registramos tus datos. En breve te enviaremos por WhatsApp el acceso y el link de pago (si aplica)."
-                : "We’ve registered your details. You’ll receive access and the payment link (if applicable) via WhatsApp shortly."}
+                ? "No encontramos un pago confirmado en esta página. Si aún no pagas, regresa e intenta de nuevo. Si ya pagaste, revisa tu email y vuelve a cargar esta pantalla."
+                : "We couldn’t confirm a payment on this page. If you haven’t paid yet, go back and try again. If you already paid, check your email and refresh this screen."}
           </p>
 
           <div className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-xl p-6 mb-8 text-left">
             <div className="flex items-center gap-3 mb-3">
-              <MessageCircle className="w-6 h-6 text-green-500" />
+              <MessageCircle className="w-6 h-6 text-primary" />
               <span className="font-semibold">
-                {language === "es"
-                  ? paidConfirmed
-                    ? "Revisa tu WhatsApp y tu email"
-                    : "Revisa tu WhatsApp"
-                  : paidConfirmed
-                    ? "Check WhatsApp and email"
-                    : "Check your WhatsApp"}
+                {language === "es" ? "Siguientes pasos" : "Next steps"}
               </span>
             </div>
-            <p className="text-sm text-muted-foreground">
-              {language === "es"
-                ? "Si no te llega el mensaje en 10 minutos, revisa tu número o vuelve a intentarlo."
-                : "If you don’t get a message in 10 minutes, double-check your number or try again."}
-            </p>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li>
+                {language === "es"
+                  ? "1) Confirmación: revisa tu email (y spam)."
+                  : "1) Confirmation: check your email (and spam)."}
+              </li>
+              <li>
+                {language === "es"
+                  ? "2) Acceso: inicia sesión con el correo que usaste en el checkout."
+                  : "2) Access: sign in with the email you used at checkout."}
+              </li>
+              <li>
+                {language === "es"
+                  ? "3) Soporte: si algo no cuadra, te ayudamos en /help."
+                  : "3) Support: if anything looks off, we’ll help at /help."}
+              </li>
+            </ul>
           </div>
 
-          {paymentUrl ? (
-            <a href={paymentUrl} target="_blank" rel="noopener noreferrer">
-              <Button className="btn-primary-glow h-12 w-full text-base font-bold">
-                {language === "es" ? "Ir a pagar" : "Go to checkout"}
+          {paidConfirmed ? (
+            <div className="grid gap-3">
+              <Button asChild className="btn-primary-glow h-12 w-full text-base font-bold">
+                <Link to="/login">{language === "es" ? "Iniciar sesión" : "Sign in"}</Link>
               </Button>
-            </a>
+              <Button asChild variant="outline" className="h-12 w-full text-base font-bold">
+                <Link to="/trends">{language === "es" ? "Ir a Tendencias" : "Go to Trends"}</Link>
+              </Button>
+            </div>
           ) : null}
 
           <div className="mt-6">

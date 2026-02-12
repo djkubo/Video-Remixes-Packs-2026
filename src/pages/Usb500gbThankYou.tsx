@@ -6,9 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 
-// Optional: if you have a payment/checkout link for USB 500GB, put it here.
-// If empty, the page will instruct the user to check WhatsApp.
-const USB500GB_PAYMENT_URL = "";
+type ShippoInfo = { ok: boolean; labelUrl?: string; trackingNumber?: string } | null;
 
 export default function Usb500gbThankYou() {
   const { language } = useLanguage();
@@ -29,6 +27,8 @@ export default function Usb500gbThankYou() {
     "idle" | "processing" | "success" | "error" | "shipping_not_allowed"
   >("idle");
 
+  const [shippoInfo, setShippoInfo] = useState<ShippoInfo>(null);
+
   useEffect(() => {
     if (!stripeSessionId || !leadId) return;
     if (stripeVerifyState !== "idle") return;
@@ -44,6 +44,11 @@ export default function Usb500gbThankYou() {
         if (error || !paid) {
           setStripeVerifyState("error");
           return;
+        }
+
+        const shippo = (data as { shippo?: unknown } | null)?.shippo;
+        if (shippo && typeof shippo === "object") {
+          setShippoInfo(shippo as ShippoInfo);
         }
 
         try {
@@ -84,6 +89,11 @@ export default function Usb500gbThankYou() {
           return;
         }
 
+        const shippo = (data as { shippo?: unknown } | null)?.shippo;
+        if (shippo && typeof shippo === "object") {
+          setShippoInfo(shippo as ShippoInfo);
+        }
+
         // Re-sync ManyChat so payment tags get applied.
         try {
           await supabase.functions.invoke("sync-manychat", { body: { leadId } });
@@ -104,6 +114,13 @@ export default function Usb500gbThankYou() {
 
   const shippingBlocked =
     hasPayPalOrder && paypalCaptureState === "shipping_not_allowed";
+
+  const trackingNumber =
+    shippoInfo && typeof shippoInfo === "object" ? shippoInfo.trackingNumber : undefined;
+  const labelUrl =
+    shippoInfo && typeof shippoInfo === "object" ? shippoInfo.labelUrl : undefined;
+  const paymentRef = stripeSessionId || paypalOrderId || null;
+  const paymentProvider = stripeSessionId ? "Stripe" : paypalOrderId ? "PayPal" : null;
 
   return (
     <main className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -142,8 +159,8 @@ export default function Usb500gbThankYou() {
           <p className="text-lg text-muted-foreground mb-8">
             {paidConfirmed
               ? language === "es"
-                ? "Pago recibido. En breve te enviaremos por WhatsApp el seguimiento y cualquier detalle de entrega."
-                : "Payment received. You’ll receive tracking and delivery details via WhatsApp shortly."
+                ? "Pago confirmado. Tu pedido ya está en proceso. Te enviaremos la confirmación y el seguimiento por email."
+                : "Payment confirmed. Your order is now processing. We’ll send confirmation and tracking by email."
               : shippingBlocked
                 ? language === "es"
                   ? "Solo enviamos productos físicos dentro de Estados Unidos. Tu pago con PayPal no se completó. Regresa e intenta de nuevo con una dirección en USA, o escríbenos por WhatsApp."
@@ -165,37 +182,73 @@ export default function Usb500gbThankYou() {
                     ? "Tu pago con PayPal está pendiente de confirmación. Revisa tu email de PayPal o intenta de nuevo."
                     : "Your PayPal payment is pending confirmation. Check your PayPal email or try again."
               : language === "es"
-                ? "Ya registramos tu pedido. En breve te enviaremos por WhatsApp el link de pago y el seguimiento."
-                : "We’ve registered your order. You’ll receive the payment link and tracking via WhatsApp shortly."}
+                ? "No encontramos un pago confirmado en esta página. Si aún no pagas, regresa e intenta de nuevo. Si ya pagaste, revisa tu email y vuelve a cargar esta pantalla."
+                : "We couldn’t confirm a payment on this page. If you haven’t paid yet, go back and try again. If you already paid, check your email and refresh this screen."}
           </p>
 
-          <div className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-xl p-6 mb-8 text-left">
+          {paidConfirmed ? (
+            <div className="rounded-xl border border-border/70 bg-card p-6 mb-8 text-left shadow-xl">
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                {language === "es" ? "Estado del envío" : "Shipping status"}
+              </p>
+              {trackingNumber ? (
+                <>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {language === "es" ? "Guía de rastreo" : "Tracking number"}
+                  </p>
+                  <p className="mt-1 font-mono text-sm text-foreground">{trackingNumber}</p>
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    {language === "es"
+                      ? "La guía puede tardar un poco en activarse en la paquetería."
+                      : "It may take a little while for the carrier to activate the tracking."}
+                  </p>
+                  {labelUrl ? (
+                    <a
+                      href={labelUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-4 inline-flex text-sm font-semibold text-primary underline-offset-2 hover:underline"
+                    >
+                      {language === "es" ? "Abrir link de envío" : "Open shipping link"}
+                    </a>
+                  ) : null}
+                </>
+              ) : (
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {language === "es"
+                    ? "Estamos preparando tu envío. En cuanto se genere la guía, aparecerá aquí y te llegará por email."
+                    : "We’re preparing your shipment. Once tracking is generated, it will show here and arrive by email."}
+                </p>
+              )}
+            </div>
+          ) : null}
+
+          <div className="rounded-xl border border-border/70 bg-muted/30 p-6 mb-8 text-left">
             <div className="flex items-center gap-3 mb-3">
-              <MessageCircle className="w-6 h-6 text-green-500" />
+              <MessageCircle className="w-6 h-6 text-primary" />
               <span className="font-semibold">
-                {language === "es"
-                  ? paidConfirmed
-                    ? "Revisa tu WhatsApp y tu email"
-                    : "Revisa tu WhatsApp"
-                  : paidConfirmed
-                    ? "Check WhatsApp and email"
-                    : "Check your WhatsApp"}
+                {language === "es" ? "Soporte en español" : "Spanish support"}
               </span>
             </div>
             <p className="text-sm text-muted-foreground">
               {language === "es"
-                ? "Si no te llega el mensaje en 10 minutos, revisa tu número o vuelve a intentarlo."
-                : "If you don’t get a message in 10 minutes, double-check your number or try again."}
+                ? "Si necesitas ayuda con tu pedido, contáctanos y te respondemos rápido."
+                : "If you need help with your order, contact us and we’ll reply fast."}
             </p>
+            <div className="mt-4 flex flex-col gap-2">
+              <Link to="/help">
+                <Button variant="outline" className="w-full">
+                  {language === "es" ? "Ver ayuda" : "Open help"}
+                </Button>
+              </Link>
+              {paymentRef && paymentProvider ? (
+                <p className="text-xs text-muted-foreground">
+                  {language === "es" ? "Referencia" : "Reference"}: {paymentProvider} ·{" "}
+                  <span className="font-mono">{paymentRef}</span>
+                </p>
+              ) : null}
+            </div>
           </div>
-
-          {USB500GB_PAYMENT_URL ? (
-            <a href={USB500GB_PAYMENT_URL} target="_blank" rel="noopener noreferrer">
-              <Button className="btn-primary-glow h-12 w-full text-base font-bold">
-                {language === "es" ? "Ir a pagar" : "Go to checkout"}
-              </Button>
-            </a>
-          ) : null}
 
           <div className="mt-6">
             <Link to="/usb-500gb">
