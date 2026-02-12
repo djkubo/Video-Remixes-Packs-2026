@@ -73,6 +73,9 @@ Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and 
     - Requires the Edge Function secret `STRIPE_SECRET_KEY` (never commit or expose this in the frontend).
   - `paypal-checkout`: must be **public** so the website can redirect users to PayPal (configured with `verify_jwt = false` in `supabase/config.toml`).
     - Requires the Edge Function secrets `PAYPAL_CLIENT_ID` and `PAYPAL_CLIENT_SECRET` (never commit or expose the secret in the frontend).
+  - `process-email-queue`: background worker for transactional emails (payment confirmation, shipping updates) using Brevo.
+    - Configure secrets: `BREVO_API_KEY` (recommended) or `BREVO_SMTP_KEY` (fallback), `BREVO_SENDER_EMAIL`, `BREVO_SENDER_NAME`, `EMAIL_WORKER_TOKEN`.
+    - Run via scheduler/cron with header `x-email-worker-token: <EMAIL_WORKER_TOKEN>` and body `{"limit":25}`.
 - After publishing/deploying, you can verify `sync-manychat` is public by opening:
   - `https://<YOUR_PROJECT_REF>.supabase.co/functions/v1/sync-manychat`
   - Expected response: `{"ok":true,"function":"sync-manychat"}` (if you see `{"error":"Unauthorized"}`, the function is still deployed with JWT verification enabled).
