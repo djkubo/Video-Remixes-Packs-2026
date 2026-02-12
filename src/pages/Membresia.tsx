@@ -332,7 +332,8 @@ export default function Membresia() {
           name,
           email,
           phone: cleanPhone,
-          country_code: countryData.country_code,
+          // ManyChat expects dial code (e.g. +1) not ISO country code (e.g. US).
+          country_code: countryData.dial_code,
           country_name: countryData.country_name,
           source: "membresia",
           tags: planTags,
