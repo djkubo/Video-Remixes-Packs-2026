@@ -37,9 +37,9 @@ export type Database = {
       }
       analytics_events: {
         Row: {
-          cta_id: string | null
           country_code: string | null
           created_at: string
+          cta_id: string | null
           device_type: string | null
           event_data: Json | null
           event_name: string
@@ -60,9 +60,9 @@ export type Database = {
           visitor_id: string | null
         }
         Insert: {
-          cta_id?: string | null
           country_code?: string | null
           created_at?: string
+          cta_id?: string | null
           device_type?: string | null
           event_data?: Json | null
           event_name: string
@@ -83,9 +83,9 @@ export type Database = {
           visitor_id?: string | null
         }
         Update: {
-          cta_id?: string | null
           country_code?: string | null
           created_at?: string
+          cta_id?: string | null
           device_type?: string | null
           event_data?: Json | null
           event_name?: string
@@ -106,6 +106,47 @@ export type Database = {
           visitor_id?: string | null
         }
         Relationships: []
+      }
+      email_delivery_attempts: {
+        Row: {
+          attempt_no: number
+          created_at: string
+          error_message: string | null
+          id: string
+          provider: string | null
+          queue_id: string
+          response_payload: Json | null
+          status: string
+        }
+        Insert: {
+          attempt_no: number
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          provider?: string | null
+          queue_id: string
+          response_payload?: Json | null
+          status: string
+        }
+        Update: {
+          attempt_no?: number
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          provider?: string | null
+          queue_id?: string
+          response_payload?: Json | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_delivery_attempts_queue_id_fkey"
+            columns: ["queue_id"]
+            isOneToOne: false
+            referencedRelation: "outbound_email_queue"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       folders: {
         Row: {
@@ -238,6 +279,115 @@ export type Database = {
         }
         Relationships: []
       }
+      order_events: {
+        Row: {
+          created_at: string
+          event_key: string | null
+          event_payload: Json
+          event_source: string
+          event_type: string
+          id: string
+          lead_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_key?: string | null
+          event_payload?: Json
+          event_source?: string
+          event_type: string
+          id?: string
+          lead_id: string
+        }
+        Update: {
+          created_at?: string
+          event_key?: string | null
+          event_payload?: Json
+          event_source?: string
+          event_type?: string
+          id?: string
+          lead_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_events_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outbound_email_queue: {
+        Row: {
+          created_at: string
+          dedupe_key: string
+          email_to: string
+          id: string
+          last_error: string | null
+          lead_id: string
+          max_retries: number
+          next_retry_at: string
+          payload: Json
+          provider: string | null
+          provider_message_id: string | null
+          retry_count: number
+          sent_at: string | null
+          status: string
+          subject: string
+          template_key: string
+          template_lang: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dedupe_key: string
+          email_to: string
+          id?: string
+          last_error?: string | null
+          lead_id: string
+          max_retries?: number
+          next_retry_at?: string
+          payload?: Json
+          provider?: string | null
+          provider_message_id?: string | null
+          retry_count?: number
+          sent_at?: string | null
+          status?: string
+          subject: string
+          template_key: string
+          template_lang?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dedupe_key?: string
+          email_to?: string
+          id?: string
+          last_error?: string | null
+          lead_id?: string
+          max_retries?: number
+          next_retry_at?: string
+          payload?: Json
+          provider?: string | null
+          provider_message_id?: string | null
+          retry_count?: number
+          sent_at?: string | null
+          status?: string
+          subject?: string
+          template_key?: string
+          template_lang?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_email_queue_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tracks: {
         Row: {
           artist: string
@@ -325,8 +475,67 @@ export type Database = {
         }
         Relationships: []
       }
+      cro_daily_variant_summary: {
+        Row: {
+          checkout_redirects: number | null
+          day: string | null
+          experiment_id: string | null
+          lead_submits: number | null
+          paid_conversions: number | null
+          plan_clicks: number | null
+          sessions: number | null
+          variant_id: string | null
+        }
+        Relationships: []
+      }
+      email_queue_daily_summary: {
+        Row: {
+          day: string | null
+          status: string | null
+          template_key: string | null
+          total: number | null
+        }
+        Relationships: []
+      }
+      order_events_daily_summary: {
+        Row: {
+          day: string | null
+          event_type: string | null
+          total: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      claim_email_jobs: {
+        Args: { p_limit?: number }
+        Returns: {
+          created_at: string
+          dedupe_key: string
+          email_to: string
+          id: string
+          last_error: string | null
+          lead_id: string
+          max_retries: number
+          next_retry_at: string
+          payload: Json
+          provider: string | null
+          provider_message_id: string | null
+          retry_count: number
+          sent_at: string | null
+          status: string
+          subject: string
+          template_key: string
+          template_lang: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "outbound_email_queue"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       count_folder_tracks: { Args: { folder_id: string }; Returns: number }
       get_analytics_summary: {
         Args: { p_end_date: string; p_start_date: string }
@@ -373,6 +582,36 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      mark_email_job_failed: {
+        Args: {
+          p_error: string
+          p_job_id: string
+          p_provider?: string
+          p_response?: Json
+          p_retry_delay_minutes?: number
+        }
+        Returns: undefined
+      }
+      mark_email_job_sent: {
+        Args: {
+          p_job_id: string
+          p_provider: string
+          p_provider_message_id?: string
+          p_response?: Json
+        }
+        Returns: undefined
+      }
+      queue_email_for_lead: {
+        Args: {
+          p_dedupe_key?: string
+          p_lang?: string
+          p_lead_id: string
+          p_payload?: Json
+          p_subject: string
+          p_template_key: string
+        }
+        Returns: string
       }
       search_tracks: {
         Args: { p_limit?: number; p_query: string }
