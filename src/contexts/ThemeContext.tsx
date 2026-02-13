@@ -15,12 +15,11 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [theme, setThemeState] = useState<Theme>(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
-      if (stored === "light" || stored === "dark") {
-        return stored;
-      }
-      return "light";
+      // Brand decision: keep the site in dark mode for consistent visuals.
+      if (stored === "dark") return "dark";
+      return "dark";
     }
-    return "light";
+    return "dark";
   });
 
   useEffect(() => {
@@ -42,11 +41,12 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   }, [theme]);
 
   const toggleTheme = () => {
-    setThemeState((prev) => (prev === "dark" ? "light" : "dark"));
+    // Dark-only: keep API stable for existing components without allowing light mode.
+    setThemeState("dark");
   };
 
   const setTheme = (newTheme: Theme) => {
-    setThemeState(newTheme);
+    setThemeState(newTheme === "dark" ? "dark" : "dark");
   };
 
   return (

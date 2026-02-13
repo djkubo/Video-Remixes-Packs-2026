@@ -21,7 +21,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ["Manrope", "Inter", "system-ui", "sans-serif"],
-        display: ["Sora", "Manrope", "system-ui", "sans-serif"],
+        display: ["Bebas Neue", "system-ui", "sans-serif"],
         bebas: ["Bebas Neue", "system-ui", "sans-serif"],
       },
       colors: {
@@ -67,7 +67,7 @@ export default {
         },
         // Brand colors for direct use
         brand: {
-          red: "#AA0601",
+          red: "#AA0202",
           black: "#000000",
           gray: "#5E5E5E",
           white: "#FFFFFF",

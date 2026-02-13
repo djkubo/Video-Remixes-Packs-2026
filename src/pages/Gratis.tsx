@@ -239,7 +239,7 @@ export default function Gratis() {
 
       {/* Hero */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#1a1a1a] via-[#e10613] to-[#1a1a1a]" />
+        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#1a1a1a] via-[#AA0202] to-[#1a1a1a]" />
 
         <div className="container relative z-10 mx-auto px-4 pb-16 pt-20 md:pb-24 md:pt-28">
           <div className="mx-auto max-w-4xl text-center">
@@ -421,7 +421,7 @@ export default function Gratis() {
 
       {/* Why special + Process */}
       <section className="relative overflow-hidden py-16 md:py-24">
-        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#1a1a1a] via-[#e10613] to-[#1a1a1a]" />
+        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#1a1a1a] via-[#AA0202] to-[#1a1a1a]" />
 
         <div className="container relative z-10 mx-auto px-4">
           <div className="mx-auto max-w-5xl">

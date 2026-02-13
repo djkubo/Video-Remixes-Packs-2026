@@ -286,7 +286,7 @@ export default function Usb500gb() {
 
       {/* Hero */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#1a1a1a] via-[#e10613] to-[#1a1a1a]" />
+        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#1a1a1a] via-[#AA0202] to-[#1a1a1a]" />
 
         <div className="container relative z-10 mx-auto max-w-6xl px-4 pb-14 pt-16 md:pb-20 md:pt-24">
           <div className="flex items-center justify-center">

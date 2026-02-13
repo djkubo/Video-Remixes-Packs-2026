@@ -104,7 +104,7 @@ export default function Login() {
   return (
     <main className="brand-frame min-h-screen bg-background">
       <section className="relative overflow-hidden py-16">
-        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#1a1a1a] via-[#e10613] to-[#1a1a1a]" />
+        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#1a1a1a] via-[#AA0202] to-[#1a1a1a]" />
 
         <div className="container relative z-10 mx-auto max-w-4xl px-4">
           <div className="mb-10 flex justify-center">
@@ -118,7 +118,7 @@ export default function Login() {
           </div>
 
           <div className="mx-auto max-w-2xl rounded-2xl border border-border/60 bg-card p-8 text-center shadow-xl md:p-12">
-            <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#e10613]/40 bg-white px-4 py-1 text-xs font-bold uppercase tracking-wider text-[#e10613]">
+            <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#5E5E5E] bg-[#111111] px-4 py-1 text-xs font-bold uppercase tracking-wider text-[#AA0202]">
               <ShieldCheck className="h-4 w-4" />
               {isSpanish ? "Acceso seguro" : "Secure access"}
             </p>

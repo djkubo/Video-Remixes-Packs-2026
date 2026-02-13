@@ -66,7 +66,7 @@ export default function TermsAndConditions() {
       <SettingsToggle />
 
       <section className="relative overflow-hidden py-12 md:py-16">
-        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#1a1a1a] via-[#e10613] to-[#1a1a1a]" />
+        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#1a1a1a] via-[#AA0202] to-[#1a1a1a]" />
 
         <div className="container relative z-10 mx-auto max-w-4xl px-4">
           <div className="mb-8 flex justify-center">

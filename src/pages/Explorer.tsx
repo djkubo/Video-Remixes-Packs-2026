@@ -46,7 +46,7 @@ export default function Explorer() {
   return (
     <main className="brand-frame min-h-screen bg-background">
       <section className="relative overflow-hidden">
-        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#1a1a1a] via-[#e10613] to-[#1a1a1a]" />
+        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#1a1a1a] via-[#AA0202] to-[#1a1a1a]" />
 
         <div className="container relative z-10 mx-auto max-w-6xl px-4 pb-10 pt-10 md:pb-14 md:pt-14">
           <div className="flex items-center justify-between gap-4">
@@ -67,7 +67,7 @@ export default function Explorer() {
           </div>
 
           <div className="mt-10 glass-card p-8 md:p-10">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#e10613]/40 bg-white px-4 py-2 text-sm font-black text-[#e10613]">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#5E5E5E] bg-[#111111] px-4 py-2 text-sm font-black text-[#AA0202]">
               <Headphones className="h-4 w-4" />
               {copy.badge}
             </div>

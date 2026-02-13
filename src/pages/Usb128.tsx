@@ -551,7 +551,7 @@ export default function Usb128() {
   return (
     <main className="min-h-screen bg-[#edf1f5] text-[#0f172a] dark:bg-background dark:text-foreground">
       <section className="relative overflow-hidden bg-[#090b0f]">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_14%_20%,rgba(225,6,19,0.45),transparent_52%),radial-gradient(circle_at_80%_15%,rgba(225,6,19,0.25),transparent_44%),linear-gradient(130deg,#140003_0%,#5e0008_35%,#9c020d_60%,#d90413_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_14%_20%,rgba(170,2,2,0.45),transparent_52%),radial-gradient(circle_at_80%_15%,rgba(170,2,2,0.25),transparent_44%),linear-gradient(130deg,#140003_0%,#5e0008_35%,#9c020d_60%,#AA0202_100%)]" />
 
         <div className="relative container mx-auto max-w-6xl px-4 pb-12 pt-8 md:pb-16 md:pt-12">
           <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
@@ -651,7 +651,7 @@ export default function Usb128() {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-[0.1em] text-[#6b7280]">USB 128 GB</p>
-                    <p className="mt-1 text-3xl font-black text-[#d90413]">$147 USD</p>
+                    <p className="mt-1 text-3xl font-black text-[#AA0202]">$147 USD</p>
                     <p className="text-xs text-[#5f6b7a]">
                       {isSpanish
                         ? "Envío gratis en USA · pago único"
@@ -659,7 +659,7 @@ export default function Usb128() {
                     </p>
                   </div>
 
-                  <Badge className="border border-[#d90413] bg-[#d90413] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-white shadow-sm">
+                  <Badge className="border border-[#AA0202] bg-[#AA0202] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-white shadow-sm">
                     {isSpanish ? "Top oferta" : "Top offer"}
                   </Badge>
                 </div>
@@ -667,7 +667,7 @@ export default function Usb128() {
                 <ul className="mt-4 space-y-2 text-sm text-[#344054]">
                   {valueBullets.map((item) => (
                     <li key={item} className="flex items-start gap-2">
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#d90413]" />
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#AA0202]" />
                       <span>{item}</span>
                     </li>
                   ))}
@@ -697,7 +697,7 @@ export default function Usb128() {
       <section className="py-10 md:py-14">
         <div className="container mx-auto max-w-6xl px-4">
           <div className="rounded-3xl border border-[#d8dee8] bg-white p-6 shadow-[0_12px_30px_rgba(10,20,40,0.08)] md:p-8">
-            <p className="text-center text-xs font-bold uppercase tracking-[0.12em] text-[#d90413]">
+            <p className="text-center text-xs font-bold uppercase tracking-[0.12em] text-[#AA0202]">
               {isSpanish ? "Oferta clara" : "Clear offer"}
             </p>
             <h2 className="mt-2 text-center text-3xl font-black leading-tight text-[#111827] md:text-4xl">
@@ -747,14 +747,14 @@ export default function Usb128() {
                 </Button>
               </article>
 
-              <article className="rounded-2xl border-2 border-[#d90413] bg-white p-5 shadow-[0_14px_28px_rgba(217,4,19,0.2)]">
+              <article className="rounded-2xl border-2 border-[#AA0202] bg-white p-5 shadow-[0_14px_28px_rgba(170,2,2,0.2)]">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-xs font-bold uppercase tracking-[0.08em] text-[#d90413]">USB 128 GB</p>
-                  <Badge className="bg-[#d90413] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-white">
+                  <p className="text-xs font-bold uppercase tracking-[0.08em] text-[#AA0202]">USB 128 GB</p>
+                  <Badge className="bg-[#AA0202] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-white">
                     {isSpanish ? "Top" : "Top"}
                   </Badge>
                 </div>
-                <p className="mt-2 text-3xl font-black text-[#d90413]">$147 USD</p>
+                <p className="mt-2 text-3xl font-black text-[#AA0202]">$147 USD</p>
                 <p className="mt-2 text-sm text-[#4b5563]">
                   {isSpanish
                     ? "10,000+ canciones · física · plug and play"
@@ -776,7 +776,7 @@ export default function Usb128() {
         <div className="container mx-auto max-w-6xl px-4">
           <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
             <article className="rounded-3xl border border-[#d8dee8] bg-white p-6 shadow-[0_14px_34px_rgba(10,20,40,0.08)] md:p-8">
-              <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#d90413]">
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#AA0202]">
                 {isSpanish ? "Cómo funciona" : "How it works"}
               </p>
               <h2 className="mt-2 text-3xl font-black text-[#111827] md:text-4xl">
@@ -1101,11 +1101,11 @@ export default function Usb128() {
                 {isSpanish
                   ? "Confirmación y seguimiento se envían por email."
                   : "Confirmation and tracking are sent by email."}{" "}
-                <Link to="/privacy_policy" className="font-semibold text-[#d90413] underline underline-offset-2">
+                <Link to="/privacy_policy" className="font-semibold text-[#AA0202] underline underline-offset-2">
                   {isSpanish ? "Privacidad" : "Privacy"}
                 </Link>{" "}
                 ·{" "}
-                <Link to="/terms_and_conditions" className="font-semibold text-[#d90413] underline underline-offset-2">
+                <Link to="/terms_and_conditions" className="font-semibold text-[#AA0202] underline underline-offset-2">
                   {isSpanish ? "Términos" : "Terms"}
                 </Link>
               </p>
