@@ -9,7 +9,6 @@ import {
   ShieldCheck,
   Truck,
   Usb,
-  Zap,
 } from "lucide-react";
 
 import Footer from "@/components/Footer";
@@ -96,6 +95,8 @@ function normalizePhoneInput(input: string): { clean: string; digits: string } {
   const digits = clean.startsWith("+") ? clean.slice(1) : clean;
   return { clean, digits };
 }
+
+const BUY_ANCHOR_ID = "usb128-comprar";
 
 export default function Usb128() {
   const { language } = useLanguage();
@@ -549,7 +550,7 @@ export default function Usb128() {
   );
 
   return (
-    <main className="brand-frame min-h-screen bg-[#070707] text-[#EFEFEF]">
+    <main className="brand-frame min-h-screen bg-[#070707] pb-28 text-[#EFEFEF]">
       <section className="relative overflow-hidden bg-[#070707]">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_14%_20%,rgba(170,2,2,0.45),transparent_52%),radial-gradient(circle_at_80%_15%,rgba(170,2,2,0.25),transparent_44%),linear-gradient(130deg,#140003_0%,#5e0008_35%,#9c020d_60%,#AA0202_100%)]" />
 
@@ -590,6 +591,7 @@ export default function Usb128() {
 
               <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                 <Button
+                  id={BUY_ANCHOR_ID}
                   onClick={() => openOrder("usb128_hero_buy")}
                   className="btn-primary-glow h-12 px-8 text-base font-black"
                 >
@@ -611,17 +613,8 @@ export default function Usb128() {
                 </Button>
               </div>
 
-              <p className="mt-3 text-xs text-white/80">
-                {isSpanish
-                  ? "¿Primero quieres valor gratis? Entra al grupo y recibe contenido antes de comprar."
-                  : "Want free value first? Join the group and receive content before buying."}{" "}
-                <Link
-                  to="/gratis"
-                  onClick={() => trackCta("usb128_hero_group", "awareness")}
-                  className="font-semibold text-white underline underline-offset-2"
-                >
-                  {isSpanish ? "Ir al acceso gratis" : "Go to free access"}
-                </Link>
+              <p className="text-xs text-yellow-500 mt-4 flex items-center justify-center gap-1.5 font-medium">
+                ⚡ Stock limitado: Pídelo en las próximas 2 horas y se envía HOY mismo.
               </p>
 
               <div className="mt-5 flex flex-wrap gap-2">
@@ -671,6 +664,12 @@ export default function Usb128() {
                       <span>{item}</span>
                     </li>
                   ))}
+                  <li className="text-sm text-zinc-200 mt-2 flex items-start gap-2">
+                    <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#AA0202]" />
+                    <span>
+                      Garantía Plug &amp; Play 100%: Conecta y funciona al instante en Serato/VDJ, o te devolvemos tu dinero.
+                    </span>
+                  </li>
                 </ul>
 
                 <Button
@@ -818,19 +817,6 @@ export default function Usb128() {
                 >
                   {isSpanish ? "Continuar compra" : "Continue purchase"}
                 </Button>
-
-                <Button
-                  asChild
-                  variant="outline"
-                  className="h-11 border-[#AA0202] bg-transparent px-6 text-sm font-bold text-[#EFEFEF] hover:bg-[#AA0202]/15 hover:text-[#EFEFEF]"
-                >
-                  <Link
-                    to="/gratis"
-                    onClick={() => trackCta("usb128_how_group", "awareness")}
-                  >
-                    {isSpanish ? "Entrar primero al grupo gratis" : "Join free group first"}
-                  </Link>
-                </Button>
               </div>
             </article>
 
@@ -945,28 +931,23 @@ export default function Usb128() {
         </div>
       </section>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#5E5E5E] bg-[#070707]/95 p-3 backdrop-blur-md md:hidden">
-        <div className="mx-auto flex max-w-md items-center gap-2">
-          <Button
-            onClick={() => openOrder("usb128_mobile_sticky_buy")}
-            className="btn-primary-glow h-11 flex-1 text-sm font-black"
-          >
-            <Zap className="mr-1.5 h-4 w-4" />
-            {isSpanish ? "Comprar USB $147" : "Buy USB $147"}
-          </Button>
-          <Button
-            asChild
-            variant="outline"
-            className="h-11 border-[#5E5E5E] bg-[#111111] px-3 text-xs font-bold text-[#EFEFEF] hover:bg-[#111111]/80"
-          >
-            <Link
-              to="/explorer"
-              onClick={() => trackCta("usb128_mobile_sticky_demos")}
-            >
-              {isSpanish ? "Demos" : "Demos"}
-            </Link>
-          </Button>
+      <div className="fixed bottom-0 left-0 right-0 z-50 flex md:hidden items-center justify-between bg-[#070707]/95 backdrop-blur-md border-t border-[#222222] p-4 shadow-[0_-10px_30px_rgba(170,2,2,0.15)]">
+        <div className="flex flex-col">
+          <p className="text-[10px] text-zinc-400 uppercase tracking-widest">ENVÍO GRATIS USA</p>
+          <p className="font-bebas text-2xl text-white leading-none">$147 USD</p>
         </div>
+
+        <a
+          href={`#${BUY_ANCHOR_ID}`}
+          className="bg-[#AA0202] hover:bg-[#8A0101] text-white px-8 py-3 rounded-lg font-bebas text-xl animate-[pulse_2s_ease-in-out_infinite] transition-all"
+          onClick={(event) => {
+            event.preventDefault();
+            document.getElementById(BUY_ANCHOR_ID)?.scrollIntoView({ behavior: "smooth", block: "start" });
+            openOrder("usb128_mobile_sticky_buy");
+          }}
+        >
+          COMPRAR AHORA
+        </a>
       </div>
 
       <Footer />
