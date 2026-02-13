@@ -96,6 +96,18 @@ function mergeTags(existing: unknown, add: string[]): string[] {
   return Array.from(set).slice(0, 30);
 }
 
+type SupabaseUpdateLike = {
+  eq: (column: string, value: string) => Promise<unknown>;
+};
+
+type SupabaseFromLike = {
+  update: (values: Record<string, unknown>) => SupabaseUpdateLike;
+};
+
+type SupabaseAdminLike = {
+  from: (table: string) => SupabaseFromLike;
+};
+
 function extractLeadIdFromMetadata(value: unknown): string | null {
   if (!value) return null;
 
@@ -341,16 +353,16 @@ async function verifyShippoSecurity(req: Request, rawBody: string): Promise<{
 }
 
 async function updateWebhookEvent(
-  supabaseAdmin: any,
+  supabaseAdmin: SupabaseAdminLike,
   eventId: string,
   patch: Partial<ShippoWebhookEventInsert>,
 ): Promise<void> {
-  await (supabaseAdmin
-    .from("shippo_webhook_events") as any)
+  await supabaseAdmin
+    .from("shippo_webhook_events")
     .update({
       ...patch,
       processed_at: patch.processed_at || new Date().toISOString(),
-    } as any)
+    })
     .eq("id", eventId);
 }
 

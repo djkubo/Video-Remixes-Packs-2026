@@ -38,6 +38,7 @@ export default function RouteMenu() {
   const location = useLocation();
 
   if (location.pathname.startsWith("/admin")) return null;
+  if (location.pathname === "/" || location.pathname === "/trends") return null;
 
   const isSpanish = language === "es";
 

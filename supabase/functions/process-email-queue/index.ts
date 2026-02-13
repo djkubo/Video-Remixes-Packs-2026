@@ -35,7 +35,7 @@ function escapeHtml(input: string): string {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
+    .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 }
 
@@ -115,14 +115,14 @@ function renderTemplate(job: QueueJob): RenderedEmail {
     if (lang === "en") {
       return {
         subject: job.subject || "Shipping update",
-        html: `<h2>Shipping update</h2><p>Hi ${escapeHtml(name)}, we have an update on your shipment.</p><ul><li>Status: ${escapeHtml(shippingStatus || "label_created")}</li><li>${escapeHtml(trackingLine)}</li>${carrierLine ? `<li>${escapeHtml(carrierLine)}</li>` : ""}${labelLine ? `<li><a href=\"${escapeHtml(labelUrl)}\">Open tracking</a></li>` : ""}</ul>`,
+        html: `<h2>Shipping update</h2><p>Hi ${escapeHtml(name)}, we have an update on your shipment.</p><ul><li>Status: ${escapeHtml(shippingStatus || "label_created")}</li><li>${escapeHtml(trackingLine)}</li>${carrierLine ? `<li>${escapeHtml(carrierLine)}</li>` : ""}${labelLine ? `<li><a href="${escapeHtml(labelUrl)}">Open tracking</a></li>` : ""}</ul>`,
         text: `Shipping update. Hi ${name}. Status: ${shippingStatus || "label_created"}. ${trackingLine}. ${carrierLine}. ${labelLine}`,
       };
     }
 
     return {
       subject: job.subject || "Actualización de envío",
-      html: `<h2>Actualización de envío</h2><p>Hola ${escapeHtml(name)}, tenemos una actualización de tu envío.</p><ul><li>Estatus: ${escapeHtml(shippingStatus || "label_created")}</li><li>${escapeHtml(trackingLine)}</li>${carrierLine ? `<li>${escapeHtml(carrierLine)}</li>` : ""}${labelLine ? `<li><a href=\"${escapeHtml(labelUrl)}\">Abrir seguimiento</a></li>` : ""}</ul>`,
+      html: `<h2>Actualización de envío</h2><p>Hola ${escapeHtml(name)}, tenemos una actualización de tu envío.</p><ul><li>Estatus: ${escapeHtml(shippingStatus || "label_created")}</li><li>${escapeHtml(trackingLine)}</li>${carrierLine ? `<li>${escapeHtml(carrierLine)}</li>` : ""}${labelLine ? `<li><a href="${escapeHtml(labelUrl)}">Abrir seguimiento</a></li>` : ""}</ul>`,
       text: `Actualización de envío. Hola ${name}. Estatus: ${shippingStatus || "label_created"}. ${trackingLine}. ${carrierLine}. ${labelLine}`,
     };
   }
