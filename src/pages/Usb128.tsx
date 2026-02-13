@@ -194,13 +194,6 @@ export default function Usb128() {
           : "Yes. MP3 works with Serato, VirtualDJ, Rekordbox, and standard DJ setups on Mac/Windows.",
       },
       {
-        id: "faq-4",
-        q: isSpanish ? "¿Puedo escuchar demos antes?" : "Can I hear demos before buying?",
-        a: isSpanish
-          ? "Sí. Puedes revisar previews por género en el explorador antes de pagar."
-          : "Yes. You can review genre previews in the explorer before paying.",
-      },
-      {
         id: "faq-5",
         q: isSpanish ? "¿Envían fuera de Estados Unidos?" : "Do you ship outside the U.S.?",
         a: isSpanish
@@ -598,19 +591,6 @@ export default function Usb128() {
                   {isSpanish ? "Comprar USB 128GB" : "Buy USB 128GB"}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
-
-                <Button
-                  asChild
-                  variant="outline"
-                  className="h-12 border-[#5E5E5E] bg-[#111111]/25 px-8 text-base font-bold text-[#EFEFEF] hover:bg-[#111111]/45"
-                >
-                  <Link
-                    to="/explorer"
-                    onClick={() => trackCta("usb128_hero_demos")}
-                  >
-                    {isSpanish ? "Escuchar demos" : "Listen to demos"}
-                  </Link>
-                </Button>
               </div>
 
               <p className="text-xs text-yellow-500 mt-4 flex items-center justify-center gap-1.5 font-medium">
@@ -714,15 +694,6 @@ export default function Usb128() {
                 <p className="mt-2 text-sm text-[#5E5E5E]">
                   {isSpanish ? "3,000 canciones · descarga digital" : "3,000 songs · digital download"}
                 </p>
-                <Button
-                  asChild
-                  variant="outline"
-                  className="mt-4 h-10 w-full border-[#AA0202] bg-transparent font-bold text-[#EFEFEF] hover:bg-[#AA0202]/15 hover:text-[#EFEFEF]"
-                >
-                  <Link to="/explorer" onClick={() => trackCta("usb128_compare_pack_demos")}> 
-                    {isSpanish ? "Ver demos" : "See demos"}
-                  </Link>
-                </Button>
               </article>
 
               <article className="rounded-2xl border border-[#5E5E5E] bg-[#070707] p-5">
