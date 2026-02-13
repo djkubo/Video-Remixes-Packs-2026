@@ -671,81 +671,12 @@ export default function Usb128() {
             ))}
           </div>
         </div>
-      </section>
+	      </section>
 
-      <section className="py-10 md:py-14">
-        <div className="container mx-auto max-w-6xl px-4">
-          <div className="rounded-3xl border border-[#5E5E5E] bg-[#111111] p-6 shadow-[0_12px_30px_rgba(0,0,0,0.45)] md:p-8">
-            <p className="text-center text-xs font-bold uppercase tracking-[0.12em] text-[#AA0202]">
-              {isSpanish ? "Oferta clara" : "Clear offer"}
-            </p>
-            <h2 className="mt-2 text-center text-3xl font-black leading-tight text-[#EFEFEF] md:text-4xl">
-              {isSpanish
-                ? "Elige la opción con mejor retorno para ti"
-                : "Choose the option with the best return for you"}
-            </h2>
-
-            <div className="mt-6 grid gap-4 lg:grid-cols-3">
-              <article className="rounded-2xl border border-[#5E5E5E] bg-[#070707] p-5">
-                <p className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
-                  {isSpanish ? "Pack individual" : "Single pack"}
-                </p>
-                <p className="mt-2 text-3xl font-black text-[#EFEFEF]">$35 USD</p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {isSpanish ? "3,000 canciones · descarga digital" : "3,000 songs · digital download"}
-                </p>
-              </article>
-
-              <article className="rounded-2xl border border-[#5E5E5E] bg-[#070707] p-5">
-                <p className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
-                  {isSpanish ? "Membresía" : "Membership"}
-                </p>
-                <p className="mt-2 text-3xl font-black text-[#EFEFEF]">$19.50/mes</p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {isSpanish
-                    ? "Actualización constante · ideal para DJs activos"
-                    : "Continuous updates · ideal for active DJs"}
-                </p>
-                <Button
-                  asChild
-                  variant="outline"
-                  className="mt-4 h-10 w-full border-[#AA0202] bg-transparent font-bold text-[#EFEFEF] hover:bg-[#AA0202]/15 hover:text-[#EFEFEF]"
-                >
-                  <Link to="/plan" onClick={() => trackCta("usb128_compare_membership")}> 
-                    {isSpanish ? "Ver membresía" : "See membership"}
-                  </Link>
-                </Button>
-              </article>
-
-              <article className="rounded-2xl border-2 border-[#AA0202] bg-[#070707] p-5 shadow-[0_14px_28px_rgba(170,2,2,0.18)]">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-xs font-bold uppercase tracking-[0.08em] text-[#AA0202]">USB 128 GB</p>
-                  <Badge className="bg-[#AA0202] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-white">
-                    {isSpanish ? "Top" : "Top"}
-                  </Badge>
-                </div>
-                <p className="mt-2 text-3xl font-black text-[#AA0202]">$147 USD</p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {isSpanish
-                    ? "10,000+ canciones · física · plug and play"
-                    : "10,000+ songs · physical · plug and play"}
-                </p>
-                <Button
-                  onClick={() => openOrder("usb128_compare_usb_buy")}
-                  className="btn-primary-glow mt-4 h-10 w-full font-black"
-                >
-                  {isSpanish ? "Comprar USB" : "Buy USB"}
-                </Button>
-              </article>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="py-10 md:py-16">
-        <div className="container mx-auto max-w-6xl px-4">
-          <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-            <article className="rounded-3xl border border-[#5E5E5E] bg-[#111111] p-6 shadow-[0_14px_34px_rgba(0,0,0,0.45)] md:p-8">
+	      <section className="py-10 md:py-16">
+	        <div className="container mx-auto max-w-6xl px-4">
+	          <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+	            <article className="rounded-3xl border border-[#5E5E5E] bg-[#111111] p-6 shadow-[0_14px_34px_rgba(0,0,0,0.45)] md:p-8">
               <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#AA0202]">
                 {isSpanish ? "Cómo funciona" : "How it works"}
               </p>
