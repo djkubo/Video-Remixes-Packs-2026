@@ -37,7 +37,7 @@ export default function DemosSection() {
         <h2 className="text-center text-3xl font-bold text-[#EFEFEF] md:text-4xl">
           ¿Quieres escuchar antes de pagar? Dale play.
         </h2>
-        <p className="mb-8 mt-3 text-center text-[#5E5E5E]">
+        <p className="mb-8 mt-3 text-center text-muted-foreground">
           Sin registro. Sin tarjeta. Comprueba la calidad MP3 320kbps.
         </p>
 

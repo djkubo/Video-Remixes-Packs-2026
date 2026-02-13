@@ -623,9 +623,9 @@ export default function Usb128() {
               <div className="mt-4 rounded-2xl border border-[#5E5E5E] bg-[#070707] p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.1em] text-[#5E5E5E]">USB 128 GB</p>
+                    <p className="text-xs font-bold uppercase tracking-[0.1em] text-muted-foreground">USB 128 GB</p>
                     <p className="mt-1 text-3xl font-black text-[#AA0202]">$147 USD</p>
-                    <p className="text-xs text-[#5E5E5E]">
+                    <p className="text-xs text-muted-foreground">
                       {isSpanish
                         ? "Envío gratis en USA · pago único"
                         : "Free shipping in USA · one-time payment"}
@@ -687,21 +687,21 @@ export default function Usb128() {
 
             <div className="mt-6 grid gap-4 lg:grid-cols-3">
               <article className="rounded-2xl border border-[#5E5E5E] bg-[#070707] p-5">
-                <p className="text-xs font-bold uppercase tracking-[0.08em] text-[#5E5E5E]">
+                <p className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
                   {isSpanish ? "Pack individual" : "Single pack"}
                 </p>
                 <p className="mt-2 text-3xl font-black text-[#EFEFEF]">$35 USD</p>
-                <p className="mt-2 text-sm text-[#5E5E5E]">
+                <p className="mt-2 text-sm text-muted-foreground">
                   {isSpanish ? "3,000 canciones · descarga digital" : "3,000 songs · digital download"}
                 </p>
               </article>
 
               <article className="rounded-2xl border border-[#5E5E5E] bg-[#070707] p-5">
-                <p className="text-xs font-bold uppercase tracking-[0.08em] text-[#5E5E5E]">
+                <p className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
                   {isSpanish ? "Membresía" : "Membership"}
                 </p>
                 <p className="mt-2 text-3xl font-black text-[#EFEFEF]">$19.50/mes</p>
-                <p className="mt-2 text-sm text-[#5E5E5E]">
+                <p className="mt-2 text-sm text-muted-foreground">
                   {isSpanish
                     ? "Actualización constante · ideal para DJs activos"
                     : "Continuous updates · ideal for active DJs"}
@@ -725,7 +725,7 @@ export default function Usb128() {
                   </Badge>
                 </div>
                 <p className="mt-2 text-3xl font-black text-[#AA0202]">$147 USD</p>
-                <p className="mt-2 text-sm text-[#5E5E5E]">
+                <p className="mt-2 text-sm text-muted-foreground">
                   {isSpanish
                     ? "10,000+ canciones · física · plug and play"
                     : "10,000+ songs · physical · plug and play"}
@@ -776,7 +776,7 @@ export default function Usb128() {
                 ].map((step) => (
                   <div key={step.title} className="rounded-2xl border border-[#5E5E5E] bg-[#070707] p-4">
                     <p className="text-sm font-black text-[#EFEFEF]">{step.title}</p>
-                    <p className="mt-1 text-sm text-[#5E5E5E]">{step.desc}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{step.desc}</p>
                   </div>
                 ))}
               </div>
@@ -814,7 +814,7 @@ export default function Usb128() {
                 {socialStats.map((stat) => (
                   <div key={stat.label} className="rounded-xl border border-[#5E5E5E] bg-[#070707] p-2 text-center">
                     <p className="text-lg font-black text-[#EFEFEF]">{stat.value}</p>
-                    <p className="text-[10px] uppercase tracking-[0.07em] text-[#5E5E5E]">{stat.label}</p>
+                    <p className="text-[10px] uppercase tracking-[0.07em] text-muted-foreground">{stat.label}</p>
                   </div>
                 ))}
               </div>
@@ -836,7 +836,7 @@ export default function Usb128() {
             <h2 className="text-center text-3xl font-black text-[#EFEFEF] md:text-4xl">
               {isSpanish ? "Preguntas frecuentes" : "Frequently asked questions"}
             </h2>
-            <p className="mt-2 text-center text-sm text-[#5E5E5E]">
+            <p className="mt-2 text-center text-sm text-muted-foreground">
               {isSpanish
                 ? "Respuestas directas a objeciones reales antes de pagar."
                 : "Direct answers to real objections before checkout."}
@@ -877,7 +877,7 @@ export default function Usb128() {
                     ? "¿Listo para dejar de buscar música en 5 pools?"
                     : "Ready to stop searching in 5 different pools?"}
                 </h2>
-                <p className="mt-3 text-sm text-[#5E5E5E]">
+                <p className="mt-3 text-sm text-muted-foreground">
                   {isSpanish
                     ? "Oferta USB 128GB: $147 USD, envío gratis USA y soporte en español."
                     : "USB 128GB offer: $147 USD, free USA shipping, and Spanish support."}
@@ -891,7 +891,7 @@ export default function Usb128() {
                 >
                   {isSpanish ? "Comprar USB por $147" : "Buy USB for $147"}
                 </Button>
-                <p className="mt-3 text-center text-xs text-[#5E5E5E]">
+                <p className="mt-3 text-center text-xs text-muted-foreground">
                   {isSpanish
                     ? "Al continuar, te enviaremos confirmación y seguimiento por email."
                     : "By continuing, we’ll send confirmation and tracking by email."}
@@ -938,7 +938,7 @@ export default function Usb128() {
             <h3 className="text-3xl font-black text-[#EFEFEF]">
               {isSpanish ? "Finalizar pedido" : "Complete order"}
             </h3>
-            <p className="mt-2 text-sm text-[#5E5E5E]">
+            <p className="mt-2 text-sm text-muted-foreground">
               {isSpanish
                 ? "Solo pedimos lo esencial para confirmar tu pedido y enviarte el tracking por email."
                 : "We only ask for essentials to confirm your order and email your tracking."}
@@ -1010,7 +1010,7 @@ export default function Usb128() {
                 {touched.phone && formErrors.phone && (
                   <p className="text-xs font-semibold text-[#AA0202]">{formErrors.phone}</p>
                 )}
-                <p className="text-xs text-[#5E5E5E]">
+                <p className="text-xs text-muted-foreground">
                   {isSpanish
                     ? "Usaremos WhatsApp solo si hace falta para soporte o confirmar detalles del envío."
                     : "We’ll only use WhatsApp if needed for support or to confirm shipping details."}
@@ -1034,7 +1034,7 @@ export default function Usb128() {
 
               <div className="relative py-1">
                 <div className="absolute inset-x-0 top-1/2 h-px bg-[#5E5E5E]" />
-                <p className="relative mx-auto w-fit bg-[#111111] px-3 text-xs font-bold uppercase tracking-[0.12em] text-[#5E5E5E]">
+                <p className="relative mx-auto w-fit bg-[#111111] px-3 text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
                   {isSpanish ? "o" : "or"}
                 </p>
               </div>
@@ -1049,7 +1049,7 @@ export default function Usb128() {
                 {isSpanish ? "Pagar con PayPal" : "Pay with PayPal"}
               </Button>
 
-              <p className="text-center text-xs text-[#5E5E5E]">
+              <p className="text-center text-xs text-muted-foreground">
                 {isSpanish
                   ? "Confirmación y seguimiento se envían por email."
                   : "Confirmation and tracking are sent by email."}{" "}

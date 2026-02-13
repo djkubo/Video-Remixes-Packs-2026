@@ -18,7 +18,7 @@ export default function PricingSection({ checkoutUrl }: PricingSectionProps) {
                 </p>
                 <p className="mt-1 font-bebas text-5xl uppercase text-[#EFEFEF]">$0</p>
               </div>
-              <span className="shrink-0 rounded-full border border-[#5E5E5E] bg-[#070707] px-3 py-1 font-bebas text-xs uppercase tracking-wide text-[#5E5E5E]">
+              <span className="shrink-0 rounded-full border border-[#5E5E5E] bg-[#070707] px-3 py-1 font-bebas text-xs uppercase tracking-wide text-muted-foreground">
                 POR 7 DÍAS
               </span>
             </div>
@@ -46,7 +46,7 @@ export default function PricingSection({ checkoutUrl }: PricingSectionProps) {
                   INICIAR PRUEBA GRATIS
                 </a>
               </Button>
-              <p className="mt-3 text-center font-sans text-xs text-[#5E5E5E]">
+              <p className="mt-3 text-center font-sans text-xs text-muted-foreground">
                 Requiere tarjeta como filtro de calidad. $0 cobrados hoy.
               </p>
             </div>
@@ -123,7 +123,7 @@ export default function PricingSection({ checkoutUrl }: PricingSectionProps) {
                   HAZTE ELITE
                 </a>
               </Button>
-              <p className="mt-3 text-center font-sans text-xs text-[#5E5E5E]">
+              <p className="mt-3 text-center font-sans text-xs text-muted-foreground">
                 Ahorras $225 en comparación al plan mensual.
               </p>
             </div>

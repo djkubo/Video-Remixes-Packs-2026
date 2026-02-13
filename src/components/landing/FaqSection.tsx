@@ -31,7 +31,7 @@ export default function FaqSection() {
         <h2 className="text-center font-bebas text-4xl uppercase text-[#EFEFEF] md:text-5xl">
           Preguntas Frecuentes
         </h2>
-        <p className="mt-3 text-center font-sans text-[#5E5E5E]">Todo claro, sin letras pequeñas.</p>
+        <p className="mt-3 text-center font-sans text-muted-foreground">Todo claro, sin letras pequeñas.</p>
 
         <Accordion type="single" collapsible className="mt-10 space-y-3">
           {FAQS.map((item) => (
@@ -43,7 +43,7 @@ export default function FaqSection() {
               <AccordionTrigger className="py-4 text-left font-sans text-[#EFEFEF] hover:no-underline">
                 {item.q}
               </AccordionTrigger>
-              <AccordionContent className="pb-4 font-sans text-[#5E5E5E]">{item.a}</AccordionContent>
+              <AccordionContent className="pb-4 font-sans text-muted-foreground">{item.a}</AccordionContent>
             </AccordionItem>
           ))}
         </Accordion>

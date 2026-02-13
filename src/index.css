@@ -27,7 +27,8 @@
     --secondary-foreground: 0 0% 94%;
 
     --muted: 0 0% 10%;
-    --muted-foreground: 0 0% 36.9%;
+    /* Slightly brighter for readability on mobile while keeping a muted tone. */
+    --muted-foreground: 0 0% 60%;
 
     --accent: 0 98% 34%;
     --accent-foreground: 0 0% 94%;

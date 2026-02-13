@@ -29,10 +29,10 @@ export default function Footer({ whatsappJoinUrl, onCtaClick }: FooterProps) {
       </div>
 
       <div className="border-t border-[#111111] bg-[#070707] py-8 text-center">
-        <p className="font-sans text-sm text-[#5E5E5E]">
+        <p className="font-sans text-sm text-muted-foreground">
           © 2026 Video Remixes Pack, LLC. Todos los derechos reservados.
         </p>
-        <nav className="mt-4 flex justify-center gap-4 font-sans text-xs text-[#5E5E5E]">
+        <nav className="mt-4 flex justify-center gap-4 font-sans text-xs text-muted-foreground">
           <Link to="/terms_and_conditions" className="hover:text-[#EFEFEF]">
             Términos y Condiciones
           </Link>

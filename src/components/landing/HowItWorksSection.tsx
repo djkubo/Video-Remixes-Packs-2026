@@ -16,7 +16,7 @@ export default function HowItWorksSection() {
             <p className="mt-4 font-bebas text-2xl uppercase text-[#EFEFEF]">
               1. LA PRUEBA DE FUEGO
             </p>
-            <p className="mt-2 font-sans text-sm leading-relaxed text-[#5E5E5E]">
+            <p className="mt-2 font-sans text-sm leading-relaxed text-muted-foreground">
               7 días gratis y 100GB. Requiere tarjeta por seguridad, pero si no te convence,
               cancelas con 1 clic. $0 cobrados hoy.
             </p>
@@ -29,7 +29,7 @@ export default function HowItWorksSection() {
             <p className="mt-4 font-bebas text-2xl uppercase text-[#EFEFEF]">
               2. CONECTA TU GESTOR FTP
             </p>
-            <p className="mt-2 font-sans text-sm leading-relaxed text-[#5E5E5E]">
+            <p className="mt-2 font-sans text-sm leading-relaxed text-muted-foreground">
               Usa Air Explorer o FileZilla. Te damos un video tutorial de 2 minutos y soporte
               'Anti-Estrés' para conectarte al instante.
             </p>
@@ -42,7 +42,7 @@ export default function HowItWorksSection() {
             <p className="mt-4 font-bebas text-2xl uppercase text-[#EFEFEF]">
               3. DESCARGA MIENTRAS DUERMES
             </p>
-            <p className="mt-2 font-sans text-sm leading-relaxed text-[#5E5E5E]">
+            <p className="mt-2 font-sans text-sm leading-relaxed text-muted-foreground">
               Olvídate del clic-por-canción. Selecciona las carpetas del mes, dale descargar,
               vete a dormir y despierta con tu biblioteca lista.
             </p>

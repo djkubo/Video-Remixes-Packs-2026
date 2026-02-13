@@ -24,7 +24,7 @@ export default function HeroCommunitySection({
           TU BIBLIOTECA DE DJ LISTA EN MINUTOS, NO EN DÍAS.
         </h1>
 
-        <p className="mt-4 font-sans text-lg text-[#5E5E5E]">
+        <p className="mt-4 font-sans text-lg leading-relaxed text-muted-foreground">
           Descarga masiva vía FTP. Centralizamos los éxitos de todos los pools, filtramos la basura y te entregamos +150,000 archivos limpios. Audio, Video y Karaoke.
         </p>
 

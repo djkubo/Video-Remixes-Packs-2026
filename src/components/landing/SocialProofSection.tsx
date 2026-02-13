@@ -18,7 +18,7 @@ export default function SocialProofSection() {
         <h2 className="text-center font-bebas text-4xl uppercase text-[#EFEFEF] md:text-5xl">
           DJs reales. Resultados reales.
         </h2>
-        <p className="mb-10 mt-3 text-center font-sans text-[#5E5E5E]">
+        <p className="mb-10 mt-3 text-center font-sans text-muted-foreground">
           Cero inventos. Mensajes reales de DJs que ya descargan y mezclan nuestra música.
         </p>
 
@@ -35,7 +35,7 @@ export default function SocialProofSection() {
 
               <p className="text-sm leading-relaxed">{msg.text}</p>
 
-              <div className="mt-1 text-right text-[10px] text-[#5E5E5E]">
+              <div className="mt-1 text-right text-[10px] text-muted-foreground">
                 14:23 <CheckCheck className="ml-1 inline-block h-3 w-3 text-[#53BDEB]" />
               </div>
             </div>
