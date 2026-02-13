@@ -204,7 +204,7 @@ export default function Usb128() {
         id: "faq-6",
         q: isSpanish ? "¿Qué pasa si necesito ayuda técnica?" : "What if I need technical help?",
         a: isSpanish
-          ? "Te atendemos por WhatsApp en español para acceso, descarga y configuración básica."
+          ? "Soporte humano por WhatsApp en español para acceso, descarga y configuración básica."
           : "We support you via Spanish WhatsApp for access, downloads, and basic setup.",
       },
     ],
