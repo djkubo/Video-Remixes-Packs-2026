@@ -35,7 +35,7 @@ export default function PricingSection() {
             <div className="mt-6">
               <Button
                 variant="outline"
-                className="min-h-[56px] w-full border-[#AA0202] bg-transparent font-bebas text-xl uppercase tracking-wide text-[#AA0202] hover:bg-[#AA0202]/10 hover:text-[#EFEFEF]"
+                className="min-h-[56px] w-full border-[#AA0202] bg-transparent font-bebas text-xl uppercase tracking-wide text-[#EFEFEF] hover:bg-[#AA0202]/15 hover:text-[#EFEFEF]"
               >
                 INICIAR PRUEBA GRATIS
               </Button>
@@ -69,7 +69,7 @@ export default function PricingSection() {
             <div className="mt-6">
               <Button
                 variant="outline"
-                className="min-h-[56px] w-full border-[#AA0202] bg-transparent font-bebas text-xl uppercase tracking-wide text-[#AA0202] hover:bg-[#AA0202]/10 hover:text-[#EFEFEF]"
+                className="min-h-[56px] w-full border-[#AA0202] bg-transparent font-bebas text-xl uppercase tracking-wide text-[#EFEFEF] hover:bg-[#AA0202]/15 hover:text-[#EFEFEF]"
               >
                 ELEGIR PLAN MENSUAL
               </Button>
