@@ -387,7 +387,7 @@ export default function Usb128() {
           leadId = crypto.randomUUID();
           const sourcePage = window.location.pathname;
 
-          const { error: insertError } = await supabase.from("leads").insert({
+          const leadBase = {
             id: leadId,
             name,
             email,
@@ -401,11 +401,24 @@ export default function Usb128() {
             source_page: sourcePage,
             experiment_assignments: [],
             intent_plan: "usb128",
+          };
+
+          const leadWithConsent = {
+            ...leadBase,
             consent_transactional: consentTransactional,
             consent_transactional_at: consentTransactional ? new Date().toISOString() : null,
             consent_marketing: consentMarketing,
             consent_marketing_at: consentMarketing ? new Date().toISOString() : null,
-          });
+          };
+
+          let { error: insertError } = await supabase.from("leads").insert(leadWithConsent);
+          // If the DB migration hasn't been applied yet, avoid breaking lead capture.
+          if (insertError && /consent_(transactional|marketing)/i.test(insertError.message)) {
+            if (import.meta.env.DEV) {
+              console.warn("Leads consent columns missing. Retrying insert without consent fields.");
+            }
+            ({ error: insertError } = await supabase.from("leads").insert(leadBase));
+          }
 
           if (insertError) throw insertError;
           setCreatedLeadId(leadId);

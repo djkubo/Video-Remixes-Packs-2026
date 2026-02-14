@@ -208,25 +208,36 @@ export default function ExitIntentPopup() {
 
 	    try {
 	      const cleanPhone = cleanPhoneInput;
-	      const leadId = crypto.randomUUID();
+      const leadId = crypto.randomUUID();
 
       // Insert lead into database
-      const { error: insertError } = await supabase
-        .from("leads")
-        .insert({
-          id: leadId,
-          name: formData.name.trim(),
-          email: formData.email.trim().toLowerCase(),
-          phone: cleanPhone,
-          country_code: countryData.dial_code,
-          country_name: countryData.country_name,
-          source: "exit_intent",
-          tags: ["exit_intent", "demo_request"],
-          consent_transactional: consentTransactional,
-          consent_transactional_at: consentTransactional ? new Date().toISOString() : null,
-          consent_marketing: consentMarketing,
-          consent_marketing_at: consentMarketing ? new Date().toISOString() : null,
-        });
+      const leadBase = {
+        id: leadId,
+        name: formData.name.trim(),
+        email: formData.email.trim().toLowerCase(),
+        phone: cleanPhone,
+        country_code: countryData.dial_code,
+        country_name: countryData.country_name,
+        source: "exit_intent",
+        tags: ["exit_intent", "demo_request"],
+      };
+
+      const leadWithConsent = {
+        ...leadBase,
+        consent_transactional: consentTransactional,
+        consent_transactional_at: consentTransactional ? new Date().toISOString() : null,
+        consent_marketing: consentMarketing,
+        consent_marketing_at: consentMarketing ? new Date().toISOString() : null,
+      };
+
+      let { error: insertError } = await supabase.from("leads").insert(leadWithConsent);
+      // If the DB migration hasn't been applied yet, avoid breaking lead capture.
+      if (insertError && /consent_(transactional|marketing)/i.test(insertError.message)) {
+        if (import.meta.env.DEV) {
+          console.warn("Leads consent columns missing. Retrying insert without consent fields.");
+        }
+        ({ error: insertError } = await supabase.from("leads").insert(leadBase));
+      }
 
       if (insertError) {
         console.error("Error inserting lead:", insertError);

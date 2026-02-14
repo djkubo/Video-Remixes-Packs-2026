@@ -206,22 +206,33 @@ export default function Gratis() {
         const fullName = `${firstName} ${lastName}`.trim();
         const leadId = crypto.randomUUID();
 
-        const { error: insertError } = await supabase
-          .from("leads")
-          .insert({
-            id: leadId,
-            name: fullName,
-            email,
-            phone: cleanPhone,
-            country_code: countryData.dial_code,
-            country_name: countryData.country_name,
-            source: "gratis",
-            tags: ["gratis", "whatsapp_group"],
-            consent_transactional: consentTransactional,
-            consent_transactional_at: consentTransactional ? new Date().toISOString() : null,
-            consent_marketing: consentMarketing,
-            consent_marketing_at: consentMarketing ? new Date().toISOString() : null,
-          });
+        const leadBase = {
+          id: leadId,
+          name: fullName,
+          email,
+          phone: cleanPhone,
+          country_code: countryData.dial_code,
+          country_name: countryData.country_name,
+          source: "gratis",
+          tags: ["gratis", "whatsapp_group"],
+        };
+
+        const leadWithConsent = {
+          ...leadBase,
+          consent_transactional: consentTransactional,
+          consent_transactional_at: consentTransactional ? new Date().toISOString() : null,
+          consent_marketing: consentMarketing,
+          consent_marketing_at: consentMarketing ? new Date().toISOString() : null,
+        };
+
+        let { error: insertError } = await supabase.from("leads").insert(leadWithConsent);
+        // If the DB migration hasn't been applied yet, avoid breaking lead capture.
+        if (insertError && /consent_(transactional|marketing)/i.test(insertError.message)) {
+          if (import.meta.env.DEV) {
+            console.warn("Leads consent columns missing. Retrying insert without consent fields.");
+          }
+          ({ error: insertError } = await supabase.from("leads").insert(leadBase));
+        }
 
         if (insertError) throw insertError;
 
