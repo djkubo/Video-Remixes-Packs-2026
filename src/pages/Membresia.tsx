@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Accordion,
   AccordionContent,
@@ -148,6 +149,9 @@ export default function Membresia() {
     email: false,
     phone: false,
   });
+  const [consentTransactional, setConsentTransactional] = useState(false);
+  const [consentMarketing, setConsentMarketing] = useState(false);
+  const [consentTouched, setConsentTouched] = useState(false);
 
   const pricingLayoutAssignment = useMemo(
     () =>
@@ -248,6 +252,9 @@ export default function Membresia() {
     if (!isJoinOpen) return;
     setFormErrors({});
     setTouched({ name: false, email: false, phone: false });
+    setConsentTransactional(false);
+    setConsentMarketing(false);
+    setConsentTouched(false);
   }, [isJoinOpen]);
 
   const openJoin = useCallback(
@@ -309,6 +316,29 @@ export default function Membresia() {
         return;
       }
 
+      setConsentTouched(true);
+      if (!consentTransactional) {
+        trackEvent("lead_form_error", {
+          cta_id: "membresia_submit",
+          plan_id: selectedPlan,
+          funnel_step: "lead_capture",
+          error_fields: ["consent_transactional"],
+          experiment_assignments: experimentAssignments,
+        });
+
+        if (!useInlineValidation) {
+          toast({
+            title: language === "es" ? "Confirmación requerida" : "Confirmation required",
+            description:
+              language === "es"
+                ? "Debes aceptar recibir mensajes transaccionales y de soporte para continuar."
+                : "You must agree to receive transactional and support messages to continue.",
+            variant: "destructive",
+          });
+        }
+        return;
+      }
+
       const name = formData.name.trim();
       const email = formData.email.trim().toLowerCase();
       const { clean: cleanPhone } = normalizePhoneInput(formData.phone);
@@ -340,6 +370,10 @@ export default function Membresia() {
           source_page: sourcePage,
           experiment_assignments: experimentAssignments,
           intent_plan: selectedPlan,
+          consent_transactional: consentTransactional,
+          consent_transactional_at: consentTransactional ? new Date().toISOString() : null,
+          consent_marketing: consentMarketing,
+          consent_marketing_at: consentMarketing ? new Date().toISOString() : null,
         });
 
         if (insertError) throw insertError;
@@ -439,7 +473,9 @@ export default function Membresia() {
       }
     },
     [
-      countryData.country_code,
+      consentMarketing,
+      consentTransactional,
+      countryData.dial_code,
       countryData.country_name,
       experimentAssignments,
       formData,
@@ -949,6 +985,54 @@ export default function Membresia() {
                 )}
               </div>
 
+              <div className="rounded-xl border border-border/60 bg-card/40 p-4">
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="membresia-consent-transactional"
+                    checked={consentTransactional}
+                    onCheckedChange={(checked) => {
+                      setConsentTransactional(Boolean(checked));
+                      if (checked) setConsentTouched(false);
+                    }}
+                    disabled={isSubmitting}
+                    aria-required="true"
+                  />
+                  <Label
+                    htmlFor="membresia-consent-transactional"
+                    className="cursor-pointer text-xs leading-snug text-foreground"
+                  >
+                    {language === "es"
+                      ? "Acepto recibir mensajes transaccionales y de soporte por WhatsApp/SMS/email."
+                      : "I agree to receive transactional and support messages via WhatsApp/SMS/email."}
+                  </Label>
+                </div>
+
+                <div className="mt-3 flex items-start gap-3">
+                  <Checkbox
+                    id="membresia-consent-marketing"
+                    checked={consentMarketing}
+                    onCheckedChange={(checked) => setConsentMarketing(Boolean(checked))}
+                    disabled={isSubmitting}
+                  />
+                  <Label
+                    htmlFor="membresia-consent-marketing"
+                    className="cursor-pointer text-xs leading-snug text-muted-foreground"
+                  >
+                    {language === "es"
+                      ? "Quiero recibir promociones y novedades por WhatsApp/SMS/email."
+                      : "I want to receive promotions and updates via WhatsApp/SMS/email."}
+                  </Label>
+                </div>
+
+                {consentTouched && !consentTransactional && (
+                  <p className="mt-3 text-xs font-semibold text-destructive">
+                    {language === "es"
+                      ? "Requerido: confirma el consentimiento de soporte/transaccional."
+                      : "Required: confirm transactional/support consent."}
+                  </p>
+                )}
+              </div>
+
               <Button
                 type="submit"
                 className="btn-primary-glow h-12 w-full text-base font-black"
@@ -968,11 +1052,6 @@ export default function Membresia() {
                 {language === "es"
                   ? "Tu información está 100% segura con nosotros"
                   : "Your information is 100% secure with us"}
-              </p>
-              <p className="text-center text-xs text-muted-foreground">
-                {language === "es"
-                  ? "Al enviar aceptas recibir mensajes sobre tu acceso y soporte. Puedes darte de baja cuando quieras."
-                  : "By submitting you agree to receive access and support messages. You can opt out anytime."}
               </p>
             </form>
           </div>

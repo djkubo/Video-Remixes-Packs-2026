@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { countryNameFromCode, detectCountryCodeFromTimezone } from "@/lib/country";
@@ -126,6 +127,9 @@ export default function Usb128() {
     email: false,
     phone: false,
   });
+  const [consentTransactional, setConsentTransactional] = useState(false);
+  const [consentMarketing, setConsentMarketing] = useState(false);
+  const [consentTouched, setConsentTouched] = useState(false);
 
   const paymentBadges = useMemo(
     () => ["VISA", "MASTERCARD", "AMEX", "DISCOVER", "PayPal", "Klarna", "Afterpay"],
@@ -290,6 +294,11 @@ export default function Usb128() {
 
   const openOrder = useCallback(
     (ctaId: string) => {
+      setFormErrors({});
+      setTouched({ name: false, email: false, phone: false });
+      setConsentTransactional(false);
+      setConsentMarketing(false);
+      setConsentTouched(false);
       setIsOrderOpen(true);
       trackEvent("lead_form_open", {
         cta_id: ctaId,
@@ -346,6 +355,24 @@ export default function Usb128() {
       const email = formData.email.trim().toLowerCase();
       const { clean: cleanPhone } = normalizePhoneInput(formData.phone);
 
+      setConsentTouched(true);
+      if (!consentTransactional) {
+        trackEvent("lead_form_error", {
+          cta_id: preferredProvider === "paypal" ? "usb128_submit_paypal" : "usb128_submit",
+          plan_id: "usb128",
+          funnel_step: "lead_capture",
+          error_fields: ["consent_transactional"],
+        });
+        toast({
+          title: isSpanish ? "Confirmación requerida" : "Confirmation required",
+          description: isSpanish
+            ? "Debes aceptar recibir mensajes transaccionales y de soporte para continuar."
+            : "You must agree to receive transactional and support messages to continue.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       setIsSubmitting(true);
       trackEvent("lead_submit_attempt", {
         cta_id: preferredProvider === "paypal" ? "usb128_submit_paypal" : "usb128_submit",
@@ -374,6 +401,10 @@ export default function Usb128() {
             source_page: sourcePage,
             experiment_assignments: [],
             intent_plan: "usb128",
+            consent_transactional: consentTransactional,
+            consent_transactional_at: consentTransactional ? new Date().toISOString() : null,
+            consent_marketing: consentMarketing,
+            consent_marketing_at: consentMarketing ? new Date().toISOString() : null,
           });
 
           if (insertError) throw insertError;
@@ -530,6 +561,8 @@ export default function Usb128() {
       }
     },
     [
+      consentMarketing,
+      consentTransactional,
       countryData.country_name,
       countryData.dial_code,
       createdLeadId,
@@ -946,6 +979,54 @@ export default function Usb128() {
                     ? "Usaremos WhatsApp solo si hace falta para soporte o confirmar detalles del envío."
                     : "We’ll only use WhatsApp if needed for support or to confirm shipping details."}
                 </p>
+              </div>
+
+              <div className="rounded-xl border border-[#5E5E5E] bg-[#070707] p-4">
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="usb128-consent-transactional"
+                    checked={consentTransactional}
+                    onCheckedChange={(checked) => {
+                      setConsentTransactional(Boolean(checked));
+                      if (checked) setConsentTouched(false);
+                    }}
+                    disabled={isSubmitting}
+                    aria-required="true"
+                  />
+                  <Label
+                    htmlFor="usb128-consent-transactional"
+                    className="cursor-pointer text-xs leading-snug text-[#EFEFEF]"
+                  >
+                    {isSpanish
+                      ? "Acepto recibir mensajes transaccionales y de soporte por WhatsApp/SMS/email."
+                      : "I agree to receive transactional and support messages via WhatsApp/SMS/email."}
+                  </Label>
+                </div>
+
+                <div className="mt-3 flex items-start gap-3">
+                  <Checkbox
+                    id="usb128-consent-marketing"
+                    checked={consentMarketing}
+                    onCheckedChange={(checked) => setConsentMarketing(Boolean(checked))}
+                    disabled={isSubmitting}
+                  />
+                  <Label
+                    htmlFor="usb128-consent-marketing"
+                    className="cursor-pointer text-xs leading-snug text-muted-foreground"
+                  >
+                    {isSpanish
+                      ? "Quiero recibir promociones y novedades por WhatsApp/SMS/email."
+                      : "I want to receive promotions and updates via WhatsApp/SMS/email."}
+                  </Label>
+                </div>
+
+                {consentTouched && !consentTransactional && (
+                  <p className="mt-3 text-xs font-semibold text-[#AA0202]">
+                    {isSpanish
+                      ? "Requerido: confirma el consentimiento de soporte/transaccional."
+                      : "Required: confirm transactional/support consent."}
+                  </p>
+                )}
               </div>
 
               <Button

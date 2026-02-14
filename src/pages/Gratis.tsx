@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import SettingsToggle from "@/components/SettingsToggle";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -106,6 +107,10 @@ export default function Gratis() {
     phone: "",
   });
 
+  const [consentTransactional, setConsentTransactional] = useState(false);
+  const [consentMarketing, setConsentMarketing] = useState(false);
+  const [consentTouched, setConsentTouched] = useState(false);
+
   const countryOptions = useMemo(() => {
     return Object.entries(COUNTRY_DIAL_CODES)
       .map(([code, dial]) => ({ code, dial }))
@@ -124,6 +129,9 @@ export default function Gratis() {
   }, [language]);
 
   const openJoin = useCallback(() => {
+    setConsentTransactional(false);
+    setConsentMarketing(false);
+    setConsentTouched(false);
     setIsJoinOpen(true);
     trackEvent("gratis_join_open", { page: "/gratis" });
   }, [trackEvent]);
@@ -180,6 +188,19 @@ export default function Gratis() {
         return;
       }
 
+      setConsentTouched(true);
+      if (!consentTransactional) {
+        toast({
+          title: language === "es" ? "Confirmación requerida" : "Confirmation required",
+          description:
+            language === "es"
+              ? "Debes aceptar recibir mensajes transaccionales y de soporte para continuar."
+              : "You must agree to receive transactional and support messages to continue.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       setIsSubmitting(true);
       try {
         const fullName = `${firstName} ${lastName}`.trim();
@@ -196,6 +217,10 @@ export default function Gratis() {
             country_name: countryData.country_name,
             source: "gratis",
             tags: ["gratis", "whatsapp_group"],
+            consent_transactional: consentTransactional,
+            consent_transactional_at: consentTransactional ? new Date().toISOString() : null,
+            consent_marketing: consentMarketing,
+            consent_marketing_at: consentMarketing ? new Date().toISOString() : null,
           });
 
         if (insertError) throw insertError;
@@ -230,7 +255,19 @@ export default function Gratis() {
         setIsSubmitting(false);
       }
     },
-    [countryData.dial_code, countryData.country_name, formData, isSubmitting, language, navigate, toast, trackEvent, trackFormSubmit]
+    [
+      consentMarketing,
+      consentTransactional,
+      countryData.dial_code,
+      countryData.country_name,
+      formData,
+      isSubmitting,
+      language,
+      navigate,
+      toast,
+      trackEvent,
+      trackFormSubmit,
+    ]
   );
 
   return (
@@ -715,7 +752,7 @@ export default function Gratis() {
                       ...prev,
                       country_code: code,
                       dial_code: COUNTRY_DIAL_CODES[code] || prev.dial_code,
-                      country_name: code,
+                      country_name: countryNameFromCode(code, language === "es" ? "es" : "en"),
                     }));
                   }}
                   disabled={isSubmitting}
@@ -761,6 +798,54 @@ export default function Gratis() {
               />
             </div>
 
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+              <div className="flex items-start gap-3">
+                <Checkbox
+                  id="gratis-consent-transactional"
+                  checked={consentTransactional}
+                  onCheckedChange={(checked) => {
+                    setConsentTransactional(Boolean(checked));
+                    if (checked) setConsentTouched(false);
+                  }}
+                  disabled={isSubmitting}
+                  aria-required="true"
+                />
+                <Label
+                  htmlFor="gratis-consent-transactional"
+                  className="cursor-pointer text-xs leading-snug text-foreground"
+                >
+                  {language === "es"
+                    ? "Acepto recibir mensajes transaccionales y de soporte por WhatsApp/SMS/email."
+                    : "I agree to receive transactional and support messages via WhatsApp/SMS/email."}
+                </Label>
+              </div>
+
+              <div className="mt-3 flex items-start gap-3">
+                <Checkbox
+                  id="gratis-consent-marketing"
+                  checked={consentMarketing}
+                  onCheckedChange={(checked) => setConsentMarketing(Boolean(checked))}
+                  disabled={isSubmitting}
+                />
+                <Label
+                  htmlFor="gratis-consent-marketing"
+                  className="cursor-pointer text-xs leading-snug text-muted-foreground"
+                >
+                  {language === "es"
+                    ? "Quiero recibir promociones y novedades por WhatsApp/SMS/email."
+                    : "I want to receive promotions and updates via WhatsApp/SMS/email."}
+                </Label>
+              </div>
+
+              {consentTouched && !consentTransactional && (
+                <p className="mt-3 text-xs font-semibold text-destructive">
+                  {language === "es"
+                    ? "Requerido: confirma el consentimiento de soporte/transaccional."
+                    : "Required: confirm transactional/support consent."}
+                </p>
+              )}
+            </div>
+
             <Button
               type="submit"
               size="lg"
@@ -778,11 +863,6 @@ export default function Gratis() {
                 "JOIN THE WHATSAPP GROUP FOR FREE"
               )}
             </Button>
-            <p className="text-center text-xs text-muted-foreground">
-              {language === "es"
-                ? "Al enviar aceptas recibir mensajes del grupo y soporte. Puedes darte de baja cuando quieras."
-                : "By submitting you agree to receive group and support messages. You can opt out anytime."}
-            </p>
           </form>
         </DialogContent>
       </Dialog>

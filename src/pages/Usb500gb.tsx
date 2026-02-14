@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import logoWhite from "@/assets/logo-white.png";
@@ -100,6 +101,10 @@ export default function Usb500gb() {
     phone: "",
   });
 
+  const [consentTransactional, setConsentTransactional] = useState(false);
+  const [consentMarketing, setConsentMarketing] = useState(false);
+  const [consentTouched, setConsentTouched] = useState(false);
+
   const paymentBadges = useMemo(
     () => ["VISA", "MASTERCARD", "AMEX", "DISCOVER", "PayPal"],
     []
@@ -120,7 +125,12 @@ export default function Usb500gb() {
     });
   }, [language]);
 
-  const openOrder = useCallback(() => setIsOrderOpen(true), []);
+  const openOrder = useCallback(() => {
+    setConsentTransactional(false);
+    setConsentMarketing(false);
+    setConsentTouched(false);
+    setIsOrderOpen(true);
+  }, []);
 
   const onSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -172,6 +182,19 @@ export default function Usb500gb() {
         return;
       }
 
+      setConsentTouched(true);
+      if (!consentTransactional) {
+        toast({
+          title: language === "es" ? "Confirmación requerida" : "Confirmation required",
+          description:
+            language === "es"
+              ? "Debes aceptar recibir mensajes transaccionales y de soporte para continuar."
+              : "You must agree to receive transactional and support messages to continue.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       setIsSubmitting(true);
       try {
         const leadId = crypto.randomUUID();
@@ -185,6 +208,10 @@ export default function Usb500gb() {
           country_name: countryData.country_name,
           source: "usb_500gb",
           tags: ["usb_500gb", "usb_definitiva", "usb_order"],
+          consent_transactional: consentTransactional,
+          consent_transactional_at: consentTransactional ? new Date().toISOString() : null,
+          consent_marketing: consentMarketing,
+          consent_marketing_at: consentMarketing ? new Date().toISOString() : null,
         });
 
         if (insertError) throw insertError;
@@ -259,7 +286,17 @@ export default function Usb500gb() {
         setIsSubmitting(false);
       }
     },
-    [countryData.dial_code, countryData.country_name, formData, isSubmitting, language, navigate, toast]
+    [
+      consentMarketing,
+      consentTransactional,
+      countryData.dial_code,
+      countryData.country_name,
+      formData,
+      isSubmitting,
+      language,
+      navigate,
+      toast,
+    ]
   );
 
   return (
@@ -732,6 +769,54 @@ export default function Usb500gb() {
                 </div>
               </div>
 
+              <div className="rounded-xl border border-border/60 bg-card/40 p-4">
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="usb500-consent-transactional"
+                    checked={consentTransactional}
+                    onCheckedChange={(checked) => {
+                      setConsentTransactional(Boolean(checked));
+                      if (checked) setConsentTouched(false);
+                    }}
+                    disabled={isSubmitting}
+                    aria-required="true"
+                  />
+                  <Label
+                    htmlFor="usb500-consent-transactional"
+                    className="cursor-pointer text-xs leading-snug text-foreground"
+                  >
+                    {language === "es"
+                      ? "Acepto recibir mensajes transaccionales y de soporte por WhatsApp/SMS/email."
+                      : "I agree to receive transactional and support messages via WhatsApp/SMS/email."}
+                  </Label>
+                </div>
+
+                <div className="mt-3 flex items-start gap-3">
+                  <Checkbox
+                    id="usb500-consent-marketing"
+                    checked={consentMarketing}
+                    onCheckedChange={(checked) => setConsentMarketing(Boolean(checked))}
+                    disabled={isSubmitting}
+                  />
+                  <Label
+                    htmlFor="usb500-consent-marketing"
+                    className="cursor-pointer text-xs leading-snug text-muted-foreground"
+                  >
+                    {language === "es"
+                      ? "Quiero recibir promociones y novedades por WhatsApp/SMS/email."
+                      : "I want to receive promotions and updates via WhatsApp/SMS/email."}
+                  </Label>
+                </div>
+
+                {consentTouched && !consentTransactional && (
+                  <p className="mt-3 text-xs font-semibold text-destructive">
+                    {language === "es"
+                      ? "Requerido: confirma el consentimiento de soporte/transaccional."
+                      : "Required: confirm transactional/support consent."}
+                  </p>
+                )}
+              </div>
+
               <Button
                 type="submit"
                 className="btn-primary-glow h-12 w-full text-base font-black"
@@ -748,17 +833,6 @@ export default function Usb500gb() {
                   "Continue"
                 )}
               </Button>
-
-              <p className="text-center text-xs text-muted-foreground">
-                {language === "es"
-                  ? "Al continuar aceptas recibir información y soporte sobre tu pedido."
-                  : "By continuing you agree to receive information and support about your order."}
-              </p>
-              <p className="text-center text-xs text-muted-foreground">
-                {language === "es"
-                  ? "Puedes darte de baja de mensajes promocionales en cualquier momento."
-                  : "You can opt out of promotional messages at any time."}
-              </p>
             </form>
           </div>
         </DialogContent>

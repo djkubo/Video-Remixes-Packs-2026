@@ -5,6 +5,7 @@ import { X, Disc3, Gift, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -64,6 +65,10 @@ export default function ExitIntentPopup() {
     email: "",
     phone: "",
   });
+
+  const [consentTransactional, setConsentTransactional] = useState(false);
+  const [consentMarketing, setConsentMarketing] = useState(false);
+  const [consentTouched, setConsentTouched] = useState(false);
   
   const { t, language } = useLanguage();
   const { toast } = useToast();
@@ -126,6 +131,13 @@ export default function ExitIntentPopup() {
     return () => document.removeEventListener("mouseleave", handleMouseLeave);
   }, [handleMouseLeave]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    setConsentTransactional(false);
+    setConsentMarketing(false);
+    setConsentTouched(false);
+  }, [isOpen]);
+
   const handleClose = () => {
     setIsOpen(false);
     sessionStorage.setItem("exit-popup-dismissed", "true");
@@ -179,6 +191,19 @@ export default function ExitIntentPopup() {
 	      return;
 	    }
 
+      setConsentTouched(true);
+      if (!consentTransactional) {
+        toast({
+          title: language === "es" ? "Confirmación requerida" : "Confirmation required",
+          description:
+            language === "es"
+              ? "Debes aceptar recibir mensajes transaccionales y de soporte para continuar."
+              : "You must agree to receive transactional and support messages to continue.",
+          variant: "destructive",
+        });
+        return;
+      }
+
 	    setIsSubmitting(true);
 
 	    try {
@@ -197,6 +222,10 @@ export default function ExitIntentPopup() {
           country_name: countryData.country_name,
           source: "exit_intent",
           tags: ["exit_intent", "demo_request"],
+          consent_transactional: consentTransactional,
+          consent_transactional_at: consentTransactional ? new Date().toISOString() : null,
+          consent_marketing: consentMarketing,
+          consent_marketing_at: consentMarketing ? new Date().toISOString() : null,
         });
 
       if (insertError) {
@@ -365,7 +394,55 @@ export default function ExitIntentPopup() {
 	                        ? `Solo números, sin el código de país. Detectamos que estás en ${countryData.country_name}` 
 	                        : `Digits only, without country code. We detected you're in ${countryData.country_name}`}
 	                    </p>
-	                  </div>
+                  </div>
+
+                  <div className="rounded-xl border border-border/60 bg-card/40 p-4">
+                    <div className="flex items-start gap-3">
+                      <Checkbox
+                        id="exit-consent-transactional"
+                        checked={consentTransactional}
+                        onCheckedChange={(checked) => {
+                          setConsentTransactional(Boolean(checked));
+                          if (checked) setConsentTouched(false);
+                        }}
+                        disabled={isSubmitting}
+                        aria-required="true"
+                      />
+                      <Label
+                        htmlFor="exit-consent-transactional"
+                        className="cursor-pointer text-xs leading-snug text-foreground"
+                      >
+                        {language === "es"
+                          ? "Acepto recibir mensajes transaccionales y de soporte por WhatsApp/SMS/email."
+                          : "I agree to receive transactional and support messages via WhatsApp/SMS/email."}
+                      </Label>
+                    </div>
+
+                    <div className="mt-3 flex items-start gap-3">
+                      <Checkbox
+                        id="exit-consent-marketing"
+                        checked={consentMarketing}
+                        onCheckedChange={(checked) => setConsentMarketing(Boolean(checked))}
+                        disabled={isSubmitting}
+                      />
+                      <Label
+                        htmlFor="exit-consent-marketing"
+                        className="cursor-pointer text-xs leading-snug text-muted-foreground"
+                      >
+                        {language === "es"
+                          ? "Quiero recibir promociones y novedades por WhatsApp/SMS/email."
+                          : "I want to receive promotions and updates via WhatsApp/SMS/email."}
+                      </Label>
+                    </div>
+
+                    {consentTouched && !consentTransactional && (
+                      <p className="mt-3 text-xs font-semibold text-destructive">
+                        {language === "es"
+                          ? "Requerido: confirma el consentimiento de soporte/transaccional."
+                          : "Required: confirm transactional/support consent."}
+                      </p>
+                    )}
+                  </div>
 
                   <Button 
                     type="submit" 
