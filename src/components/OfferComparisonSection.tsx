@@ -38,7 +38,7 @@ const OfferComparisonSection = () => {
       key: "membresia",
       icon: MessageCircle,
       title: isEs ? "Membresía" : "Membership",
-      price: "$19.50/mes · $195/año",
+      price: "$35USD/m · $195USD/a",
       subtitle: isEs ? "Contenido actualizado + comunidad" : "Updated content + community",
       bullets: isEs
         ? [

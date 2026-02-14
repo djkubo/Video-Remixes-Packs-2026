@@ -54,7 +54,7 @@ const PRODUCTS: Record<ProductKey, ProductConfig> = {
   plan_1tb_mensual: {
     name: "Membresia 1 TB (Mensual)",
     description: "Acceso a la membresia con 1 TB de descarga mensual.",
-    defaultAmountCents: 1950,
+    defaultAmountCents: 3500,
     envAmountKey: "PAYPAL_PLAN_1TB_MENSUAL_AMOUNT_CENTS",
     shippingPreference: "NO_SHIPPING",
   },

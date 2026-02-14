@@ -109,13 +109,13 @@ const PLAN_DETAILS: Record<
   }
 > = {
   plan_1tb_mensual: {
-    label: "Plan 1 TB / Mes",
-    priceLabel: "$19.50 mensual",
+    label: "Plan PRO DJ mensual",
+    priceLabel: "$35USD/m",
     tags: ["membresia", "plan_1tb_mensual"],
   },
   plan_2tb_anual: {
-    label: "Plan 2 TB / Año",
-    priceLabel: "$195 anual",
+    label: "Plan 2 TB / Mes \u2013 195 Anual",
+    priceLabel: "$195USD/a",
     tags: ["membresia", "plan_2tb_anual"],
   },
 };

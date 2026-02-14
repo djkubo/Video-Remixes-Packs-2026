@@ -242,8 +242,8 @@ export const translations: Translations = {
     en: "How much does each option cost?",
   },
   "faq1.answer": {
-    es: "Pack individual desde $35 USD, membresía desde $19.50/mes y USB física desde $147 USD.",
-    en: "Single packs start at $35 USD, membership starts at $19.50/month, and physical USB starts at $147 USD.",
+    es: "Pack individual desde $35 USD, membresía desde $35/mes y USB física desde $147 USD.",
+    en: "Single packs start at $35 USD, membership starts at $35/month, and physical USB starts at $147 USD.",
   },
   "faq2.question": {
     es: "¿Cómo funciona?",

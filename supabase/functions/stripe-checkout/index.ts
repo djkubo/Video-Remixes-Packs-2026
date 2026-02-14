@@ -46,6 +46,7 @@ type ProductConfig = {
   description: string;
   defaultAmountCents: number;
   envAmountKey?: string;
+  trialDays?: number;
   shipping?: {
     allowedCountries: string[];
     displayName: string;
@@ -90,18 +91,20 @@ const PRODUCTS: Record<ProductKey, ProductConfig> = {
   },
   plan_1tb_mensual: {
     mode: "subscription",
-    name: "Membresia 1 TB (Mensual)",
+    name: "Plan PRO DJ mensual",
     description: "Acceso a la membresia con 1 TB de descarga mensual.",
-    defaultAmountCents: 1950,
+    defaultAmountCents: 3500,
     envAmountKey: "STRIPE_PLAN_1TB_MENSUAL_AMOUNT_CENTS",
+    trialDays: 7,
     recurring: { interval: "month" },
   },
   plan_2tb_anual: {
     mode: "subscription",
-    name: "Membresia 2 TB (Anual)",
+    name: "Plan 2 TB / Mes \u2013 195 Anual",
     description: "Acceso a la membresia con 2 TB de descarga.",
     defaultAmountCents: 19500,
     envAmountKey: "STRIPE_PLAN_2TB_ANUAL_AMOUNT_CENTS",
+    trialDays: 7,
     recurring: { interval: "year" },
   },
 };
@@ -235,6 +238,7 @@ function buildStripeFormData(args: {
   amountCents: number;
   currency: string;
   interval?: "month" | "year";
+  trialDays?: number;
   successUrl: string;
   cancelUrl: string;
   customerEmail?: string;
@@ -266,6 +270,12 @@ function buildStripeFormData(args: {
     const interval = args.interval;
     if (!interval) throw new Error("Missing recurring interval for subscription product");
     p.set("line_items[0][price_data][recurring][interval]", interval);
+
+    // If we're offering a free trial, still collect payment method as a quality filter.
+    if (args.trialDays && args.trialDays > 0) {
+      p.set("subscription_data[trial_period_days]", String(args.trialDays));
+      p.set("payment_method_collection", "always");
+    }
   }
 
   if (args.shippingAllowedCountries?.length) {
@@ -630,6 +640,7 @@ Deno.serve(async (req) => {
       amountCents,
       currency,
       interval: cfg.recurring?.interval,
+      trialDays: cfg.trialDays,
       successUrl,
       cancelUrl,
       customerEmail: typeof lead.email === "string" ? lead.email : undefined,
