@@ -1,5 +1,8 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 
+const createSupabaseAdmin = (url: string, serviceRoleKey: string) =>
+  createClient(url, serviceRoleKey, { auth: { persistSession: false } });
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -96,8 +99,7 @@ function mergeTags(existing: unknown, add: string[]): string[] {
   return Array.from(set).slice(0, 30);
 }
 
-// deno-lint-ignore no-explicit-any
-type SupabaseAdminLike = any;
+type SupabaseAdminLike = ReturnType<typeof createSupabaseAdmin>;
 
 function extractLeadIdFromMetadata(value: unknown): string | null {
   if (!value) return null;
@@ -431,9 +433,7 @@ Deno.serve(async (req) => {
       "",
   };
 
-  const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-    auth: { persistSession: false },
-  });
+  const supabaseAdmin = createSupabaseAdmin(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   const eventInsert: ShippoWebhookEventInsert = {
     shippo_event: extracted.eventType || "unknown",

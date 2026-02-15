@@ -1,6 +1,11 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { createShippoLabel, getShippoFromAddress, getShippoToken, type ShippoAddress } from "../_shared/shippo.ts";
 
+const createSupabaseAdmin = (url: string, serviceRoleKey: string) =>
+  createClient(url, serviceRoleKey, { auth: { persistSession: false } });
+
+type SupabaseAdmin = ReturnType<typeof createSupabaseAdmin>;
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -31,6 +36,58 @@ function mergeTags(existing: unknown, add: string[]): string[] {
   const set = new Set<string>(base);
   for (const t of add) set.add(t);
   return Array.from(set).slice(0, 20);
+}
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_INPUT_REGEX = /^\+?\d{7,20}$/;
+
+function asTrimmedString(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function cleanEmail(value: unknown): string | null {
+  const email = asTrimmedString(value).toLowerCase();
+  if (!email || email.length > 255) return null;
+  return EMAIL_REGEX.test(email) ? email : null;
+}
+
+function cleanName(value: unknown): string | null {
+  const name = asTrimmedString(value);
+  if (!name) return null;
+  return name.length > 120 ? name.slice(0, 120) : name;
+}
+
+function cleanPhone(value: unknown): string | null {
+  const raw = asTrimmedString(value);
+  if (!raw) return null;
+  const cleaned = raw.replace(/[\s().-]/g, "");
+  const digits = cleaned.startsWith("+") ? cleaned.slice(1) : cleaned;
+  if (cleaned.length > 20) return null;
+  if (!PHONE_INPUT_REGEX.test(cleaned)) return null;
+  if (!/[1-9]/.test(digits)) return null;
+  return cleaned;
+}
+
+function cleanSourcePage(value: unknown): string | null {
+  const page = asTrimmedString(value);
+  if (!page) return null;
+  if (!page.startsWith("/")) return null;
+  if (page.length > 200) return null;
+  return page;
+}
+
+function getSourcePageFromRequest(req: Request): string | null {
+  const referer = req.headers.get("referer");
+  if (!referer) return null;
+  try {
+    const u = new URL(referer);
+    if (u.hostname !== "videoremixpack.com" && u.hostname !== "localhost" && u.hostname !== "127.0.0.1") {
+      return null;
+    }
+    return cleanSourcePage(u.pathname);
+  } catch {
+    return null;
+  }
 }
 
 type ProductKey =
@@ -89,13 +146,6 @@ const PRODUCTS: Record<ProductKey, ProductConfig> = {
       "Acceso anual a la membresia Video Remix Packs (audio + video + karaoke).",
     defaultAmountCents: 19500,
     envAmountKey: "STRIPE_ANUAL_AMOUNT_CENTS",
-  },
-  djedits: {
-    mode: "payment",
-    name: "Curso DJ Edits",
-    description: "Aprende a crear tus propios DJ edits desde cero.",
-    defaultAmountCents: 4700,
-    envAmountKey: "STRIPE_DJEDITS_AMOUNT_CENTS",
   },
   djedits: {
     mode: "payment",
@@ -375,6 +425,87 @@ async function stripeRetrieveCheckoutSession(args: {
   return data;
 }
 
+async function ensureLeadExists(args: {
+  supabaseAdmin: SupabaseAdmin;
+  req: Request;
+  leadId: string;
+  productKey: ProductKey;
+  input: Record<string, unknown>;
+}): Promise<{ id: string; email: string; name: string; phone: string; source: string | null; tags: unknown }> {
+  const { data: existing, error: existingError } = await args.supabaseAdmin
+    .from("leads")
+    .select("id,email,name,phone,source,tags")
+    .eq("id", args.leadId)
+    .maybeSingle();
+
+  if (existingError) {
+    console.error("[Supabase] Failed to fetch lead");
+    throw new Error("Failed to fetch lead");
+  }
+
+  if (existing) {
+    return existing as { id: string; email: string; name: string; phone: string; source: string | null; tags: unknown };
+  }
+
+  const providedLead = isRecord(args.input.lead) ? (args.input.lead as Record<string, unknown>) : {};
+
+  const name = cleanName(args.input.name) || cleanName(providedLead.name) || "DJ";
+  const email = cleanEmail(args.input.email) || cleanEmail(providedLead.email) || "pending";
+  const phone = cleanPhone(args.input.phone) || cleanPhone(providedLead.phone) || "";
+  const countryCode = asTrimmedString(args.input.country_code) || asTrimmedString(providedLead.country_code) || null;
+  const countryName = asTrimmedString(args.input.country_name) || asTrimmedString(providedLead.country_name) || null;
+  const source = asTrimmedString(args.input.source) || asTrimmedString(providedLead.source) || args.productKey;
+  const sourcePage =
+    cleanSourcePage(args.input.source_page) ||
+    cleanSourcePage(args.input.sourcePage) ||
+    cleanSourcePage(providedLead.source_page) ||
+    cleanSourcePage(providedLead.sourcePage) ||
+    getSourcePageFromRequest(args.req);
+
+  const baseTags = mergeTags(args.input.tags ?? providedLead.tags, [
+    args.productKey,
+    "checkout_started",
+  ]);
+
+  const leadPayloadFull: Record<string, unknown> = {
+    id: args.leadId,
+    name,
+    email,
+    phone,
+    country_code: countryCode,
+    country_name: countryName,
+    source,
+    tags: baseTags,
+    funnel_step: "checkout_start",
+    source_page: sourcePage,
+    intent_plan: args.productKey,
+    consent_transactional: false,
+    consent_marketing: false,
+  };
+
+  try {
+    const { error: insertError } = await args.supabaseAdmin.from("leads").insert(leadPayloadFull);
+    if (insertError) throw insertError;
+  } catch {
+    // If optional columns haven't been migrated yet, fall back to minimal insert.
+    const leadPayloadMinimal: Record<string, unknown> = {
+      id: args.leadId,
+      name,
+      email,
+      phone,
+      country_code: countryCode,
+      country_name: countryName,
+      source,
+      tags: baseTags,
+    };
+
+    const { error: insertError } = await args.supabaseAdmin.from("leads").insert(leadPayloadMinimal);
+    if (insertError) throw insertError;
+  }
+
+  return { id: args.leadId, email, name, phone, source, tags: baseTags };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -429,9 +560,7 @@ Deno.serve(async (req) => {
     });
   }
 
-  const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-    auth: { persistSession: false },
-  });
+  const supabaseAdmin = createSupabaseAdmin(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   if (action === "verify") {
     if (!sessionId || sessionId.length < 10) {
@@ -495,11 +624,59 @@ Deno.serve(async (req) => {
         });
       }
 
-      if (!lead) {
-        return new Response(JSON.stringify({ error: "Lead not found" }), {
-          status: 404,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      const sessionEmail = isRecord(session.customer_details)
+        ? cleanEmail((session.customer_details as Record<string, unknown>).email)
+        : null;
+      const sessionPhone = isRecord(session.customer_details)
+        ? cleanPhone((session.customer_details as Record<string, unknown>).phone)
+        : null;
+      const sessionName =
+        (isRecord(session.shipping_details) &&
+          typeof (session.shipping_details as Record<string, unknown>).name === "string" &&
+          cleanName((session.shipping_details as Record<string, unknown>).name)) ||
+        (isRecord(session.customer_details) &&
+          typeof (session.customer_details as Record<string, unknown>).name === "string" &&
+          cleanName((session.customer_details as Record<string, unknown>).name)) ||
+        null;
+
+      const ensuredLead =
+        lead ||
+        (await ensureLeadExists({
+          supabaseAdmin,
+          req,
+          leadId,
+          productKey,
+          input: {
+            name: sessionName || "DJ",
+            email: sessionEmail || "pending",
+            phone: sessionPhone || "",
+            source: productKey,
+            tags: [productKey, "paid_stripe"],
+            funnel_step: "paid",
+          },
+        }));
+
+      const leadContactUpdates: Record<string, unknown> = {};
+      if (sessionEmail && (!ensuredLead.email || !cleanEmail(ensuredLead.email))) {
+        leadContactUpdates.email = sessionEmail;
+      } else if (sessionEmail && sessionEmail !== ensuredLead.email) {
+        leadContactUpdates.email = sessionEmail;
+      }
+      if (sessionPhone && (!ensuredLead.phone || !cleanPhone(ensuredLead.phone))) {
+        leadContactUpdates.phone = sessionPhone;
+      } else if (sessionPhone && sessionPhone !== ensuredLead.phone) {
+        leadContactUpdates.phone = sessionPhone;
+      }
+      if (sessionName && sessionName !== ensuredLead.name) {
+        leadContactUpdates.name = sessionName;
+      }
+
+      if (Object.keys(leadContactUpdates).length) {
+        try {
+          await supabaseAdmin.from("leads").update(leadContactUpdates).eq("id", leadId);
+        } catch {
+          // ignore
+        }
       }
 
       // Not paid yet: return without mutating.
@@ -510,7 +687,7 @@ Deno.serve(async (req) => {
         });
       }
 
-      const baseTags = mergeTags(lead.tags, ["paid_stripe"]);
+      const baseTags = mergeTags(ensuredLead.tags, ["paid_stripe"]);
       const alreadyHasLabel =
         baseTags.includes("shippo_label_created") || baseTags.includes("shippo_label");
 
@@ -520,7 +697,7 @@ Deno.serve(async (req) => {
         const shippoToken = getShippoToken();
         const fromAddress = getShippoFromAddress();
         const toAddress = buildShippoToAddressFromStripe({
-          lead: { name: lead.name, email: lead.email, phone: lead.phone },
+          lead: { name: ensuredLead.name, email: ensuredLead.email, phone: ensuredLead.phone },
           session,
         });
 
@@ -555,6 +732,8 @@ Deno.serve(async (req) => {
                   payment_provider: "stripe",
                   payment_id: sessionId,
                   paid_at: new Date().toISOString(),
+                  consent_transactional: true,
+                  consent_transactional_at: new Date().toISOString(),
                   shipping_to: toAddress,
                   shipping_label_url: label.labelUrl,
                   shipping_tracking_number: label.trackingNumber,
@@ -586,6 +765,8 @@ Deno.serve(async (req) => {
               payment_provider: "stripe",
               payment_id: sessionId,
               paid_at: new Date().toISOString(),
+              consent_transactional: true,
+              consent_transactional_at: new Date().toISOString(),
             })
             .eq("id", leadId);
         } catch {
@@ -626,23 +807,13 @@ Deno.serve(async (req) => {
   const successUrl = `${siteOrigin}${successPath}${successPath.includes("?") ? "&" : "?"}lead_id=${encodeURIComponent(leadId)}&product=${encodeURIComponent(productKey)}&provider=stripe&session_id={CHECKOUT_SESSION_ID}`;
   const cancelUrl = `${siteOrigin}${cancelPath}${cancelPath.includes("?") ? "&" : "?"}lead_id=${encodeURIComponent(leadId)}&product=${encodeURIComponent(productKey)}&provider=stripe&canceled=1`;
 
-  const { data: lead, error: leadError } = await supabaseAdmin
-    .from("leads")
-    .select("id,email,name,phone,source,tags")
-    .eq("id", leadId)
-    .maybeSingle();
-
-  if (leadError) {
-    console.error("[Supabase] Failed to fetch lead");
+  let lead: { id: string; email: string; name: string; phone: string; source: string | null; tags: unknown };
+  try {
+    lead = await ensureLeadExists({ supabaseAdmin, req, leadId, productKey, input });
+  } catch (e) {
+    console.error("[Supabase] Failed to ensure lead", e);
     return new Response(JSON.stringify({ error: "Failed to fetch lead" }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-
-  if (!lead) {
-    return new Response(JSON.stringify({ error: "Lead not found" }), {
-      status: 404,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
@@ -660,12 +831,17 @@ Deno.serve(async (req) => {
       trialDays: cfg.trialDays,
       successUrl,
       cancelUrl,
-      customerEmail: typeof lead.email === "string" ? lead.email : undefined,
+      customerEmail: cleanEmail(lead.email) || undefined,
       clientReferenceId: leadId,
       metadata: {
         lead_id: leadId,
         product: productKey,
         source: typeof lead.source === "string" ? lead.source : "",
+        source_page:
+          cleanSourcePage(input.source_page) ||
+          cleanSourcePage(input.sourcePage) ||
+          getSourcePageFromRequest(req) ||
+          "",
       },
       shippingAllowedCountries: cfg.shipping?.allowedCountries,
       shippingDisplayName: cfg.shipping?.displayName,

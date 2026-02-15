@@ -35,6 +35,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { countryNameFromCode, detectCountryCodeFromTimezone } from "@/lib/country";
+import { createBestCheckoutUrl } from "@/lib/checkout";
 import usbSamsungBarPlus from "@/assets/usb128-samsung-bar-plus.jpg";
 
 type CountryData = {
@@ -292,21 +293,83 @@ export default function Usb128() {
     [trackEvent]
   );
 
-  const openOrder = useCallback(
-    (ctaId: string) => {
-      setFormErrors({});
-      setTouched({ name: false, email: false, phone: false });
-      setConsentTransactional(false);
-      setConsentMarketing(false);
-      setConsentTouched(false);
-      setIsOrderOpen(true);
-      trackEvent("lead_form_open", {
+  const startExpressCheckout = useCallback(
+    async (ctaId: string) => {
+      if (isSubmitting) return;
+      setIsSubmitting(true);
+
+      trackEvent("checkout_redirect", {
         cta_id: ctaId,
         plan_id: "usb128",
-        funnel_step: "lead_capture",
+        provider: "auto",
+        status: "starting",
+        funnel_step: "checkout_handoff",
       });
+
+      try {
+        const leadId = crypto.randomUUID();
+        const { provider, url } = await createBestCheckoutUrl({
+          leadId,
+          product: "usb128",
+          sourcePage: window.location.pathname,
+        });
+
+        if (url) {
+          trackEvent("checkout_redirect", {
+            cta_id: ctaId,
+            plan_id: "usb128",
+            provider: provider || "unknown",
+            status: "redirected",
+            funnel_step: "checkout_handoff",
+          });
+          window.location.assign(url);
+          return;
+        }
+
+        trackEvent("checkout_redirect", {
+          cta_id: ctaId,
+          plan_id: "usb128",
+          provider: "auto",
+          status: "missing_url",
+          funnel_step: "checkout_handoff",
+        });
+
+        toast({
+          title: isSpanish ? "Checkout no disponible" : "Checkout unavailable",
+          description: isSpanish
+            ? "Intenta de nuevo en unos segundos."
+            : "Please try again in a few seconds.",
+          variant: "destructive",
+        });
+      } catch (err) {
+        console.error("USB128 checkout error:", err);
+        trackEvent("checkout_redirect", {
+          cta_id: ctaId,
+          plan_id: "usb128",
+          provider: "auto",
+          status: "error",
+          funnel_step: "checkout_handoff",
+        });
+        toast({
+          title: isSpanish ? "Error" : "Error",
+          description: isSpanish
+            ? "Hubo un problema al iniciar el pago. Intenta de nuevo."
+            : "There was a problem starting checkout. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
     },
-    [trackEvent]
+    [isSpanish, isSubmitting, toast, trackEvent]
+  );
+
+  const openOrder = useCallback(
+    (ctaId: string) => {
+      trackCta(ctaId, "checkout_handoff");
+      void startExpressCheckout(ctaId);
+    },
+    [startExpressCheckout, trackCta]
   );
 
   const handleFieldChange = useCallback(

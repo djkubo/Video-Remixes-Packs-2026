@@ -38,6 +38,7 @@ import { cn } from "@/lib/utils";
 import logoWhite from "@/assets/logo-white.png";
 import logoDark from "@/assets/logo-dark.png";
 import { countryNameFromCode, detectCountryCodeFromTimezone } from "@/lib/country";
+import { createStripeCheckoutUrl } from "@/lib/checkout";
 
 type CountryData = {
   country_code: string;
@@ -258,18 +259,82 @@ export default function Membresia() {
   }, [isJoinOpen]);
 
   const openJoin = useCallback(
-    (plan?: PlanId, sourceCta: string = "membresia_open_join") => {
+    async (plan?: PlanId, sourceCta: string = "membresia_open_join") => {
       const nextPlan = plan || selectedPlan;
+      if (isSubmitting) return;
       if (plan) setSelectedPlan(plan);
-      setIsJoinOpen(true);
-      trackEvent("lead_form_open", {
+
+      setIsSubmitting(true);
+      trackEvent("checkout_redirect", {
         cta_id: sourceCta,
         plan_id: nextPlan,
-        funnel_step: "lead_capture",
+        funnel_step: "checkout_handoff",
         experiment_assignments: experimentAssignments,
+        provider: "stripe",
+        status: "starting",
       });
+
+      try {
+        const leadId = crypto.randomUUID();
+        const url = await createStripeCheckoutUrl({
+          leadId,
+          product: nextPlan,
+          sourcePage: window.location.pathname,
+        });
+
+        if (url) {
+          trackEvent("checkout_redirect", {
+            cta_id: sourceCta,
+            plan_id: nextPlan,
+            funnel_step: "checkout_handoff",
+            experiment_assignments: experimentAssignments,
+            provider: "stripe",
+            status: "redirected",
+          });
+          window.location.assign(url);
+          return;
+        }
+
+        trackEvent("checkout_redirect", {
+          cta_id: sourceCta,
+          plan_id: nextPlan,
+          funnel_step: "checkout_handoff",
+          experiment_assignments: experimentAssignments,
+          provider: "stripe",
+          status: "missing_url",
+        });
+
+        toast({
+          title: language === "es" ? "Checkout no disponible" : "Checkout unavailable",
+          description:
+            language === "es"
+              ? "Intenta de nuevo en unos segundos. Si continúa, contáctanos en Soporte."
+              : "Please try again in a few seconds. If it continues, contact Support.",
+          variant: "destructive",
+        });
+      } catch (err) {
+        console.error("MEMBRESIA checkout error:", err);
+        trackEvent("checkout_redirect", {
+          cta_id: sourceCta,
+          plan_id: nextPlan,
+          funnel_step: "checkout_handoff",
+          experiment_assignments: experimentAssignments,
+          provider: "stripe",
+          status: "error",
+        });
+        toast({
+          title: language === "es" ? "Error" : "Error",
+          description:
+            language === "es"
+              ? "Hubo un problema al iniciar el pago. Intenta de nuevo."
+              : "There was a problem starting checkout. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
     },
-    [experimentAssignments, selectedPlan, trackEvent]
+    [experimentAssignments, isSubmitting, language, selectedPlan, toast, trackEvent]
   );
 
   const handlePlanClick = useCallback(
@@ -280,7 +345,7 @@ export default function Membresia() {
         funnel_step: "pricing",
         experiment_assignments: experimentAssignments,
       });
-      openJoin(plan, ctaId);
+      void openJoin(plan, ctaId);
     },
     [experimentAssignments, openJoin, trackEvent]
   );
@@ -380,13 +445,13 @@ export default function Membresia() {
           consent_marketing_at: consentMarketing ? new Date().toISOString() : null,
         };
 
-        let { error: insertError } = await supabase.from("leads").insert(leadWithConsent as any);
+        let { error: insertError } = await supabase.from("leads").insert(leadWithConsent);
         // If the DB migration hasn't been applied yet, avoid breaking lead capture.
         if (insertError && /consent_(transactional|marketing)/i.test(insertError.message)) {
           if (import.meta.env.DEV) {
             console.warn("Leads consent columns missing. Retrying insert without consent fields.");
           }
-          ({ error: insertError } = await supabase.from("leads").insert(leadBase as any));
+          ({ error: insertError } = await supabase.from("leads").insert(leadBase));
         }
 
         if (insertError) throw insertError;

@@ -1,5 +1,9 @@
 import { useEffect, useRef } from "react";
 
+type HlsModule = typeof import("hls.js");
+type HlsConstructor = HlsModule["default"];
+type HlsInstance = InstanceType<HlsConstructor>;
+
 type HlsVideoProps = {
   src: string;
   poster?: string;
@@ -20,12 +24,11 @@ export default function HlsVideo({ src, poster, className }: HlsVideoProps) {
     }
 
     let cancelled = false;
-    // deno-lint-ignore no-explicit-any
-    let hls: any = null;
+    let hls: HlsInstance | null = null;
 
     const setup = async () => {
       try {
-        const mod = await import("hls.js");
+        const mod = (await import("hls.js")) as HlsModule;
         if (cancelled) return;
 
         const Hls = mod.default;
@@ -61,4 +64,3 @@ export default function HlsVideo({ src, poster, className }: HlsVideoProps) {
     />
   );
 }
-

@@ -36,6 +36,7 @@ import { useToast } from "@/hooks/use-toast";
 import logoWhite from "@/assets/logo-white.png";
 import logoDark from "@/assets/logo-dark.png";
 import { countryNameFromCode, detectCountryCodeFromTimezone } from "@/lib/country";
+import { createBestCheckoutUrl } from "@/lib/checkout";
 
 type CountryData = {
   country_code: string;
@@ -131,12 +132,45 @@ export default function Anual() {
     });
   }, [language]);
 
-  const openJoin = useCallback(() => {
-    setConsentTransactional(false);
-    setConsentMarketing(false);
-    setConsentTouched(false);
-    setIsJoinOpen(true);
-  }, []);
+  const openJoin = useCallback(async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    try {
+      const leadId = crypto.randomUUID();
+      const { url } = await createBestCheckoutUrl({
+        leadId,
+        product: "anual",
+        sourcePage: window.location.pathname,
+      });
+
+      if (url) {
+        window.location.assign(url);
+        return;
+      }
+
+      toast({
+        title: language === "es" ? "Checkout no disponible" : "Checkout unavailable",
+        description:
+          language === "es"
+            ? "Intenta de nuevo en unos segundos. Si continúa, contáctanos en Soporte."
+            : "Please try again in a few seconds. If it continues, contact Support.",
+        variant: "destructive",
+      });
+    } catch (err) {
+      console.error("ANUAL checkout error:", err);
+      toast({
+        title: language === "es" ? "Error" : "Error",
+        description:
+          language === "es"
+            ? "Hubo un problema al iniciar el pago. Intenta de nuevo."
+            : "There was a problem starting checkout. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [isSubmitting, language, toast]);
 
   const onSubmit = useCallback(
     async (e: React.FormEvent) => {

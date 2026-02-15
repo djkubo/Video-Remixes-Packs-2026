@@ -1,6 +1,11 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { createShippoLabel, getShippoFromAddress, getShippoToken, type ShippoAddress } from "../_shared/shippo.ts";
 
+const createSupabaseAdmin = (url: string, serviceRoleKey: string) =>
+  createClient(url, serviceRoleKey, { auth: { persistSession: false } });
+
+type SupabaseAdmin = ReturnType<typeof createSupabaseAdmin>;
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -9,6 +14,44 @@ const corsHeaders = {
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_INPUT_REGEX = /^\+?\d{7,20}$/;
+
+function asTrimmedString(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function cleanEmail(value: unknown): string | null {
+  const email = asTrimmedString(value).toLowerCase();
+  if (!email || email.length > 255) return null;
+  return EMAIL_REGEX.test(email) ? email : null;
+}
+
+function cleanName(value: unknown): string | null {
+  const name = asTrimmedString(value);
+  if (!name) return null;
+  return name.length > 120 ? name.slice(0, 120) : name;
+}
+
+function cleanPhone(value: unknown): string | null {
+  const raw = asTrimmedString(value);
+  if (!raw) return null;
+  const cleaned = raw.replace(/[\s().-]/g, "");
+  const digits = cleaned.startsWith("+") ? cleaned.slice(1) : cleaned;
+  if (cleaned.length > 20) return null;
+  if (!PHONE_INPUT_REGEX.test(cleaned)) return null;
+  if (!/[1-9]/.test(digits)) return null;
+  return cleaned;
+}
+
+function cleanSourcePage(value: unknown): string | null {
+  const page = asTrimmedString(value);
+  if (!page) return null;
+  if (!page.startsWith("/")) return null;
+  if (page.length > 200) return null;
+  return page;
+}
 
 type ProductKey =
   | "usb128"
@@ -50,13 +93,6 @@ const PRODUCTS: Record<ProductKey, ProductConfig> = {
       "Acceso anual a la membresia Video Remix Packs (audio + video + karaoke).",
     defaultAmountCents: 19500,
     envAmountKey: "PAYPAL_ANUAL_AMOUNT_CENTS",
-    shippingPreference: "NO_SHIPPING",
-  },
-  djedits: {
-    name: "Curso DJ Edits",
-    description: "Aprende a crear tus propios DJ edits desde cero.",
-    defaultAmountCents: 4700,
-    envAmountKey: "PAYPAL_DJEDITS_AMOUNT_CENTS",
     shippingPreference: "NO_SHIPPING",
   },
   djedits: {
@@ -291,6 +327,84 @@ function mergeTags(existing: unknown, add: string[]): string[] {
   return Array.from(set).slice(0, 20);
 }
 
+async function ensureLeadExists(args: {
+  supabaseAdmin: SupabaseAdmin;
+  leadId: string;
+  productKey: ProductKey;
+  input: Record<string, unknown>;
+}): Promise<{ id: string; email: string; name: string; phone: string; source: string | null; tags: unknown }> {
+  const { data: existing, error: existingError } = await args.supabaseAdmin
+    .from("leads")
+    .select("id,email,name,phone,source,tags")
+    .eq("id", args.leadId)
+    .maybeSingle();
+
+  if (existingError) {
+    console.error("[Supabase] Failed to fetch lead");
+    throw new Error("Failed to fetch lead");
+  }
+
+  if (existing) {
+    return existing as { id: string; email: string; name: string; phone: string; source: string | null; tags: unknown };
+  }
+
+  const providedLead = isRecord(args.input.lead) ? (args.input.lead as Record<string, unknown>) : {};
+
+  const name = cleanName(args.input.name) || cleanName(providedLead.name) || "DJ";
+  const email = cleanEmail(args.input.email) || cleanEmail(providedLead.email) || "pending";
+  const phone = cleanPhone(args.input.phone) || cleanPhone(providedLead.phone) || "";
+  const countryCode = asTrimmedString(args.input.country_code) || asTrimmedString(providedLead.country_code) || null;
+  const countryName = asTrimmedString(args.input.country_name) || asTrimmedString(providedLead.country_name) || null;
+  const source = asTrimmedString(args.input.source) || asTrimmedString(providedLead.source) || args.productKey;
+  const sourcePage =
+    cleanSourcePage(args.input.source_page) ||
+    cleanSourcePage(args.input.sourcePage) ||
+    cleanSourcePage(providedLead.source_page) ||
+    cleanSourcePage(providedLead.sourcePage) ||
+    null;
+
+  const baseTags = mergeTags(args.input.tags ?? providedLead.tags, [
+    args.productKey,
+    "checkout_started",
+  ]);
+
+  const leadPayloadFull: Record<string, unknown> = {
+    id: args.leadId,
+    name,
+    email,
+    phone,
+    country_code: countryCode,
+    country_name: countryName,
+    source,
+    tags: baseTags,
+    funnel_step: "checkout_start",
+    source_page: sourcePage,
+    intent_plan: args.productKey,
+    consent_transactional: false,
+    consent_marketing: false,
+  };
+
+  try {
+    const { error: insertError } = await args.supabaseAdmin.from("leads").insert(leadPayloadFull);
+    if (insertError) throw insertError;
+  } catch {
+    const leadPayloadMinimal: Record<string, unknown> = {
+      id: args.leadId,
+      name,
+      email,
+      phone,
+      country_code: countryCode,
+      country_name: countryName,
+      source,
+      tags: baseTags,
+    };
+    const { error: insertError } = await args.supabaseAdmin.from("leads").insert(leadPayloadMinimal);
+    if (insertError) throw insertError;
+  }
+
+  return { id: args.leadId, email, name, phone, source, tags: baseTags };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -344,9 +458,7 @@ Deno.serve(async (req) => {
     });
   }
 
-  const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-    auth: { persistSession: false },
-  });
+  const supabaseAdmin = createSupabaseAdmin(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   const baseUrl = getPayPalBaseUrl();
   const accessToken = await getPayPalAccessToken({
@@ -381,23 +493,13 @@ Deno.serve(async (req) => {
       : null;
     const amountCents = amountFromEnv ?? cfg.defaultAmountCents;
 
-    const { data: lead, error: leadError } = await supabaseAdmin
-      .from("leads")
-      .select("id,email,name,source,tags")
-      .eq("id", leadId)
-      .maybeSingle();
-
-    if (leadError) {
-      console.error("[Supabase] Failed to fetch lead");
+    let lead: { id: string; email: string; name: string; phone: string; source: string | null; tags: unknown };
+    try {
+      lead = await ensureLeadExists({ supabaseAdmin, leadId, productKey, input });
+    } catch (e) {
+      console.error("[Supabase] Failed to ensure lead", e);
       return new Response(JSON.stringify({ error: "Failed to fetch lead" }), {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    if (!lead) {
-      return new Response(JSON.stringify({ error: "Lead not found" }), {
-        status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -527,6 +629,72 @@ Deno.serve(async (req) => {
     if (parsedProduct === "plan_1tb_mensual" || parsedProduct === "plan_2tb_anual") {
       return new Response(JSON.stringify({ error: "PayPal subscriptions are not supported for this plan" }), {
         status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!parsedProduct) {
+      return new Response(JSON.stringify({ error: "Invalid product" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const payer = isRecord(orderInfo.json.payer) ? (orderInfo.json.payer as Record<string, unknown>) : null;
+    const payerEmail = payer ? cleanEmail(payer.email_address) : null;
+    const payerName = (() => {
+      if (!payer) return null;
+      const nameObj = payer.name;
+      if (!isRecord(nameObj)) return cleanName(payer.name);
+      const given = cleanName((nameObj as Record<string, unknown>).given_name);
+      const sur = cleanName((nameObj as Record<string, unknown>).surname);
+      const joined = `${given || ""} ${sur || ""}`.trim();
+      return joined || null;
+    })();
+    const payerPhone = (() => {
+      if (!payer) return null;
+      const phoneObj = payer.phone;
+      if (!isRecord(phoneObj)) return cleanPhone(phoneObj);
+      const pn = (phoneObj as Record<string, unknown>).phone_number;
+      if (isRecord(pn)) {
+        const nn = (pn as Record<string, unknown>).national_number;
+        return cleanPhone(nn);
+      }
+      return null;
+    })();
+
+    const shippingName = (() => {
+      const pu = Array.isArray(orderInfo.json.purchase_units) ? (orderInfo.json.purchase_units as unknown[]) : [];
+      const pu0 = pu[0];
+      if (!isRecord(pu0)) return null;
+      const shipping = (pu0 as Record<string, unknown>).shipping;
+      if (!isRecord(shipping)) return null;
+      const nameObj = (shipping as Record<string, unknown>).name;
+      if (isRecord(nameObj)) return cleanName((nameObj as Record<string, unknown>).full_name);
+      return cleanName((shipping as Record<string, unknown>).name);
+    })();
+
+    const contactName = shippingName || payerName || "DJ";
+
+    // Ensure lead exists so capture/update flows are consistent even when we skip pre-checkout forms.
+    try {
+      await ensureLeadExists({
+        supabaseAdmin,
+        leadId,
+        productKey: parsedProduct,
+        input: {
+          ...input,
+          name: contactName,
+          email: payerEmail || undefined,
+          phone: payerPhone || undefined,
+          source: parsedProduct,
+          tags: [parsedProduct, "paypal_checkout"],
+        },
+      });
+    } catch (e) {
+      console.error("[Supabase] Failed to ensure lead", e);
+      return new Response(JSON.stringify({ error: "Failed to fetch lead" }), {
+        status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -708,9 +876,14 @@ Deno.serve(async (req) => {
                     .from("leads")
                     .update({
                       tags: tagsWithShippo,
+                      name: contactName,
+                      ...(payerEmail ? { email: payerEmail } : {}),
+                      ...(payerPhone ? { phone: payerPhone } : {}),
                       payment_provider: "paypal",
                       payment_id: orderId,
                       paid_at: new Date().toISOString(),
+                      consent_transactional: true,
+                      consent_transactional_at: new Date().toISOString(),
                       shipping_to: toAddress,
                       shipping_label_url: label.labelUrl,
                       shipping_tracking_number: label.trackingNumber,
@@ -733,8 +906,8 @@ Deno.serve(async (req) => {
               await supabaseAdmin.from("leads").update({ tags: tagsNeedsShipping }).eq("id", leadId);
             }
           } else {
-            // Nothing to do (already has label or missing lead info).
-            const nextTags = mergeTags(baseTags, []);
+            // Missing lead info (e.g. phone). Mark for manual follow-up.
+            const nextTags = mergeTags(baseTags, ["needs_shipping"]);
             await supabaseAdmin.from("leads").update({ tags: nextTags }).eq("id", leadId);
           }
         } else {
@@ -744,9 +917,14 @@ Deno.serve(async (req) => {
               .from("leads")
               .update({
                 tags: baseTags,
+                name: contactName,
+                ...(payerEmail ? { email: payerEmail } : {}),
+                ...(payerPhone ? { phone: payerPhone } : {}),
                 payment_provider: "paypal",
                 payment_id: orderId,
                 paid_at: new Date().toISOString(),
+                consent_transactional: true,
+                consent_transactional_at: new Date().toISOString(),
               })
               .eq("id", leadId);
           } catch {
