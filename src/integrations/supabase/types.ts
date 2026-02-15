@@ -197,6 +197,10 @@ export type Database = {
       }
       leads: {
         Row: {
+          consent_marketing: boolean | null
+          consent_marketing_at: string | null
+          consent_transactional: boolean | null
+          consent_transactional_at: string | null
           country_code: string | null
           country_name: string | null
           created_at: string
@@ -224,6 +228,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          consent_marketing?: boolean | null
+          consent_marketing_at?: string | null
+          consent_transactional?: boolean | null
+          consent_transactional_at?: string | null
           country_code?: string | null
           country_name?: string | null
           created_at?: string
@@ -251,6 +259,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          consent_marketing?: boolean | null
+          consent_marketing_at?: string | null
+          consent_transactional?: boolean | null
+          consent_transactional_at?: string | null
           country_code?: string | null
           country_name?: string | null
           created_at?: string
@@ -381,6 +393,100 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "outbound_email_queue_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shippo_webhook_events: {
+        Row: {
+          created_at: string
+          event_fingerprint: string
+          headers: Json
+          id: string
+          lead_id: string | null
+          payload: Json
+          processed_at: string | null
+          processing_error: string | null
+          shippo_event: string
+          status: string
+          tracking_number: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_fingerprint: string
+          headers?: Json
+          id?: string
+          lead_id?: string | null
+          payload?: Json
+          processed_at?: string | null
+          processing_error?: string | null
+          shippo_event?: string
+          status?: string
+          tracking_number?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_fingerprint?: string
+          headers?: Json
+          id?: string
+          lead_id?: string | null
+          payload?: Json
+          processed_at?: string | null
+          processing_error?: string | null
+          shippo_event?: string
+          status?: string
+          tracking_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shippo_webhook_events_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stripe_webhook_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          lead_id: string | null
+          payload: Json
+          processed_at: string | null
+          processing_error: string | null
+          status: string
+          stripe_event_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          lead_id?: string | null
+          payload?: Json
+          processed_at?: string | null
+          processing_error?: string | null
+          status?: string
+          stripe_event_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          lead_id?: string | null
+          payload?: Json
+          processed_at?: string | null
+          processing_error?: string | null
+          status?: string
+          stripe_event_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stripe_webhook_events_lead_id_fkey"
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
