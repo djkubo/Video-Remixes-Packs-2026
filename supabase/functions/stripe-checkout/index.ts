@@ -45,6 +45,11 @@ function asTrimmedString(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function makePendingEmail(leadId: string): string {
+  // Use a reserved TLD so it never routes email, but stays unique per lead.
+  return `pending+${leadId}@example.invalid`;
+}
+
 function cleanEmail(value: unknown): string | null {
   const email = asTrimmedString(value).toLowerCase();
   if (!email || email.length > 255) return null;
@@ -141,9 +146,9 @@ const PRODUCTS: Record<ProductKey, ProductConfig> = {
   },
   anual: {
     mode: "payment",
-    name: "Acceso Anual - Video Remixes Packs",
+    name: "Acceso Anual - VideoRemixesPack",
     description:
-      "Acceso anual a la membresia Video Remix Packs (audio + video + karaoke).",
+      "Acceso anual a la membresia VideoRemixesPack (audio + video + karaoke).",
     defaultAmountCents: 19500,
     envAmountKey: "STRIPE_ANUAL_AMOUNT_CENTS",
   },
@@ -450,7 +455,7 @@ async function ensureLeadExists(args: {
   const providedLead = isRecord(args.input.lead) ? (args.input.lead as Record<string, unknown>) : {};
 
   const name = cleanName(args.input.name) || cleanName(providedLead.name) || "DJ";
-  const email = cleanEmail(args.input.email) || cleanEmail(providedLead.email) || "pending";
+  const email = cleanEmail(args.input.email) || cleanEmail(providedLead.email) || makePendingEmail(args.leadId);
   const phone = cleanPhone(args.input.phone) || cleanPhone(providedLead.phone) || "";
   const countryCode = asTrimmedString(args.input.country_code) || asTrimmedString(providedLead.country_code) || null;
   const countryName = asTrimmedString(args.input.country_name) || asTrimmedString(providedLead.country_name) || null;
@@ -648,7 +653,7 @@ Deno.serve(async (req) => {
           productKey,
           input: {
             name: sessionName || "DJ",
-            email: sessionEmail || "pending",
+            email: sessionEmail || makePendingEmail(leadId),
             phone: sessionPhone || "",
             source: productKey,
             tags: [productKey, "paid_stripe"],

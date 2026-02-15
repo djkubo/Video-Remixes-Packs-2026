@@ -40,6 +40,11 @@ function mergeTags(existing: unknown, add: string[]): string[] {
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_INPUT_REGEX = /^\+?\d{7,20}$/;
 
+function makePendingEmail(leadId: string): string {
+  // Use a reserved TLD so it never routes email, but stays unique per lead.
+  return `pending+${leadId}@example.invalid`;
+}
+
 function cleanEmail(value: unknown): string | null {
   const email = asString(value).toLowerCase();
   if (!email || email.length > 255) return null;
@@ -394,7 +399,7 @@ Deno.serve(async (req) => {
       const insertPayloadFull: Record<string, unknown> = {
         id: leadId,
         name: sessionName,
-        email: sessionEmail || "pending",
+        email: sessionEmail || makePendingEmail(leadId),
         phone: sessionPhone || "",
         source,
         tags,
@@ -419,7 +424,7 @@ Deno.serve(async (req) => {
         const insertPayloadMinimal: Record<string, unknown> = {
           id: leadId,
           name: sessionName,
-          email: sessionEmail || "pending",
+          email: sessionEmail || makePendingEmail(leadId),
           phone: sessionPhone || "",
           source,
           tags,

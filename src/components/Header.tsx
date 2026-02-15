@@ -12,7 +12,7 @@ const Header = () => {
         <a href="/" className="flex items-center">
           <img
             src={theme === "dark" ? logoWhite : logoDark}
-            alt="VideoRemixesPacks"
+            alt="VideoRemixesPack"
             className="h-10 w-auto object-contain"
           />
         </a>

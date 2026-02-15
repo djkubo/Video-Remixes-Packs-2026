@@ -89,7 +89,7 @@ const HeroSection = () => {
           >
             <img
               src={theme === "dark" ? logoWhite : logoDark}
-              alt="VideoRemixesPacks"
+              alt="VideoRemixesPack"
               className="mb-7 h-11 w-auto object-contain"
             />
 

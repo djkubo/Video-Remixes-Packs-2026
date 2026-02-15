@@ -208,7 +208,7 @@ export default function DjEdits() {
           <div className="flex items-center justify-between gap-4">
             <img
               src={theme === "dark" ? logoWhite : logoDark}
-              alt="VideoRemixesPacks"
+              alt="VideoRemixesPack"
               className="h-10 w-auto object-contain md:h-12"
             />
             <p className="text-xs text-muted-foreground md:text-sm">
@@ -462,7 +462,7 @@ export default function DjEdits() {
             </div>
 
             <p className="mt-8 text-xs text-muted-foreground">
-              Video Remixes Packs © {new Date().getFullYear()}. Derechos
+              VideoRemixesPack © {new Date().getFullYear()}. Derechos
               Reservados
             </p>
           </div>

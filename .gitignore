@@ -35,6 +35,10 @@ supabase/.temp/
 # Playwright CLI artifacts
 .playwright-cli/
 output/playwright/
+output/
+
+# Local brand/media folder (not required to build/deploy)
+MARCA VR/
 
 # Local Netlify folder
 .netlify

@@ -60,6 +60,7 @@ export default function TermsAndConditions() {
   const { language } = useLanguage();
   const { theme } = useTheme();
   const isSpanish = language === "es";
+  const lastUpdated = isSpanish ? "15 Feb 2026" : "Feb 15, 2026";
 
   return (
     <main className="brand-frame min-h-screen bg-background">
@@ -81,14 +82,16 @@ export default function TermsAndConditions() {
 
           <article className="rounded-2xl border border-border/60 bg-card p-6 shadow-xl md:p-8">
             <h1 className="font-display text-3xl font-black leading-tight md:text-4xl">
-              Video Remixes Packs' Website Terms and Conditions of Use
+              {isSpanish ? "Términos y condiciones" : "Terms and conditions"}
             </h1>
-            <p className="mt-2 text-sm text-muted-foreground">Last Modified: March 8, 2021</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {isSpanish ? "Última actualización:" : "Last updated:"} {lastUpdated}
+            </p>
 
             <p className="mt-6 text-muted-foreground">
               {isSpanish
-                ? "Resumen adaptado del documento legal vigente en producción. Para lectura completa y vinculante, consulta el documento oficial."
-                : "Summary adapted from the current production legal document. For the full and binding version, consult the official document."}
+                ? "Estos términos aplican al uso de VideoRemixesPack y a la compra de productos y/o suscripciones disponibles en el sitio."
+                : "These terms apply to the use of VideoRemixesPack and the purchase of products and/or subscriptions available on the site."}
             </p>
 
             <div className="mt-8 space-y-6">
@@ -102,14 +105,10 @@ export default function TermsAndConditions() {
               ))}
             </div>
 
-            <p className="mt-8 text-sm">
-              <a
-                href="https://videoremixpack.com/terms_and_conditions"
-                target="_blank"
-                rel="noreferrer"
-                className="font-semibold text-primary underline-offset-2 hover:underline"
-              >
-                {isSpanish ? "Ver términos completos en el sitio oficial" : "View full terms on the official site"}
+            <p className="mt-8 text-sm text-muted-foreground">
+              {isSpanish ? "Soporte:" : "Support:"}{" "}
+              <a className="font-semibold text-primary underline-offset-2 hover:underline" href="mailto:soporte@videoremixpack.com">
+                soporte@videoremixpack.com
               </a>
             </p>
           </article>

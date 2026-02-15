@@ -108,7 +108,29 @@ export default function DjEditsThankYou() {
           </motion.div>
 
           <h1 className="text-3xl md:text-4xl font-bold mb-4">
-            {language === "es" ? "¡Pago confirmado!" : "Payment confirmed!"}
+            {paidConfirmed
+              ? language === "es"
+                ? "¡Pago confirmado!"
+                : "Payment confirmed!"
+              : hasStripeSession && stripeVerifyState === "processing"
+                ? language === "es"
+                  ? "Confirmando pago..."
+                  : "Confirming payment..."
+                : hasPayPalOrder && paypalCaptureState === "processing"
+                  ? language === "es"
+                    ? "Confirmando pago..."
+                    : "Confirming payment..."
+                : hasStripeSession && stripeVerifyState === "error"
+                  ? language === "es"
+                    ? "Pago pendiente"
+                    : "Payment pending"
+                : hasPayPalOrder && paypalCaptureState === "error"
+                  ? language === "es"
+                    ? "Pago pendiente"
+                    : "Payment pending"
+                : language === "es"
+                  ? "¡Listo!"
+                  : "All set!"}
           </h1>
 
           <p className="text-lg text-muted-foreground mb-8">
@@ -180,4 +202,3 @@ export default function DjEditsThankYou() {
     </main>
   );
 }
-

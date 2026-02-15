@@ -17,76 +17,16 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { supabase } from "@/integrations/supabase/client";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { useToast } from "@/hooks/use-toast";
 import logoWhite from "@/assets/logo-white.png";
 import logoDark from "@/assets/logo-dark.png";
-import { countryNameFromCode, detectCountryCodeFromTimezone } from "@/lib/country";
 import { createBestCheckoutUrl, type CheckoutProvider } from "@/lib/checkout";
-
-type CountryData = {
-  country_code: string;
-  country_name: string;
-  dial_code: string;
-};
-
-const COUNTRY_DIAL_CODES: Record<string, string> = {
-  US: "+1",
-  MX: "+52",
-  ES: "+34",
-  AR: "+54",
-  CO: "+57",
-  CL: "+56",
-  PE: "+51",
-  VE: "+58",
-  EC: "+593",
-  GT: "+502",
-  CU: "+53",
-  DO: "+1",
-  HN: "+504",
-  SV: "+503",
-  NI: "+505",
-  CR: "+506",
-  PA: "+507",
-  UY: "+598",
-  PY: "+595",
-  BO: "+591",
-  PR: "+1",
-  BR: "+55",
-  PT: "+351",
-  CA: "+1",
-  GB: "+44",
-  FR: "+33",
-  DE: "+49",
-  IT: "+39",
-};
-
-function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-}
-
-function normalizePhoneInput(input: string): { clean: string; digits: string } {
-  const clean = input.trim().replace(/[\s().-]/g, "");
-  const digits = clean.startsWith("+") ? clean.slice(1) : clean;
-  return { clean, digits };
-}
 
 export default function Anual() {
   const { language } = useLanguage();
@@ -95,26 +35,9 @@ export default function Anual() {
   const { trackEvent } = useAnalytics();
   const navigate = useNavigate();
 
-  const [isJoinOpen, setIsJoinOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [lastAttempt, setLastAttempt] = useState<{ ctaId: string; prefer: CheckoutProvider } | null>(null);
-
-  const [countryData, setCountryData] = useState<CountryData>({
-    country_code: "US",
-    country_name: "United States",
-    dial_code: "+1",
-  });
-
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-  });
-
-  const [consentTransactional, setConsentTransactional] = useState(false);
-  const [consentMarketing, setConsentMarketing] = useState(false);
-  const [consentTouched, setConsentTouched] = useState(false);
 
   const paymentBadges = useMemo(
     () => ["VISA", "MASTERCARD", "AMEX", "DISCOVER", "PayPal"],
@@ -123,19 +46,8 @@ export default function Anual() {
 
   useEffect(() => {
     document.title =
-      "Video Remixes Packs. La mejor plataforma de música y video para profesionales de la música de habla hispana";
+      "VideoRemixesPack. La mejor plataforma de música y video para profesionales de la música de habla hispana";
   }, []);
-
-  // Detect user's country (best-effort; timezone-based so we avoid CORS/network issues).
-  useEffect(() => {
-    const code = detectCountryCodeFromTimezone() || "US";
-    const dialCode = COUNTRY_DIAL_CODES[code] || "+1";
-    setCountryData({
-      country_code: code,
-      country_name: countryNameFromCode(code, language === "es" ? "es" : "en"),
-      dial_code: dialCode,
-    });
-  }, [language]);
 
   const startExpressCheckout = useCallback(
     async (ctaId: string, prefer: CheckoutProvider, isRetry = false) => {
@@ -299,185 +211,6 @@ export default function Anual() {
     [checkoutError, isSubmitting, language, lastAttempt?.ctaId, navigate, retryCheckout]
   );
 
-  const onSubmit = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (isSubmitting) return;
-
-      const name = formData.name.trim();
-      const email = formData.email.trim().toLowerCase();
-      const { clean: cleanPhone, digits: phoneDigits } = normalizePhoneInput(formData.phone);
-
-      if (!name || !email || !cleanPhone) {
-        toast({
-          title: language === "es" ? "Campos requeridos" : "Required fields",
-          description:
-            language === "es"
-              ? "Por favor completa todos los campos."
-              : "Please fill in all fields.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (!isValidEmail(email)) {
-        toast({
-          title: language === "es" ? "Email inválido" : "Invalid email",
-          description:
-            language === "es"
-              ? "Por favor ingresa un email válido."
-              : "Please enter a valid email.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // NOTE: Supabase RLS policy enforces phone length <= 20.
-      if (
-        cleanPhone.length > 20 ||
-        !/^\+?\d{7,20}$/.test(cleanPhone) ||
-        !/[1-9]/.test(phoneDigits)
-      ) {
-        toast({
-          title: language === "es" ? "WhatsApp inválido" : "Invalid WhatsApp",
-          description:
-            language === "es"
-              ? "Número de teléfono no válido."
-              : "Phone number is not valid.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setConsentTouched(true);
-      if (!consentTransactional) {
-        toast({
-          title: language === "es" ? "Confirmación requerida" : "Confirmation required",
-          description:
-            language === "es"
-              ? "Debes aceptar recibir mensajes transaccionales y de soporte para continuar."
-              : "You must agree to receive transactional and support messages to continue.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setIsSubmitting(true);
-      try {
-        const leadId = crypto.randomUUID();
-
-        const leadBase = {
-          id: leadId,
-          name,
-          email,
-          phone: cleanPhone,
-          country_code: countryData.dial_code,
-          country_name: countryData.country_name,
-          source: "anual",
-          tags: ["anual", "membresia_anual"],
-        };
-
-        const leadWithConsent = {
-          ...leadBase,
-          consent_transactional: consentTransactional,
-          consent_transactional_at: consentTransactional ? new Date().toISOString() : null,
-          consent_marketing: consentMarketing,
-          consent_marketing_at: consentMarketing ? new Date().toISOString() : null,
-        };
-
-        let { error: insertError } = await supabase.from("leads").insert(leadWithConsent);
-        // If the DB migration hasn't been applied yet, avoid breaking lead capture.
-        if (insertError && /consent_(transactional|marketing)/i.test(insertError.message)) {
-          if (import.meta.env.DEV) {
-            console.warn("Leads consent columns missing. Retrying insert without consent fields.");
-          }
-          ({ error: insertError } = await supabase.from("leads").insert(leadBase));
-        }
-
-        if (insertError) throw insertError;
-
-        try {
-          const { error: syncError } = await supabase.functions.invoke("sync-manychat", {
-            body: { leadId },
-          });
-          if (syncError && import.meta.env.DEV) console.warn("ManyChat sync error:", syncError);
-        } catch (syncErr) {
-          if (import.meta.env.DEV) console.warn("ManyChat sync threw:", syncErr);
-        }
-
-        setIsJoinOpen(false);
-
-        // Try to redirect to Stripe Checkout (if configured). If not, fallback to thank-you.
-        try {
-          const { data: checkout, error: checkoutError } = await supabase.functions.invoke(
-            "stripe-checkout",
-            {
-              body: { leadId, product: "anual" },
-            }
-          );
-
-          if (checkoutError && import.meta.env.DEV) {
-            console.warn("Stripe checkout error:", checkoutError);
-          }
-
-          const url = (checkout as { url?: unknown } | null)?.url;
-          if (typeof url === "string" && url.length > 0) {
-            window.location.assign(url);
-            return;
-          }
-        } catch (stripeErr) {
-          if (import.meta.env.DEV) console.warn("Stripe invoke threw:", stripeErr);
-        }
-
-        // Fallback: PayPal redirect (if configured).
-        try {
-          const { data: paypal, error: paypalError } = await supabase.functions.invoke(
-            "paypal-checkout",
-            {
-              body: { action: "create", leadId, product: "anual" },
-            }
-          );
-
-          if (paypalError && import.meta.env.DEV) {
-            console.warn("PayPal checkout error:", paypalError);
-          }
-
-          const approveUrl = (paypal as { approveUrl?: unknown } | null)?.approveUrl;
-          if (typeof approveUrl === "string" && approveUrl.length > 0) {
-            window.location.assign(approveUrl);
-            return;
-          }
-        } catch (paypalErr) {
-          if (import.meta.env.DEV) console.warn("PayPal invoke threw:", paypalErr);
-        }
-
-        navigate("/anual/gracias");
-      } catch (err) {
-        console.error("ANUAL lead submit error:", err);
-        toast({
-          title: language === "es" ? "Error" : "Error",
-          description:
-            language === "es"
-              ? "Hubo un problema al enviar tus datos. Intenta de nuevo."
-              : "There was a problem submitting your data. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsSubmitting(false);
-      }
-    },
-    [
-      consentMarketing,
-      consentTransactional,
-      countryData.dial_code,
-      countryData.country_name,
-      formData,
-      isSubmitting,
-      language,
-      navigate,
-      toast,
-    ]
-  );
 
   return (
     <main className="brand-frame min-h-screen bg-background">
@@ -491,7 +224,7 @@ export default function Anual() {
           <div className="flex items-center justify-between gap-4">
             <img
               src={theme === "dark" ? logoWhite : logoDark}
-              alt="VideoRemixesPacks"
+              alt="VideoRemixesPack"
               className="h-10 w-auto object-contain md:h-12"
             />
             <p className="text-xs text-muted-foreground md:text-sm">
@@ -647,7 +380,7 @@ export default function Anual() {
               </h2>
 
               <p className="mt-6 text-sm text-muted-foreground md:text-base">
-                En Video Remix Packs tenemos más de 15 años de experiencia en la industria de la música. Y sabemos que
+                En VideoRemixesPack tenemos más de 15 años de experiencia en la industria de la música. Y sabemos que
                 es de vital importancia tener material de calidad para un evento.
               </p>
 
@@ -787,7 +520,7 @@ export default function Anual() {
                 "DJ profesional con más de 15 años de experiencia",
                 "Ha tenido la oportunidad de tocar en bares y clubes de México y Estados Unidos",
                 "Ha colaborado con grandes colegas de la industria",
-                "Creador de la Plataforma Video Remixes Packs",
+                "Creador de la Plataforma VideoRemixesPack",
               ].map((t) => (
                 <li key={t} className="flex items-start gap-3">
                   <Star className="mt-0.5 h-5 w-5 text-primary" />
@@ -802,8 +535,7 @@ export default function Anual() {
             </p>
 
             <p className="mt-6 text-sm font-semibold text-foreground md:text-base">
-              Esta asesoría por separado te costaría más de $500 USD Y la obtienes GRATIS al adquirir tu membresía anual Video
-              Remix Packs. Aprovecha la oferta hoy.
+              Esta asesoría por separado te costaría más de $500 USD Y la obtienes GRATIS al adquirir tu membresía anual VideoRemixesPack. Aprovecha la oferta hoy.
             </p>
 
 	            <div className="mt-10 flex justify-center">
@@ -926,7 +658,7 @@ export default function Anual() {
             <div className="mt-10 grid gap-6 md:grid-cols-2">
               <div className="glass-card p-7">
                 <p className="font-display text-2xl font-black">
-                  DJ&apos;s que <span className="text-gradient-red">NO</span> usan Video Remix Packs
+                  DJ&apos;s que <span className="text-gradient-red">NO</span> usan VideoRemixesPack
                 </p>
                 <ul className="mt-5 space-y-3 text-sm text-muted-foreground md:text-base">
                   {[
@@ -947,7 +679,7 @@ export default function Anual() {
 
               <div className="glass-card p-7">
                 <p className="font-display text-2xl font-black">
-                  DJ&apos;s que <span className="text-gradient-red">SÍ</span> usan Video Remix Packs
+                  DJ&apos;s que <span className="text-gradient-red">SÍ</span> usan VideoRemixesPack
                 </p>
                 <ul className="mt-5 space-y-3 text-sm text-muted-foreground md:text-base">
                   {[
@@ -1102,7 +834,7 @@ export default function Anual() {
 
             <div className="mt-10">
               <p className="font-display text-4xl font-black leading-[0.95] md:text-5xl">
-                Paso 1. <span className="text-gradient-red">Ingresa tus Datos</span>
+                Paso 1. <span className="text-gradient-red">Abre tu checkout seguro</span>
               </p>
             </div>
 
@@ -1123,7 +855,7 @@ export default function Anual() {
 	              </Button>
                 {renderCheckoutFeedback("anual_register_stripe")}
 	              <p className="text-xs text-muted-foreground">
-	                Video Remixes Packs © 2024. Derechos Reservados
+	                VideoRemixesPack © {new Date().getFullYear()}. Derechos Reservados
 	              </p>
               <p className="text-xs text-muted-foreground">
                 Política de Privacidad | Términos y Condiciones
@@ -1133,145 +865,6 @@ export default function Anual() {
         </div>
       </section>
 
-      {/* Join modal */}
-      <Dialog open={isJoinOpen} onOpenChange={(open) => !isSubmitting && setIsJoinOpen(open)}>
-        <DialogContent className="glass-card border-border/60 p-0 sm:max-w-lg">
-          <DialogHeader className="sr-only">
-            <DialogTitle>{language === "es" ? "Acceso anual" : "Annual access"}</DialogTitle>
-            <DialogDescription>
-              {language === "es"
-                ? "Déjanos tus datos para enviarte el acceso."
-                : "Leave your details so we can send access."}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="p-6 md:p-7">
-            <h3 className="font-display text-3xl font-black">
-              {language === "es" ? "Paso 1. Ingresa tus Datos" : "Step 1. Enter your details"}
-            </h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {language === "es"
-                ? "Déjanos tus datos para confirmación y soporte. Te contactamos por WhatsApp."
-                : "Leave your details for confirmation and support. We’ll contact you on WhatsApp."}
-            </p>
-
-            <form className="mt-6 space-y-4" onSubmit={onSubmit}>
-              <div className="space-y-2">
-                <Label htmlFor="anual-name">{language === "es" ? "Nombre" : "Name"}</Label>
-                <Input
-                  id="anual-name"
-                  value={formData.name}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                  placeholder={language === "es" ? "Tu nombre completo" : "Your full name"}
-                  autoComplete="name"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="anual-email">Email</Label>
-                <Input
-                  id="anual-email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
-                  placeholder="you@email.com"
-                  autoComplete="email"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="anual-phone">{language === "es" ? "WhatsApp" : "WhatsApp"}</Label>
-                <div className="flex items-center gap-2">
-                  <Badge
-                    variant="outline"
-                    className="h-10 shrink-0 border-border/60 bg-card/40 px-3 text-sm text-muted-foreground"
-                    title={countryData.country_name}
-                  >
-                    {countryData.dial_code}
-                  </Badge>
-                  <Input
-                    id="anual-phone"
-                    value={formData.phone}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
-                    placeholder={language === "es" ? "Tu número" : "Your number"}
-                    inputMode="tel"
-                    autoComplete="tel"
-                  />
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-border/60 bg-card/40 p-4">
-                <div className="flex items-start gap-3">
-                  <Checkbox
-                    id="anual-consent-transactional"
-                    checked={consentTransactional}
-                    onCheckedChange={(checked) => {
-                      setConsentTransactional(Boolean(checked));
-                      if (checked) setConsentTouched(false);
-                    }}
-                    disabled={isSubmitting}
-                    aria-required="true"
-                  />
-                  <Label
-                    htmlFor="anual-consent-transactional"
-                    className="cursor-pointer text-xs leading-snug text-foreground"
-                  >
-                    {language === "es"
-                      ? "Acepto recibir mensajes transaccionales y de soporte por WhatsApp/SMS/email."
-                      : "I agree to receive transactional and support messages via WhatsApp/SMS/email."}
-                  </Label>
-                </div>
-
-                <div className="mt-3 flex items-start gap-3">
-                  <Checkbox
-                    id="anual-consent-marketing"
-                    checked={consentMarketing}
-                    onCheckedChange={(checked) => setConsentMarketing(Boolean(checked))}
-                    disabled={isSubmitting}
-                  />
-                  <Label
-                    htmlFor="anual-consent-marketing"
-                    className="cursor-pointer text-xs leading-snug text-muted-foreground"
-                  >
-                    {language === "es"
-                      ? "Quiero recibir promociones y novedades por WhatsApp/SMS/email."
-                      : "I want to receive promotions and updates via WhatsApp/SMS/email."}
-                  </Label>
-                </div>
-
-                {consentTouched && !consentTransactional && (
-                  <p className="mt-3 text-xs font-semibold text-destructive">
-                    {language === "es"
-                      ? "Requerido: confirma el consentimiento de soporte/transaccional."
-                      : "Required: confirm transactional/support consent."}
-                  </p>
-                )}
-              </div>
-
-              <Button
-                type="submit"
-                className="btn-primary-glow h-12 w-full text-base font-black"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {language === "es" ? "Enviando..." : "Submitting..."}
-                  </>
-                ) : (
-                  language === "es" ? "Enviar" : "Submit"
-                )}
-              </Button>
-
-              <p className="text-center text-xs text-muted-foreground">
-                {language === "es"
-                  ? "Tu información está 100% segura con nosotros"
-                  : "Your information is 100% secure with us"}
-              </p>
-            </form>
-          </div>
-        </DialogContent>
-      </Dialog>
     </main>
   );
 }

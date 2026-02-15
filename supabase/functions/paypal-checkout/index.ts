@@ -22,6 +22,11 @@ function asTrimmedString(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function makePendingEmail(leadId: string): string {
+  // Use a reserved TLD so it never routes email, but stays unique per lead.
+  return `pending+${leadId}@example.invalid`;
+}
+
 function cleanEmail(value: unknown): string | null {
   const email = asTrimmedString(value).toLowerCase();
   if (!email || email.length > 255) return null;
@@ -88,9 +93,9 @@ const PRODUCTS: Record<ProductKey, ProductConfig> = {
     shippingPreference: "GET_FROM_FILE",
   },
   anual: {
-    name: "Acceso Anual - Video Remixes Packs",
+    name: "Acceso Anual - VideoRemixesPack",
     description:
-      "Acceso anual a la membresia Video Remix Packs (audio + video + karaoke).",
+      "Acceso anual a la membresia VideoRemixesPack (audio + video + karaoke).",
     defaultAmountCents: 19500,
     envAmountKey: "PAYPAL_ANUAL_AMOUNT_CENTS",
     shippingPreference: "NO_SHIPPING",
@@ -351,7 +356,7 @@ async function ensureLeadExists(args: {
   const providedLead = isRecord(args.input.lead) ? (args.input.lead as Record<string, unknown>) : {};
 
   const name = cleanName(args.input.name) || cleanName(providedLead.name) || "DJ";
-  const email = cleanEmail(args.input.email) || cleanEmail(providedLead.email) || "pending";
+  const email = cleanEmail(args.input.email) || cleanEmail(providedLead.email) || makePendingEmail(args.leadId);
   const phone = cleanPhone(args.input.phone) || cleanPhone(providedLead.phone) || "";
   const countryCode = asTrimmedString(args.input.country_code) || asTrimmedString(providedLead.country_code) || null;
   const countryName = asTrimmedString(args.input.country_name) || asTrimmedString(providedLead.country_name) || null;
@@ -477,6 +482,15 @@ Deno.serve(async (req) => {
     }
 
     const productKey = product as ProductKey;
+
+    // PayPal Subscriptions are required for recurring billing/trials. We only support Orders (one-time CAPTURE) here.
+    if (productKey === "plan_1tb_mensual" || productKey === "plan_2tb_anual") {
+      return new Response(JSON.stringify({ error: "PayPal not available for subscriptions. Use card." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const cfg = PRODUCTS[productKey];
 
     // NOTE: This function uses PayPal Orders (one-time CAPTURE). Subscription billing + trials
@@ -517,7 +531,7 @@ Deno.serve(async (req) => {
         },
       ],
       application_context: {
-        brand_name: "VideoRemixesPacks",
+        brand_name: "VideoRemixesPack",
         user_action: "PAY_NOW",
         shipping_preference: cfg.shippingPreference,
         return_url: returnUrl,

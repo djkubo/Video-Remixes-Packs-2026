@@ -293,7 +293,7 @@ export default function Gratis() {
           <div className="mx-auto max-w-4xl text-center">
             <img
               src={theme === "dark" ? logoWhite : logoDark}
-              alt="VideoRemixesPacks"
+              alt="VideoRemixesPack"
               className="mx-auto h-16 w-auto object-contain md:h-20"
             />
 

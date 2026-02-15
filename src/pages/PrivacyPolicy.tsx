@@ -53,6 +53,7 @@ export default function PrivacyPolicy() {
   const { language } = useLanguage();
   const { theme } = useTheme();
   const isSpanish = language === "es";
+  const lastUpdated = isSpanish ? "15 Feb 2026" : "Feb 15, 2026";
 
   return (
     <main className="brand-frame min-h-screen bg-background">
@@ -73,12 +74,17 @@ export default function PrivacyPolicy() {
           </div>
 
           <article className="rounded-2xl border border-border/60 bg-card p-6 shadow-xl md:p-8">
-            <h1 className="font-display text-4xl font-black md:text-5xl">PRIVACY POLICY</h1>
+            <h1 className="font-display text-4xl font-black md:text-5xl">
+              {isSpanish ? "Política de privacidad" : "Privacy policy"}
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {isSpanish ? "Última actualización:" : "Last updated:"} {lastUpdated}
+            </p>
 
             <p className="mt-6 text-muted-foreground">
               {isSpanish
-                ? "Resumen basado en la política de privacidad activa en producción. Para la versión completa y vigente, consulta el documento oficial."
-                : "Summary based on the active production privacy policy. For the complete and current version, consult the official document."}
+                ? "Esta política describe cómo recopilamos, usamos y compartimos información cuando visitas o compras en VideoRemixesPack."
+                : "This policy describes how we collect, use, and share information when you visit or purchase from VideoRemixesPack."}
             </p>
 
             <div className="mt-8 space-y-6">
@@ -94,14 +100,10 @@ export default function PrivacyPolicy() {
               ))}
             </div>
 
-            <p className="mt-8 text-sm">
-              <a
-                href="https://videoremixpack.com/privacy_policy"
-                target="_blank"
-                rel="noreferrer"
-                className="font-semibold text-primary underline-offset-2 hover:underline"
-              >
-                {isSpanish ? "Ver política completa en el sitio oficial" : "View full policy on the official site"}
+            <p className="mt-8 text-sm text-muted-foreground">
+              {isSpanish ? "Contacto:" : "Contact:"}{" "}
+              <a className="font-semibold text-primary underline-offset-2 hover:underline" href="mailto:soporte@videoremixpack.com">
+                soporte@videoremixpack.com
               </a>
             </p>
           </article>

@@ -63,14 +63,14 @@ function renderTemplate(job: QueueJob): RenderedEmail {
     if (lang === "en") {
       return {
         subject: job.subject || "We received your request",
-        html: `<h2>Hello ${escapeHtml(name)}, your request is confirmed</h2><p>We already registered your details and our team will follow up shortly with your next steps.</p><p>Thanks for choosing VideoRemixesPacks.</p>`,
+        html: `<h2>Hello ${escapeHtml(name)}, your request is confirmed</h2><p>We already registered your details and our team will follow up shortly with your next steps.</p><p>Thanks for choosing VideoRemixesPack.</p>`,
         text: `Hello ${name}, your request is confirmed. We registered your details and our team will follow up shortly with your next steps.`,
       };
     }
 
     return {
       subject: job.subject || "Recibimos tu solicitud",
-      html: `<h2>Hola ${escapeHtml(name)}, ya recibimos tu solicitud</h2><p>Ya registramos tus datos y en breve te compartimos los siguientes pasos.</p><p>Gracias por elegir VideoRemixesPacks.</p>`,
+      html: `<h2>Hola ${escapeHtml(name)}, ya recibimos tu solicitud</h2><p>Ya registramos tus datos y en breve te compartimos los siguientes pasos.</p><p>Gracias por elegir VideoRemixesPack.</p>`,
       text: `Hola ${name}, ya recibimos tu solicitud. En breve te compartimos los siguientes pasos.`,
     };
   }
@@ -216,7 +216,7 @@ Deno.serve(async (req) => {
   const BREVO_SMTP_KEY = Deno.env.get("BREVO_SMTP_KEY");
   const BREVO_AUTH_TOKEN = BREVO_API_KEY || BREVO_SMTP_KEY;
   const BREVO_SENDER_EMAIL = Deno.env.get("BREVO_SENDER_EMAIL");
-  const BREVO_SENDER_NAME = Deno.env.get("BREVO_SENDER_NAME") || "VideoRemixesPacks";
+  const BREVO_SENDER_NAME = Deno.env.get("BREVO_SENDER_NAME") || "VideoRemixesPack";
   const EMAIL_WORKER_TOKEN = Deno.env.get("EMAIL_WORKER_TOKEN") || null;
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !BREVO_AUTH_TOKEN || !BREVO_SENDER_EMAIL) {

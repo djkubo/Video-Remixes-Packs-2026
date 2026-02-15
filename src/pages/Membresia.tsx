@@ -15,22 +15,11 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { isExperimentEnabled } from "@/lib/croFlags";
@@ -38,70 +27,9 @@ import { getExperimentAssignment } from "@/lib/experiments";
 import { cn } from "@/lib/utils";
 import logoWhite from "@/assets/logo-white.png";
 import logoDark from "@/assets/logo-dark.png";
-import { countryNameFromCode, detectCountryCodeFromTimezone } from "@/lib/country";
-import { createPayPalCheckoutUrl, createStripeCheckoutUrl, type CheckoutProvider } from "@/lib/checkout";
-
-type CountryData = {
-  country_code: string;
-  country_name: string;
-  dial_code: string;
-};
+import { createStripeCheckoutUrl } from "@/lib/checkout";
 
 type PlanId = "plan_1tb_mensual" | "plan_2tb_anual";
-
-const COUNTRY_DIAL_CODES: Record<string, string> = {
-  US: "+1",
-  MX: "+52",
-  ES: "+34",
-  AR: "+54",
-  CO: "+57",
-  CL: "+56",
-  PE: "+51",
-  VE: "+58",
-  EC: "+593",
-  GT: "+502",
-  CU: "+53",
-  DO: "+1",
-  HN: "+504",
-  SV: "+503",
-  NI: "+505",
-  CR: "+506",
-  PA: "+507",
-  UY: "+598",
-  PY: "+595",
-  BO: "+591",
-  PR: "+1",
-  BR: "+55",
-  PT: "+351",
-  CA: "+1",
-  GB: "+44",
-  FR: "+33",
-  DE: "+49",
-  IT: "+39",
-};
-
-function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-}
-
-function normalizePhoneInput(input: string): { clean: string; digits: string } {
-  const clean = input.trim().replace(/[\s().-]/g, "");
-  const digits = clean.startsWith("+") ? clean.slice(1) : clean;
-  return { clean, digits };
-}
-
-type FormErrors = {
-  name?: string;
-  email?: string;
-  phone?: string;
-};
-
-type LeadFormData = {
-  name: string;
-  email: string;
-  phone: string;
-};
 
 const PLAN_DETAILS: Record<
   PlanId,
@@ -129,37 +57,14 @@ export default function Membresia() {
   const { toast } = useToast();
   const { trackEvent } = useAnalytics();
 
-  const [isJoinOpen, setIsJoinOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [lastAttempt, setLastAttempt] = useState<{
     ctaId: string;
-    provider: CheckoutProvider;
     plan: PlanId;
   } | null>(null);
 
   const [selectedPlan, setSelectedPlan] = useState<PlanId>("plan_2tb_anual");
-
-  const [countryData, setCountryData] = useState<CountryData>({
-    country_code: "US",
-    country_name: "United States",
-    dial_code: "+1",
-  });
-
-  const [formData, setFormData] = useState<LeadFormData>({
-    name: "",
-    email: "",
-    phone: "",
-  });
-  const [formErrors, setFormErrors] = useState<FormErrors>({});
-  const [touched, setTouched] = useState<Record<keyof LeadFormData, boolean>>({
-    name: false,
-    email: false,
-    phone: false,
-  });
-  const [consentTransactional, setConsentTransactional] = useState(false);
-  const [consentMarketing, setConsentMarketing] = useState(false);
-  const [consentTouched, setConsentTouched] = useState(false);
 
   const pricingLayoutAssignment = useMemo(
     () =>
@@ -173,60 +78,16 @@ export default function Membresia() {
     []
   );
 
-  const leadFormAssignment = useMemo(
-    () =>
-      isExperimentEnabled("lead_form_friction")
-        ? getExperimentAssignment("lead_form_friction")
-        : {
-            id: "lead_form_friction" as const,
-            variant: "A" as const,
-            assignedAt: new Date(0).toISOString(),
-          },
-    []
-  );
-
   const experimentAssignments = useMemo(
-    () => [pricingLayoutAssignment, leadFormAssignment],
-    [leadFormAssignment, pricingLayoutAssignment]
+    () => [pricingLayoutAssignment],
+    [pricingLayoutAssignment]
   );
 
-  const useInlineValidation = leadFormAssignment.variant === "B";
   const useStackedPricingLayout = pricingLayoutAssignment.variant === "A";
 
   const paymentBadges = useMemo(
-    () => ["VISA", "MASTERCARD", "AMEX", "DISCOVER", "PayPal"],
+    () => ["VISA", "MASTERCARD", "AMEX", "DISCOVER"],
     []
-  );
-
-  const validateLeadForm = useCallback(
-    (data: LeadFormData): FormErrors => {
-      const nextErrors: FormErrors = {};
-      const name = data.name.trim();
-      const email = data.email.trim().toLowerCase();
-      const { clean: cleanPhone, digits: phoneDigits } = normalizePhoneInput(data.phone);
-
-      if (!name) {
-        nextErrors.name = language === "es" ? "Ingresa tu nombre." : "Enter your name.";
-      }
-      if (!email) {
-        nextErrors.email = language === "es" ? "Ingresa tu email." : "Enter your email.";
-      } else if (!isValidEmail(email)) {
-        nextErrors.email = language === "es" ? "Email inválido." : "Invalid email.";
-      }
-
-      if (!cleanPhone) {
-        nextErrors.phone = language === "es" ? "Ingresa tu WhatsApp." : "Enter your WhatsApp.";
-      } else if (
-        cleanPhone.length > 20 ||
-        !/^\+?\d{7,20}$/.test(cleanPhone) ||
-        !/[1-9]/.test(phoneDigits)
-      ) {
-        nextErrors.phone = language === "es" ? "Número inválido." : "Invalid number.";
-      }
-
-      return nextErrors;
-    },
-    [language]
   );
 
   useEffect(() => {
@@ -245,26 +106,6 @@ export default function Membresia() {
     });
   }, [experimentAssignments, trackEvent]);
 
-  // Detect user's country (best-effort; timezone-based so we avoid CORS/network issues).
-  useEffect(() => {
-    const code = detectCountryCodeFromTimezone() || "US";
-    const dialCode = COUNTRY_DIAL_CODES[code] || "+1";
-    setCountryData({
-      country_code: code,
-      country_name: countryNameFromCode(code, language === "es" ? "es" : "en"),
-      dial_code: dialCode,
-    });
-  }, [language]);
-
-  useEffect(() => {
-    if (!isJoinOpen) return;
-    setFormErrors({});
-    setTouched({ name: false, email: false, phone: false });
-    setConsentTransactional(false);
-    setConsentMarketing(false);
-    setConsentTouched(false);
-  }, [isJoinOpen]);
-
   const openJoin = useCallback(
     async (plan?: PlanId, sourceCta: string = "membresia_open_join", isRetry = false) => {
       const nextPlan = plan || selectedPlan;
@@ -273,7 +114,7 @@ export default function Membresia() {
 
       setIsSubmitting(true);
       setCheckoutError(null);
-      setLastAttempt({ ctaId: sourceCta, provider: "stripe", plan: nextPlan });
+      setLastAttempt({ ctaId: sourceCta, plan: nextPlan });
       trackEvent("checkout_redirect", {
         cta_id: sourceCta,
         plan_id: nextPlan,
@@ -366,115 +207,10 @@ export default function Membresia() {
     [experimentAssignments, isSubmitting, language, selectedPlan, toast, trackEvent]
   );
 
-  const openJoinPayPal = useCallback(
-    async (plan?: PlanId, sourceCta: string = "membresia_open_paypal", isRetry = false) => {
-      const nextPlan = plan || selectedPlan;
-      if (isSubmitting) return;
-      if (plan) setSelectedPlan(plan);
-
-      setIsSubmitting(true);
-      setCheckoutError(null);
-      setLastAttempt({ ctaId: sourceCta, provider: "paypal", plan: nextPlan });
-      trackEvent("checkout_redirect", {
-        cta_id: sourceCta,
-        plan_id: nextPlan,
-        funnel_step: "checkout_handoff",
-        experiment_assignments: experimentAssignments,
-        provider: "paypal",
-        status: "starting",
-        is_retry: isRetry,
-      });
-
-      let redirected = false;
-      try {
-        const leadId = crypto.randomUUID();
-        const url = await createPayPalCheckoutUrl({
-          leadId,
-          product: nextPlan,
-          sourcePage: window.location.pathname,
-        });
-
-        if (url) {
-          redirected = true;
-          trackEvent("checkout_redirect", {
-            cta_id: sourceCta,
-            plan_id: nextPlan,
-            funnel_step: "checkout_handoff",
-            experiment_assignments: experimentAssignments,
-            provider: "paypal",
-            status: "redirected",
-            is_retry: isRetry,
-            lead_id: leadId,
-          });
-          window.location.assign(url);
-          return;
-        }
-
-        trackEvent("checkout_redirect", {
-          cta_id: sourceCta,
-          plan_id: nextPlan,
-          funnel_step: "checkout_handoff",
-          experiment_assignments: experimentAssignments,
-          provider: "paypal",
-          status: "missing_url",
-          is_retry: isRetry,
-          lead_id: leadId,
-        });
-
-        setCheckoutError(
-          language === "es"
-            ? "No pudimos abrir el checkout. Reintenta; si continúa, cambia de red o desactiva tu bloqueador de anuncios."
-            : "We couldn't open checkout. Try again; if it continues, switch networks or disable your ad blocker."
-        );
-
-        toast({
-          title: language === "es" ? "Checkout no disponible" : "Checkout unavailable",
-          description:
-            language === "es"
-              ? "Intenta de nuevo en unos segundos. Si continúa, contáctanos en Soporte."
-              : "Please try again in a few seconds. If it continues, contact Support.",
-          variant: "destructive",
-        });
-      } catch (err) {
-        console.error("MEMBRESIA PayPal checkout error:", err);
-        trackEvent("checkout_redirect", {
-          cta_id: sourceCta,
-          plan_id: nextPlan,
-          funnel_step: "checkout_handoff",
-          experiment_assignments: experimentAssignments,
-          provider: "paypal",
-          status: "error",
-          is_retry: isRetry,
-          error_message: err instanceof Error ? err.message : String(err),
-        });
-        setCheckoutError(
-          language === "es"
-            ? "Hubo un problema al iniciar el pago. Reintenta; si continúa, cambia de red o desactiva tu bloqueador de anuncios."
-            : "There was a problem starting checkout. Try again; if it continues, switch networks or disable your ad blocker."
-        );
-        toast({
-          title: language === "es" ? "Error" : "Error",
-          description:
-            language === "es"
-              ? "Hubo un problema al iniciar el pago. Intenta de nuevo."
-              : "There was a problem starting checkout. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        if (!redirected) setIsSubmitting(false);
-      }
-    },
-    [experimentAssignments, isSubmitting, language, selectedPlan, toast, trackEvent]
-  );
-
   const retryCheckout = useCallback(() => {
     if (!lastAttempt) return;
-    if (lastAttempt.provider === "paypal") {
-      void openJoinPayPal(lastAttempt.plan, lastAttempt.ctaId, true);
-      return;
-    }
     void openJoin(lastAttempt.plan, lastAttempt.ctaId, true);
-  }, [lastAttempt, openJoin, openJoinPayPal]);
+  }, [lastAttempt, openJoin]);
 
   const renderCheckoutFeedback = useCallback(
     (ctaId: string) => {
@@ -529,250 +265,6 @@ export default function Membresia() {
     [experimentAssignments, openJoin, trackEvent]
   );
 
-  const onSubmit = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (isSubmitting) return;
-
-      const validationErrors = validateLeadForm(formData);
-      setFormErrors(validationErrors);
-
-      if (Object.keys(validationErrors).length > 0) {
-        setTouched({ name: true, email: true, phone: true });
-        trackEvent("lead_form_error", {
-          cta_id: "membresia_submit",
-          plan_id: selectedPlan,
-          funnel_step: "lead_capture",
-          error_fields: Object.keys(validationErrors),
-          experiment_assignments: experimentAssignments,
-        });
-
-        if (!useInlineValidation) {
-          toast({
-            title: language === "es" ? "Revisa tus datos" : "Check your details",
-            description:
-              language === "es"
-                ? "Completa correctamente nombre, email y WhatsApp."
-                : "Please fill in a valid name, email, and WhatsApp number.",
-            variant: "destructive",
-          });
-        }
-        return;
-      }
-
-      setConsentTouched(true);
-      if (!consentTransactional) {
-        trackEvent("lead_form_error", {
-          cta_id: "membresia_submit",
-          plan_id: selectedPlan,
-          funnel_step: "lead_capture",
-          error_fields: ["consent_transactional"],
-          experiment_assignments: experimentAssignments,
-        });
-
-        if (!useInlineValidation) {
-          toast({
-            title: language === "es" ? "Confirmación requerida" : "Confirmation required",
-            description:
-              language === "es"
-                ? "Debes aceptar recibir mensajes transaccionales y de soporte para continuar."
-                : "You must agree to receive transactional and support messages to continue.",
-            variant: "destructive",
-          });
-        }
-        return;
-      }
-
-      const name = formData.name.trim();
-      const email = formData.email.trim().toLowerCase();
-      const { clean: cleanPhone } = normalizePhoneInput(formData.phone);
-
-      setIsSubmitting(true);
-      trackEvent("lead_submit_attempt", {
-        cta_id: "membresia_submit",
-        plan_id: selectedPlan,
-        funnel_step: "lead_capture",
-        experiment_assignments: experimentAssignments,
-      });
-
-      try {
-        const leadId = crypto.randomUUID();
-        const sourcePage = window.location.pathname;
-        const planTags = PLAN_DETAILS[selectedPlan].tags;
-
-        const leadBase = {
-          id: leadId,
-          name,
-          email,
-          phone: cleanPhone,
-          // ManyChat expects dial code (e.g. +1) not ISO country code (e.g. US).
-          country_code: countryData.dial_code,
-          country_name: countryData.country_name,
-          source: "membresia",
-          tags: planTags,
-          funnel_step: "lead_submit",
-          source_page: sourcePage,
-          experiment_assignments: experimentAssignments as unknown as import("@/integrations/supabase/types").Json[],
-          intent_plan: selectedPlan,
-        };
-
-        const leadWithConsent = {
-          ...leadBase,
-          consent_transactional: consentTransactional,
-          consent_transactional_at: consentTransactional ? new Date().toISOString() : null,
-          consent_marketing: consentMarketing,
-          consent_marketing_at: consentMarketing ? new Date().toISOString() : null,
-        };
-
-        let { error: insertError } = await supabase.from("leads").insert([leadWithConsent]);
-        // If the DB migration hasn't been applied yet, avoid breaking lead capture.
-        if (insertError && /consent_(transactional|marketing)/i.test(insertError.message)) {
-          if (import.meta.env.DEV) {
-            console.warn("Leads consent columns missing. Retrying insert without consent fields.");
-          }
-          ({ error: insertError } = await supabase.from("leads").insert([leadBase]));
-        }
-
-        if (insertError) throw insertError;
-        trackEvent("lead_submit_success", {
-          cta_id: "membresia_submit",
-          plan_id: selectedPlan,
-          lead_id: leadId,
-          funnel_step: "lead_capture",
-          experiment_assignments: experimentAssignments,
-        });
-
-        try {
-          const { error: syncError } = await supabase.functions.invoke(
-            "sync-manychat",
-            {
-              body: { leadId },
-            }
-          );
-          if (syncError && import.meta.env.DEV)
-            console.warn("ManyChat sync error:", syncError);
-        } catch (syncErr) {
-          if (import.meta.env.DEV) console.warn("ManyChat sync threw:", syncErr);
-        }
-
-        // Try to redirect to Stripe Checkout (required for trial/subscription billing).
-        try {
-          const { data: checkout, error: checkoutError } = await supabase.functions.invoke(
-            "stripe-checkout",
-            {
-              body: { leadId, product: selectedPlan },
-            }
-          );
-
-          if (checkoutError && import.meta.env.DEV) {
-            console.warn("Stripe checkout error:", checkoutError);
-          }
-
-          const url = (checkout as { url?: unknown } | null)?.url;
-          if (typeof url === "string" && url.length > 0) {
-            trackEvent("checkout_redirect", {
-              cta_id: "membresia_checkout_stripe",
-              plan_id: selectedPlan,
-              provider: "stripe",
-              status: "redirected",
-              funnel_step: "checkout_handoff",
-              experiment_assignments: experimentAssignments,
-            });
-            setIsJoinOpen(false);
-            window.location.assign(url);
-            return;
-          }
-          trackEvent("checkout_redirect", {
-            cta_id: "membresia_checkout_stripe",
-            plan_id: selectedPlan,
-            provider: "stripe",
-            status: "missing_url",
-            funnel_step: "checkout_handoff",
-            experiment_assignments: experimentAssignments,
-          });
-        } catch (stripeErr) {
-          if (import.meta.env.DEV) console.warn("Stripe invoke threw:", stripeErr);
-          trackEvent("checkout_redirect", {
-            cta_id: "membresia_checkout_stripe",
-            plan_id: selectedPlan,
-            provider: "stripe",
-            status: "error",
-            funnel_step: "checkout_handoff",
-            experiment_assignments: experimentAssignments,
-          });
-        }
-        toast({
-          title: language === "es" ? "No pudimos abrir el checkout" : "Checkout unavailable",
-          description:
-            language === "es"
-              ? "Intenta de nuevo en unos segundos. Si continúa, contáctanos en Soporte."
-              : "Please try again in a few seconds. If it continues, contact Support.",
-          variant: "destructive",
-        });
-      } catch (err) {
-        console.error("MEMBRESIA lead submit error:", err);
-        trackEvent("lead_submit_failed", {
-          cta_id: "membresia_submit",
-          plan_id: selectedPlan,
-          funnel_step: "lead_capture",
-          experiment_assignments: experimentAssignments,
-        });
-        toast({
-          title: language === "es" ? "Error" : "Error",
-          description:
-            language === "es"
-              ? "Hubo un problema al enviar tus datos. Intenta de nuevo."
-              : "There was a problem submitting your data. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsSubmitting(false);
-      }
-    },
-    [
-      consentMarketing,
-      consentTransactional,
-      countryData.dial_code,
-      countryData.country_name,
-      experimentAssignments,
-      formData,
-      isSubmitting,
-      language,
-      selectedPlan,
-      trackEvent,
-      toast,
-      useInlineValidation,
-      validateLeadForm,
-    ]
-  );
-
-  const handleFieldChange = useCallback(
-    (field: keyof LeadFormData, value: string) => {
-      setFormData((prev) => {
-        const next = { ...prev, [field]: value };
-        if (useInlineValidation && touched[field]) {
-          const nextErrors = validateLeadForm(next);
-          setFormErrors(nextErrors);
-        }
-        return next;
-      });
-    },
-    [touched, useInlineValidation, validateLeadForm]
-  );
-
-  const handleFieldBlur = useCallback(
-    (field: keyof LeadFormData) => {
-      setTouched((prev) => {
-        const nextTouched = { ...prev, [field]: true };
-        if (useInlineValidation) {
-          setFormErrors(validateLeadForm(formData));
-        }
-        return nextTouched;
-      });
-    },
-    [formData, useInlineValidation, validateLeadForm]
-  );
-
   return (
     <main className="brand-frame min-h-screen bg-background">
       {/* Hero */}
@@ -783,7 +275,7 @@ export default function Membresia() {
           <div className="flex items-center justify-between gap-4">
             <img
               src={theme === "dark" ? logoWhite : logoDark}
-              alt="VideoRemixesPacks"
+              alt="VideoRemixesPack"
               className="h-10 w-auto object-contain md:h-12"
             />
             <p className="text-xs text-muted-foreground md:text-sm">
@@ -848,27 +340,8 @@ export default function Membresia() {
 	                      </>
 	                    )}
 	                  </Button>
-	                  <Button
-	                    variant="outline"
-	                    className="h-12 text-base font-black"
-	                    disabled={isSubmitting}
-	                    onClick={() => void openJoinPayPal(selectedPlan, "membresia_hero_paypal")}
-	                  >
-	                    {isSubmitting && lastAttempt?.ctaId === "membresia_hero_paypal" ? (
-	                      <>
-	                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-	                        {language === "es" ? "Cargando PayPal..." : "Loading PayPal..."}
-	                      </>
-	                    ) : (
-	                      <>
-	                        <CreditCard className="mr-2 h-4 w-4 text-primary" />
-	                        {language === "es" ? "Pagar con PayPal" : "Pay with PayPal"}
-	                      </>
-	                    )}
-	                  </Button>
 
                     {renderCheckoutFeedback("membresia_hero_adquiere")}
-                    {renderCheckoutFeedback("membresia_hero_paypal")}
 	                </div>
 	              </div>
 
@@ -952,7 +425,7 @@ export default function Membresia() {
             </div>
 
 	            <div className="mt-10 flex justify-center">
-	              <div className="grid w-full max-w-2xl gap-3 sm:grid-cols-2">
+	              <div className="grid w-full max-w-2xl gap-3">
 	                <Button
 	                  onClick={() => void openJoin(selectedPlan, "membresia_socialproof_adquiere")}
 	                  disabled={isSubmitting}
@@ -967,30 +440,11 @@ export default function Membresia() {
 	                    language === "es" ? "Tarjeta" : "Card"
 	                  )}
 	                </Button>
-	                <Button
-	                  onClick={() => void openJoinPayPal(selectedPlan, "membresia_socialproof_paypal")}
-	                  disabled={isSubmitting}
-	                  variant="outline"
-	                  className="h-12 w-full text-base font-black md:h-14 md:text-lg"
-	                >
-	                  {isSubmitting && lastAttempt?.ctaId === "membresia_socialproof_paypal" ? (
-	                    <>
-	                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-	                      {language === "es" ? "Cargando PayPal..." : "Loading PayPal..."}
-	                    </>
-	                  ) : (
-	                    <>
-	                      <CreditCard className="mr-2 h-4 w-4 text-primary" />
-	                      PayPal
-	                    </>
-	                  )}
-	                </Button>
 	              </div>
 	            </div>
               <div className="mt-4 flex justify-center">
                 <div className="w-full max-w-2xl">
                   {renderCheckoutFeedback("membresia_socialproof_adquiere")}
-                  {renderCheckoutFeedback("membresia_socialproof_paypal")}
                 </div>
               </div>
 	          </div>
@@ -1047,7 +501,7 @@ export default function Membresia() {
                 ))}
               </ul>
 
-		              <div className="mt-8 grid gap-3 sm:grid-cols-2">
+		              <div className="mt-8 grid gap-3">
 		                <Button
 		                  onClick={() => handlePlanClick("plan_1tb_mensual", "membresia_plan_1tb")}
 		                  disabled={isSubmitting}
@@ -1062,28 +516,9 @@ export default function Membresia() {
 		                    language === "es" ? "Tarjeta" : "Card"
 		                  )}
 		                </Button>
-		                <Button
-		                  onClick={() => void openJoinPayPal("plan_1tb_mensual", "membresia_plan_1tb_paypal")}
-		                  disabled={isSubmitting}
-		                  variant="outline"
-		                  className="h-12 w-full text-base font-black"
-		                >
-		                  {isSubmitting && lastAttempt?.ctaId === "membresia_plan_1tb_paypal" ? (
-		                    <>
-		                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-		                      {language === "es" ? "Cargando PayPal..." : "Loading PayPal..."}
-		                    </>
-		                  ) : (
-		                    <>
-		                      <CreditCard className="mr-2 h-4 w-4 text-primary" />
-		                      PayPal
-		                    </>
-		                  )}
-		                </Button>
 		              </div>
 
                   {renderCheckoutFeedback("membresia_plan_1tb")}
-                  {renderCheckoutFeedback("membresia_plan_1tb_paypal")}
 	            </div>
 
             {/* Plan 2TB */}
@@ -1119,7 +554,7 @@ export default function Membresia() {
                 ))}
               </ul>
 
-		              <div className="mt-8 grid gap-3 sm:grid-cols-2">
+		              <div className="mt-8 grid gap-3">
 		                <Button
 		                  onClick={() => handlePlanClick("plan_2tb_anual", "membresia_plan_2tb")}
 		                  disabled={isSubmitting}
@@ -1134,28 +569,9 @@ export default function Membresia() {
 		                    language === "es" ? "Tarjeta" : "Card"
 		                  )}
 		                </Button>
-		                <Button
-		                  onClick={() => void openJoinPayPal("plan_2tb_anual", "membresia_plan_2tb_paypal")}
-		                  disabled={isSubmitting}
-		                  variant="outline"
-		                  className="h-12 w-full text-base font-black"
-		                >
-		                  {isSubmitting && lastAttempt?.ctaId === "membresia_plan_2tb_paypal" ? (
-		                    <>
-		                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-		                      {language === "es" ? "Cargando PayPal..." : "Loading PayPal..."}
-		                    </>
-		                  ) : (
-		                    <>
-		                      <CreditCard className="mr-2 h-4 w-4 text-primary" />
-		                      PayPal
-		                    </>
-		                  )}
-		                </Button>
 		              </div>
 
                   {renderCheckoutFeedback("membresia_plan_2tb")}
-                  {renderCheckoutFeedback("membresia_plan_2tb_paypal")}
 	
 		                <div className="mt-4 flex flex-wrap items-center gap-2">
 		                  {paymentBadges.map((label) => (
@@ -1220,7 +636,7 @@ export default function Membresia() {
           </div>
 
 	          <div className="mt-10 flex justify-center">
-	            <div className="grid w-full max-w-2xl gap-3 sm:grid-cols-2">
+	            <div className="grid w-full max-w-2xl gap-3">
 	              <Button
 	                onClick={() => void openJoin(selectedPlan, "membresia_faq_adquiere")}
 	                disabled={isSubmitting}
@@ -1235,30 +651,11 @@ export default function Membresia() {
 	                  language === "es" ? "Tarjeta" : "Card"
 	                )}
 	              </Button>
-	              <Button
-	                onClick={() => void openJoinPayPal(selectedPlan, "membresia_faq_paypal")}
-	                disabled={isSubmitting}
-	                variant="outline"
-	                className="h-12 w-full text-base font-black md:h-14 md:text-lg"
-	              >
-	                {isSubmitting && lastAttempt?.ctaId === "membresia_faq_paypal" ? (
-	                  <>
-	                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-	                    {language === "es" ? "Cargando PayPal..." : "Loading PayPal..."}
-	                  </>
-	                ) : (
-	                  <>
-	                    <CreditCard className="mr-2 h-4 w-4 text-primary" />
-	                    PayPal
-	                  </>
-	                )}
-	              </Button>
 	            </div>
 	          </div>
             <div className="mt-4 flex justify-center">
               <div className="w-full max-w-2xl">
                 {renderCheckoutFeedback("membresia_faq_adquiere")}
-                {renderCheckoutFeedback("membresia_faq_paypal")}
               </div>
             </div>
 	        </div>
@@ -1275,203 +672,6 @@ export default function Membresia() {
           </div>
         </div>
       </section>
-
-      {/* Join modal */}
-      <Dialog open={isJoinOpen} onOpenChange={(open) => !isSubmitting && setIsJoinOpen(open)}>
-        <DialogContent className="glass-card border-border/60 p-0 sm:max-w-lg">
-          <DialogHeader className="sr-only">
-            <DialogTitle>
-              {language === "es" ? "Adquirir membresía" : "Get membership"}
-            </DialogTitle>
-            <DialogDescription>
-              {language === "es"
-                ? "Déjanos tus datos para confirmar tu plan y enviarte el acceso."
-                : "Leave your details so we can confirm your plan and send access."}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="p-6 md:p-7">
-            <h3 className="font-display text-3xl font-black">
-              {language === "es" ? "Ingresa tus datos" : "Enter your details"}
-            </h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {language === "es"
-                ? "Te contactamos por WhatsApp para confirmar tu plan y enviarte el acceso."
-                : "We’ll contact you on WhatsApp to confirm your plan and send access."}
-            </p>
-
-            <div className="mt-6">
-              <Label className="text-sm">
-                {language === "es" ? "Plan" : "Plan"}
-              </Label>
-              <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {(Object.keys(PLAN_DETAILS) as PlanId[]).map((planId) => {
-                  const isActive = selectedPlan === planId;
-                  const plan = PLAN_DETAILS[planId];
-                  return (
-                    <button
-                      key={planId}
-                      type="button"
-                      onClick={() => {
-                        setSelectedPlan(planId);
-                        trackEvent("plan_select", {
-                          cta_id: "membresia_modal_plan_select",
-                          plan_id: planId,
-                          funnel_step: "lead_capture",
-                          experiment_assignments: experimentAssignments,
-                        });
-                      }}
-                      aria-pressed={isActive}
-                      className={`rounded-xl border px-4 py-3 text-left transition-colors ${
-                        isActive
-                          ? "border-primary/60 bg-primary/10"
-                          : "border-border/60 bg-card/40 hover:bg-card/60"
-                      }`}
-                    >
-                      <p className="text-sm font-black">{plan.label}</p>
-                      <p className="text-xs text-muted-foreground">{plan.priceLabel}</p>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <form className="mt-6 space-y-4" onSubmit={onSubmit}>
-              <div className="space-y-2">
-                <Label htmlFor="membresia-name">
-                  {language === "es" ? "Nombre" : "Name"}
-                </Label>
-                <Input
-                  id="membresia-name"
-                  value={formData.name}
-                  onChange={(e) => handleFieldChange("name", e.target.value)}
-                  onBlur={() => handleFieldBlur("name")}
-                  placeholder={language === "es" ? "Tu nombre completo" : "Your full name"}
-                  autoComplete="name"
-                  className={cn(formErrors.name && touched.name && "border-destructive focus-visible:ring-destructive")}
-                />
-                {useInlineValidation && touched.name && formErrors.name && (
-                  <p className="text-xs text-destructive">{formErrors.name}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="membresia-email">Email</Label>
-                <Input
-                  id="membresia-email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleFieldChange("email", e.target.value)}
-                  onBlur={() => handleFieldBlur("email")}
-                  placeholder="you@email.com"
-                  autoComplete="email"
-                  className={cn(formErrors.email && touched.email && "border-destructive focus-visible:ring-destructive")}
-                />
-                {useInlineValidation && touched.email && formErrors.email && (
-                  <p className="text-xs text-destructive">{formErrors.email}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="membresia-phone">
-                  {language === "es" ? "WhatsApp" : "WhatsApp"}
-                </Label>
-                <div className="flex items-center gap-2">
-                  <Badge
-                    variant="outline"
-                    className="h-10 shrink-0 border-border/60 bg-card/40 px-3 text-sm text-muted-foreground"
-                    title={countryData.country_name}
-                  >
-                    {countryData.dial_code}
-                  </Badge>
-                  <Input
-                    id="membresia-phone"
-                    value={formData.phone}
-                    onChange={(e) => handleFieldChange("phone", e.target.value)}
-                    onBlur={() => handleFieldBlur("phone")}
-                    placeholder={language === "es" ? "Tu número" : "Your number"}
-                    inputMode="tel"
-                    autoComplete="tel"
-                    className={cn(formErrors.phone && touched.phone && "border-destructive focus-visible:ring-destructive")}
-                  />
-                </div>
-                {useInlineValidation && touched.phone && formErrors.phone && (
-                  <p className="text-xs text-destructive">{formErrors.phone}</p>
-                )}
-              </div>
-
-              <div className="rounded-xl border border-border/60 bg-card/40 p-4">
-                <div className="flex items-start gap-3">
-                  <Checkbox
-                    id="membresia-consent-transactional"
-                    checked={consentTransactional}
-                    onCheckedChange={(checked) => {
-                      setConsentTransactional(Boolean(checked));
-                      if (checked) setConsentTouched(false);
-                    }}
-                    disabled={isSubmitting}
-                    aria-required="true"
-                  />
-                  <Label
-                    htmlFor="membresia-consent-transactional"
-                    className="cursor-pointer text-xs leading-snug text-foreground"
-                  >
-                    {language === "es"
-                      ? "Acepto recibir mensajes transaccionales y de soporte por WhatsApp/SMS/email."
-                      : "I agree to receive transactional and support messages via WhatsApp/SMS/email."}
-                  </Label>
-                </div>
-
-                <div className="mt-3 flex items-start gap-3">
-                  <Checkbox
-                    id="membresia-consent-marketing"
-                    checked={consentMarketing}
-                    onCheckedChange={(checked) => setConsentMarketing(Boolean(checked))}
-                    disabled={isSubmitting}
-                  />
-                  <Label
-                    htmlFor="membresia-consent-marketing"
-                    className="cursor-pointer text-xs leading-snug text-muted-foreground"
-                  >
-                    {language === "es"
-                      ? "Quiero recibir promociones y novedades por WhatsApp/SMS/email."
-                      : "I want to receive promotions and updates via WhatsApp/SMS/email."}
-                  </Label>
-                </div>
-
-                {consentTouched && !consentTransactional && (
-                  <p className="mt-3 text-xs font-semibold text-destructive">
-                    {language === "es"
-                      ? "Requerido: confirma el consentimiento de soporte/transaccional."
-                      : "Required: confirm transactional/support consent."}
-                  </p>
-                )}
-              </div>
-
-              <Button
-                type="submit"
-                className="btn-primary-glow h-12 w-full text-base font-black"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {language === "es" ? "Enviando..." : "Submitting..."}
-                  </>
-                ) : (
-                  language === "es" ? "Enviar" : "Submit"
-                )}
-              </Button>
-
-              <p className="text-center text-xs text-muted-foreground">
-                {language === "es"
-                  ? "Tu información está 100% segura con nosotros"
-                  : "Your information is 100% secure with us"}
-              </p>
-            </form>
-          </div>
-        </DialogContent>
-      </Dialog>
     </main>
   );
 }

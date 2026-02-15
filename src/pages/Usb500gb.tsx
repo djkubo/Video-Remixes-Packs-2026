@@ -17,71 +17,11 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { supabase } from "@/integrations/supabase/client";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { useToast } from "@/hooks/use-toast";
 import logoWhite from "@/assets/logo-white.png";
 import logoDark from "@/assets/logo-dark.png";
-import { countryNameFromCode, detectCountryCodeFromTimezone } from "@/lib/country";
 import { createBestCheckoutUrl, type CheckoutProvider } from "@/lib/checkout";
-
-type CountryData = {
-  country_code: string;
-  country_name: string;
-  dial_code: string;
-};
-
-const COUNTRY_DIAL_CODES: Record<string, string> = {
-  US: "+1",
-  MX: "+52",
-  ES: "+34",
-  AR: "+54",
-  CO: "+57",
-  CL: "+56",
-  PE: "+51",
-  VE: "+58",
-  EC: "+593",
-  GT: "+502",
-  CU: "+53",
-  DO: "+1",
-  HN: "+504",
-  SV: "+503",
-  NI: "+505",
-  CR: "+506",
-  PA: "+507",
-  UY: "+598",
-  PY: "+595",
-  BO: "+591",
-  PR: "+1",
-  BR: "+55",
-  PT: "+351",
-  CA: "+1",
-  GB: "+44",
-  FR: "+33",
-  DE: "+49",
-  IT: "+39",
-};
-
-function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-}
-
-function normalizePhoneInput(input: string): { clean: string; digits: string } {
-  const clean = input.trim().replace(/[\s().-]/g, "");
-  const digits = clean.startsWith("+") ? clean.slice(1) : clean;
-  return { clean, digits };
-}
 
 export default function Usb500gb() {
   const { language } = useLanguage();
@@ -90,26 +30,9 @@ export default function Usb500gb() {
   const { trackEvent } = useAnalytics();
   const navigate = useNavigate();
 
-  const [isOrderOpen, setIsOrderOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [lastAttempt, setLastAttempt] = useState<{ ctaId: string; prefer: CheckoutProvider } | null>(null);
-
-  const [countryData, setCountryData] = useState<CountryData>({
-    country_code: "US",
-    country_name: "United States",
-    dial_code: "+1",
-  });
-
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-  });
-
-  const [consentTransactional, setConsentTransactional] = useState(false);
-  const [consentMarketing, setConsentMarketing] = useState(false);
-  const [consentTouched, setConsentTouched] = useState(false);
 
   const paymentBadges = useMemo(
     () => ["VISA", "MASTERCARD", "AMEX", "DISCOVER", "PayPal"],
@@ -119,17 +42,6 @@ export default function Usb500gb() {
   useEffect(() => {
     document.title = "La USB Definitiva";
   }, []);
-
-  // Detect user's country (best-effort; timezone-based so we avoid CORS/network issues).
-  useEffect(() => {
-    const code = detectCountryCodeFromTimezone() || "US";
-    const dialCode = COUNTRY_DIAL_CODES[code] || "+1";
-    setCountryData({
-      country_code: code,
-      country_name: countryNameFromCode(code, language === "es" ? "es" : "en"),
-      dial_code: dialCode,
-    });
-  }, [language]);
 
   const startExpressCheckout = useCallback(
     async (ctaId: string, prefer: CheckoutProvider, isRetry = false) => {
@@ -293,186 +205,6 @@ export default function Usb500gb() {
     [checkoutError, isSubmitting, language, lastAttempt?.ctaId, navigate, retryCheckout]
   );
 
-  const onSubmit = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (isSubmitting) return;
-
-      const name = formData.name.trim();
-      const email = formData.email.trim().toLowerCase();
-      const { clean: cleanPhone, digits: phoneDigits } = normalizePhoneInput(formData.phone);
-
-      if (!name || !email || !cleanPhone) {
-        toast({
-          title: language === "es" ? "Campos requeridos" : "Required fields",
-          description:
-            language === "es"
-              ? "Por favor completa todos los campos."
-              : "Please fill in all fields.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (!isValidEmail(email)) {
-        toast({
-          title: language === "es" ? "Email inválido" : "Invalid email",
-          description:
-            language === "es"
-              ? "Por favor ingresa un email válido."
-              : "Please enter a valid email.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // NOTE: Supabase RLS policy enforces phone length <= 20.
-      if (
-        cleanPhone.length > 20 ||
-        !/^\+?\d{7,20}$/.test(cleanPhone) ||
-        !/[1-9]/.test(phoneDigits)
-      ) {
-        toast({
-          title: language === "es" ? "WhatsApp inválido" : "Invalid WhatsApp",
-          description:
-            language === "es"
-              ? "Número de teléfono no válido."
-              : "Phone number is not valid.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setConsentTouched(true);
-      if (!consentTransactional) {
-        toast({
-          title: language === "es" ? "Confirmación requerida" : "Confirmation required",
-          description:
-            language === "es"
-              ? "Debes aceptar recibir mensajes transaccionales y de soporte para continuar."
-              : "You must agree to receive transactional and support messages to continue.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setIsSubmitting(true);
-      try {
-        const leadId = crypto.randomUUID();
-
-        const leadBase = {
-          id: leadId,
-          name,
-          email,
-          phone: cleanPhone,
-          country_code: countryData.dial_code,
-          country_name: countryData.country_name,
-          source: "usb_500gb",
-          tags: ["usb_500gb", "usb_definitiva", "usb_order"],
-        };
-
-        const leadWithConsent = {
-          ...leadBase,
-          consent_transactional: consentTransactional,
-          consent_transactional_at: consentTransactional ? new Date().toISOString() : null,
-          consent_marketing: consentMarketing,
-          consent_marketing_at: consentMarketing ? new Date().toISOString() : null,
-        };
-
-        let { error: insertError } = await supabase.from("leads").insert(leadWithConsent);
-        // If the DB migration hasn't been applied yet, avoid breaking lead capture.
-        if (insertError && /consent_(transactional|marketing)/i.test(insertError.message)) {
-          if (import.meta.env.DEV) {
-            console.warn("Leads consent columns missing. Retrying insert without consent fields.");
-          }
-          ({ error: insertError } = await supabase.from("leads").insert(leadBase));
-        }
-
-        if (insertError) throw insertError;
-
-        try {
-          const { error: syncError } = await supabase.functions.invoke("sync-manychat", {
-            body: { leadId },
-          });
-          if (syncError && import.meta.env.DEV) console.warn("ManyChat sync error:", syncError);
-        } catch (syncErr) {
-          if (import.meta.env.DEV) console.warn("ManyChat sync threw:", syncErr);
-        }
-
-        setIsOrderOpen(false);
-
-        // Try to redirect to Stripe Checkout (if configured). If not, fallback to thank-you.
-        try {
-          const { data: checkout, error: checkoutError } = await supabase.functions.invoke(
-            "stripe-checkout",
-            {
-              body: { leadId, product: "usb_500gb" },
-            }
-          );
-
-          if (checkoutError && import.meta.env.DEV) {
-            console.warn("Stripe checkout error:", checkoutError);
-          }
-
-          const url = (checkout as { url?: unknown } | null)?.url;
-          if (typeof url === "string" && url.length > 0) {
-            window.location.assign(url);
-            return;
-          }
-        } catch (stripeErr) {
-          if (import.meta.env.DEV) console.warn("Stripe invoke threw:", stripeErr);
-        }
-
-        // Fallback: PayPal redirect (if configured).
-        try {
-          const { data: paypal, error: paypalError } = await supabase.functions.invoke(
-            "paypal-checkout",
-            {
-              body: { action: "create", leadId, product: "usb_500gb" },
-            }
-          );
-
-          if (paypalError && import.meta.env.DEV) {
-            console.warn("PayPal checkout error:", paypalError);
-          }
-
-          const approveUrl = (paypal as { approveUrl?: unknown } | null)?.approveUrl;
-          if (typeof approveUrl === "string" && approveUrl.length > 0) {
-            window.location.assign(approveUrl);
-            return;
-          }
-        } catch (paypalErr) {
-          if (import.meta.env.DEV) console.warn("PayPal invoke threw:", paypalErr);
-        }
-
-        navigate("/usb-500gb/gracias");
-      } catch (err) {
-        console.error("USB 500GB lead submit error:", err);
-        toast({
-          title: language === "es" ? "Error" : "Error",
-          description:
-            language === "es"
-              ? "Hubo un problema al enviar tus datos. Intenta de nuevo."
-              : "There was a problem submitting your data. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsSubmitting(false);
-      }
-    },
-    [
-      consentMarketing,
-      consentTransactional,
-      countryData.dial_code,
-      countryData.country_name,
-      formData,
-      isSubmitting,
-      language,
-      navigate,
-      toast,
-    ]
-  );
-
   return (
     <main className="brand-frame min-h-screen bg-background">
       <SettingsToggle />
@@ -503,7 +235,7 @@ export default function Usb500gb() {
           <div className="flex items-center justify-center">
             <img
               src={theme === "dark" ? logoWhite : logoDark}
-              alt="VideoRemixesPacks"
+              alt="VideoRemixesPack"
               className="h-14 w-auto object-contain md:h-16"
             />
           </div>
@@ -960,143 +692,6 @@ export default function Usb500gb() {
           </p>
         </div>
       </section>
-
-      {/* Order modal */}
-      <Dialog open={isOrderOpen} onOpenChange={setIsOrderOpen}>
-        <DialogContent className="glass-card border-border/60 p-0 sm:max-w-lg">
-          <DialogHeader className="sr-only">
-            <DialogTitle>
-              {language === "es" ? "Antes de pagar" : "Before checkout"}
-            </DialogTitle>
-            <DialogDescription>
-              {language === "es"
-                ? "Déjanos tus datos para confirmación, tracking y soporte."
-                : "Leave your details for confirmation, tracking, and support."}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="p-6 md:p-7">
-            <h3 className="font-display text-3xl font-black">
-              {language === "es" ? "Antes de pagar" : "Before checkout"}
-            </h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {language === "es"
-                ? "Déjanos tus datos para confirmación, tracking y soporte. Después te enviamos al checkout."
-                : "Leave your details for confirmation, tracking, and support. Then we’ll send you to checkout."}
-            </p>
-
-            <form className="mt-6 space-y-4" onSubmit={onSubmit}>
-              <div className="space-y-2">
-                <Label htmlFor="usb500-name">{language === "es" ? "Nombre" : "Name"}</Label>
-                <Input
-                  id="usb500-name"
-                  value={formData.name}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                  placeholder={language === "es" ? "Tu nombre completo" : "Your full name"}
-                  autoComplete="name"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="usb500-email">Email</Label>
-                <Input
-                  id="usb500-email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
-                  placeholder="you@email.com"
-                  autoComplete="email"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="usb500-phone">{language === "es" ? "WhatsApp" : "WhatsApp"}</Label>
-                <div className="flex items-center gap-2">
-                  <Badge
-                    variant="outline"
-                    className="h-10 shrink-0 border-border/60 bg-card/40 px-3 text-sm text-muted-foreground"
-                    title={countryData.country_name}
-                  >
-                    {countryData.dial_code}
-                  </Badge>
-                  <Input
-                    id="usb500-phone"
-                    value={formData.phone}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
-                    placeholder={language === "es" ? "Tu número" : "Your number"}
-                    inputMode="tel"
-                    autoComplete="tel"
-                  />
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-border/60 bg-card/40 p-4">
-                <div className="flex items-start gap-3">
-                  <Checkbox
-                    id="usb500-consent-transactional"
-                    checked={consentTransactional}
-                    onCheckedChange={(checked) => {
-                      setConsentTransactional(Boolean(checked));
-                      if (checked) setConsentTouched(false);
-                    }}
-                    disabled={isSubmitting}
-                    aria-required="true"
-                  />
-                  <Label
-                    htmlFor="usb500-consent-transactional"
-                    className="cursor-pointer text-xs leading-snug text-foreground"
-                  >
-                    {language === "es"
-                      ? "Acepto recibir mensajes transaccionales y de soporte por WhatsApp/SMS/email."
-                      : "I agree to receive transactional and support messages via WhatsApp/SMS/email."}
-                  </Label>
-                </div>
-
-                <div className="mt-3 flex items-start gap-3">
-                  <Checkbox
-                    id="usb500-consent-marketing"
-                    checked={consentMarketing}
-                    onCheckedChange={(checked) => setConsentMarketing(Boolean(checked))}
-                    disabled={isSubmitting}
-                  />
-                  <Label
-                    htmlFor="usb500-consent-marketing"
-                    className="cursor-pointer text-xs leading-snug text-muted-foreground"
-                  >
-                    {language === "es"
-                      ? "Quiero recibir promociones y novedades por WhatsApp/SMS/email."
-                      : "I want to receive promotions and updates via WhatsApp/SMS/email."}
-                  </Label>
-                </div>
-
-                {consentTouched && !consentTransactional && (
-                  <p className="mt-3 text-xs font-semibold text-destructive">
-                    {language === "es"
-                      ? "Requerido: confirma el consentimiento de soporte/transaccional."
-                      : "Required: confirm transactional/support consent."}
-                  </p>
-                )}
-              </div>
-
-              <Button
-                type="submit"
-                className="btn-primary-glow h-12 w-full text-base font-black"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {language === "es" ? "Enviando..." : "Submitting..."}
-                  </>
-                ) : language === "es" ? (
-                  "Continuar"
-                ) : (
-                  "Continue"
-                )}
-              </Button>
-            </form>
-          </div>
-        </DialogContent>
-      </Dialog>
     </main>
   );
 }

@@ -124,7 +124,7 @@ export default function Login() {
             </p>
 
             <h1 className="font-display text-4xl font-black leading-tight md:text-5xl">
-              {isSpanish ? "Te damos la bienvenida a VideoRemixesPacks" : "Welcome to VideoRemixesPacks"}
+              {isSpanish ? "Te damos la bienvenida a VideoRemixesPack" : "Welcome to VideoRemixesPack"}
             </h1>
             <p className="mt-4 text-muted-foreground">
               {isSpanish

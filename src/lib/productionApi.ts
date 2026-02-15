@@ -1,4 +1,10 @@
-const PRODUCTION_API_BASE = "https://vr.inowu.dev";
+const PRODUCTION_API_BASE =
+  (import.meta.env.VITE_PRODUCTION_API_BASE as string | undefined)?.trim().replace(/\/$/, "") || "";
+
+function buildApiUrl(path: string): string {
+  if (!PRODUCTION_API_BASE) return path;
+  return `${PRODUCTION_API_BASE}${path}`;
+}
 
 export type TrendingCategory = "Audios" | "Videos" | "Karaoke";
 export type MostDownloadedType = "File" | "Folder";
@@ -81,7 +87,7 @@ async function requestJson<T>(path: string, config: RequestConfig = {}): Promise
     headers.set("Authorization", `Bearer ${config.token}`);
   }
 
-  const response = await fetch(`${PRODUCTION_API_BASE}${path}`, {
+  const response = await fetch(buildApiUrl(path), {
     method: config.method ?? "GET",
     headers,
     body: config.body ? JSON.stringify(config.body) : undefined,
