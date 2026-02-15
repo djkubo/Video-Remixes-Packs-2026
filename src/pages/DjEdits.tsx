@@ -4,7 +4,6 @@ import {
   BadgeCheck,
   CheckCircle2,
   CreditCard,
-  ExternalLink,
   Headphones,
   Loader2,
   Lock,
@@ -81,9 +80,6 @@ function normalizePhoneInput(input: string): { clean: string; digits: string } {
   const digits = clean.startsWith("+") ? clean.slice(1) : clean;
   return { clean, digits };
 }
-
-const COURSE_CHECKOUT_URL =
-  "https://videoremixpack.app.clientclub.net/courses/offers/d5dfb603-d36f-474c-801e-1fce88c1a31d";
 
 const PREVIEW_HLS_URL =
   "https://content.apisystem.tech/hls/medias/kIG3EUjfgGLoNW0QsJLS/media/transcoded_videos/cts-824a03253a87c3fb_,360,480,720,1080,p.mp4.urlset/master.m3u8";
@@ -252,8 +248,60 @@ export default function DjEdits() {
           if (import.meta.env.DEV) console.warn("ManyChat sync threw:", syncErr);
         }
 
-        // After capturing the lead, we can send them to checkout.
-        window.location.href = COURSE_CHECKOUT_URL;
+        // After capturing the lead, redirect to checkout.
+        try {
+          const { data: checkout, error: checkoutError } = await supabase.functions.invoke(
+            "stripe-checkout",
+            {
+              body: { leadId, product: "djedits" },
+            }
+          );
+
+          if (checkoutError && import.meta.env.DEV) {
+            console.warn("Stripe checkout error:", checkoutError);
+          }
+
+          const url = (checkout as { url?: unknown } | null)?.url;
+          if (typeof url === "string" && url.length > 0) {
+            setIsJoinOpen(false);
+            window.location.assign(url);
+            return;
+          }
+        } catch (stripeErr) {
+          if (import.meta.env.DEV) console.warn("Stripe invoke threw:", stripeErr);
+        }
+
+        // Fallback to PayPal if Stripe isn't available.
+        try {
+          const { data: checkout, error: checkoutError } = await supabase.functions.invoke(
+            "paypal-checkout",
+            {
+              body: { action: "create", leadId, product: "djedits" },
+            }
+          );
+
+          if (checkoutError && import.meta.env.DEV) {
+            console.warn("PayPal checkout error:", checkoutError);
+          }
+
+          const approveUrl = (checkout as { approveUrl?: unknown } | null)?.approveUrl;
+          if (typeof approveUrl === "string" && approveUrl.length > 0) {
+            setIsJoinOpen(false);
+            window.location.assign(approveUrl);
+            return;
+          }
+        } catch (paypalErr) {
+          if (import.meta.env.DEV) console.warn("PayPal invoke threw:", paypalErr);
+        }
+
+        toast({
+          title: language === "es" ? "Checkout no disponible" : "Checkout unavailable",
+          description:
+            language === "es"
+              ? "Intenta de nuevo en unos segundos. Si continúa, contáctanos en Soporte."
+              : "Please try again in a few seconds. If it continues, contact Support.",
+          variant: "destructive",
+        });
       } catch (err) {
         console.error("DJEDITS lead submit error:", err);
         toast({
@@ -298,7 +346,7 @@ export default function DjEdits() {
               className="h-10 w-auto object-contain md:h-12"
             />
             <p className="text-xs text-muted-foreground md:text-sm">
-              videoremixespacks@outlook.com
+              soporte@videoremixpack.com
             </p>
           </div>
 
@@ -462,16 +510,6 @@ export default function DjEdits() {
                 <Sparkles className="mr-2 h-5 w-5" />
                 CLICK AQUI
               </Button>
-
-              <a
-                href={COURSE_CHECKOUT_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground"
-              >
-                <ExternalLink className="h-4 w-4" />
-                Abrir checkout en nueva pestaña
-              </a>
 
               <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
                 {paymentBadges.map((label) => (

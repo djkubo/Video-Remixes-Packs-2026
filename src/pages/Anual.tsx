@@ -334,7 +334,7 @@ export default function Anual() {
               className="h-10 w-auto object-contain md:h-12"
             />
             <p className="text-xs text-muted-foreground md:text-sm">
-              videoremixespacks@outlook.com
+              soporte@videoremixpack.com
             </p>
           </div>
 

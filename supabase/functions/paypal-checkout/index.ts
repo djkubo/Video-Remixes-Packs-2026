@@ -14,6 +14,7 @@ type ProductKey =
   | "usb128"
   | "usb_500gb"
   | "anual"
+  | "djedits"
   | "plan_1tb_mensual"
   | "plan_2tb_anual";
 
@@ -49,6 +50,13 @@ const PRODUCTS: Record<ProductKey, ProductConfig> = {
       "Acceso anual a la membresia Video Remix Packs (audio + video + karaoke).",
     defaultAmountCents: 19500,
     envAmountKey: "PAYPAL_ANUAL_AMOUNT_CENTS",
+    shippingPreference: "NO_SHIPPING",
+  },
+  djedits: {
+    name: "Curso DJ Edits (Pago unico)",
+    description: "Curso paso a paso para crear DJ edits desde cero.",
+    defaultAmountCents: 7000,
+    envAmountKey: "PAYPAL_DJEDITS_AMOUNT_CENTS",
     shippingPreference: "NO_SHIPPING",
   },
   plan_1tb_mensual: {
@@ -152,13 +160,9 @@ function isAllowedOrigin(origin: string): boolean {
     const u = new URL(origin);
     if (u.protocol !== "https:" && u.protocol !== "http:") return false;
 
-    const allowedHosts = [
-      "videoremixespacks.com",
-      "www.videoremixespacks.com",
-      "videoremixpack.com",
-      "www.videoremixpack.com",
-    ];
-    if (allowedHosts.includes(u.hostname)) return true;
+    if (u.hostname === "videoremixpack.com") {
+      return true;
+    }
 
     if (u.hostname === "localhost" || u.hostname === "127.0.0.1") return true;
 
@@ -186,7 +190,7 @@ function getSafeSiteOrigin(req: Request): string {
     }
   }
 
-  return "https://videoremixespacks.com";
+  return "https://videoremixpack.com";
 }
 
 function getRedirectPaths(product: ProductKey): { successPath: string; cancelPath: string } {
@@ -197,6 +201,8 @@ function getRedirectPaths(product: ProductKey): { successPath: string; cancelPat
       return { successPath: "/usb-500gb/gracias", cancelPath: "/usb-500gb" };
     case "anual":
       return { successPath: "/anual/gracias", cancelPath: "/anual" };
+    case "djedits":
+      return { successPath: "/djedits/gracias", cancelPath: "/djedits" };
     case "plan_1tb_mensual":
     case "plan_2tb_anual":
       return {

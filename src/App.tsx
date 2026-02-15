@@ -23,6 +23,7 @@ import Membresia from "./pages/Membresia";
 import MembresiaThankYou from "./pages/MembresiaThankYou";
 import Explorer from "./pages/Explorer";
 import DjEdits from "./pages/DjEdits";
+import DjEditsThankYou from "./pages/DjEditsThankYou";
 import AdminLogin from "./pages/AdminLogin";
 import AdminMusic from "./pages/AdminMusic";
 import Admin from "./pages/Admin";
@@ -83,8 +84,10 @@ const App = () => {
                     <Route path="/explorer" element={<Explorer />} />
 
                     <Route path="/djedits" element={<DjEdits />} />
+                    <Route path="/djedits/gracias" element={<DjEditsThankYou />} />
                     {/* Aliases requested by marketing */} 
                     <Route path="/DJEDITS" element={<DjEdits />} />
+                    <Route path="/DJEDITS/gracias" element={<DjEditsThankYou />} />
 
                     <Route path="/gracias" element={<ThankYou />} />
 

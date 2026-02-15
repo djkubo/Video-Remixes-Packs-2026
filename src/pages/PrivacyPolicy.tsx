@@ -96,7 +96,7 @@ export default function PrivacyPolicy() {
 
             <p className="mt-8 text-sm">
               <a
-                href="https://videoremixespacks.com/privacy_policy"
+                href="https://videoremixpack.com/privacy_policy"
                 target="_blank"
                 rel="noreferrer"
                 className="font-semibold text-primary underline-offset-2 hover:underline"

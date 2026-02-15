@@ -23,15 +23,6 @@ const HOSTNAME_FALLBACKS: Record<
   "videoremixpack.com": {
     ...DEFAULT_PUBLIC_SUPABASE,
   },
-  "www.videoremixpack.com": {
-    ...DEFAULT_PUBLIC_SUPABASE,
-  },
-  "videoremixespacks.com": {
-    ...DEFAULT_PUBLIC_SUPABASE,
-  },
-  "www.videoremixespacks.com": {
-    ...DEFAULT_PUBLIC_SUPABASE,
-  },
 };
 
 function isLocalhostHostname(hostname: string): boolean {

@@ -1,4 +1,4 @@
-# robots.txt - VideoRemixPack
+# robots.txt - VideoRemixesPack
 # https://videoremixpack.com
 
 User-agent: Googlebot

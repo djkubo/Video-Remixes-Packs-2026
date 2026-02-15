@@ -247,12 +247,12 @@ export default function Login() {
             <p className="mt-8 text-xs text-muted-foreground">
               {isSpanish ? "¿Prefieres usar el portal oficial?" : "Prefer the official portal?"} {" "}
               <a
-                href="https://videoremixespacks.com/login"
+                href="https://videoremixpack.com/login"
                 target="_blank"
                 rel="noreferrer"
                 className="font-semibold text-primary underline-offset-2 hover:underline"
               >
-                {isSpanish ? "Abrir videoremixespacks.com/login" : "Open videoremixespacks.com/login"}
+                {isSpanish ? "Abrir videoremixpack.com/login" : "Open videoremixpack.com/login"}
               </a>
             </p>
             <p className="mt-2 text-xs text-muted-foreground">

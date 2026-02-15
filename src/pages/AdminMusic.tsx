@@ -545,6 +545,23 @@ export default function AdminMusic() {
     }
   };
 
+  const guessAudioContentType = (file: File): string | undefined => {
+    if (file.type) return file.type;
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    switch (ext) {
+      case "mp3":
+        return "audio/mpeg";
+      case "wav":
+        return "audio/wav";
+      case "m4a":
+        return "audio/mp4";
+      case "flac":
+        return "audio/flac";
+      default:
+        return undefined;
+    }
+  };
+
   const uploadTracks = async () => {
     if (!uploadFiles || uploadFiles.length === 0) return;
 
@@ -562,9 +579,11 @@ export default function AdminMusic() {
           ? `${currentFolderId}/${fileName}`
           : fileName;
 
+        const contentType = guessAudioContentType(file);
+        const uploadOptions = contentType ? { contentType } : undefined;
         const { error: uploadError } = await supabase.storage
           .from("music")
-          .upload(filePath, file);
+          .upload(filePath, file, uploadOptions);
 
         if (uploadError) throw uploadError;
 
@@ -641,9 +660,11 @@ export default function AdminMusic() {
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
+        const contentType = guessAudioContentType(file);
+        const uploadOptions = contentType ? { contentType } : undefined;
         const { error: uploadError } = await supabase.storage
           .from("music")
-          .upload(filePath, file);
+          .upload(filePath, file, uploadOptions);
 
         if (uploadError) {
           if (attempt === maxRetries) {

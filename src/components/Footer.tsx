@@ -24,7 +24,7 @@ const Footer = () => {
           {/* Contact and social */}
           <div className="flex items-center gap-4">
             <a
-              href="mailto:djkubo@live.com.mx"
+              href="mailto:soporte@videoremixpack.com"
               aria-label="Email support"
               className="rounded-full border border-border bg-card p-2 text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
             >
@@ -84,7 +84,7 @@ const Footer = () => {
               {t("footer.privacy")}
             </a>
             <a
-              href="https://videoremixespacks.com/trends"
+              href="https://videoremixpack.com/trends"
               target="_blank"
               rel="noreferrer"
               className="font-sans text-sm text-foreground/72 transition-colors duration-300 hover:text-primary hover:scale-105"

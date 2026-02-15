@@ -153,10 +153,10 @@ export default function Help() {
             <p className="mt-8 text-xs text-muted-foreground">
               {isSpanish ? "Soporte directo:" : "Direct support:"}{" "}
               <a
-                href="mailto:djkubo@live.com.mx"
+                href="mailto:soporte@videoremixpack.com"
                 className="font-semibold text-primary underline-offset-2 hover:underline"
               >
-                djkubo@live.com.mx
+                soporte@videoremixpack.com
               </a>
             </p>
           </div>

@@ -7,7 +7,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 // Optional: set a WhatsApp invite link here if you want to show it immediately
 // after registration. If empty, the page will instruct the user to check WhatsApp.
 const WHATSAPP_GROUP_URL = "";
-const PLAN_URL = "https://videoremixespacks.com/plan";
+const PLAN_URL = "https://videoremixpack.com/plan";
 
 export default function GratisThankYou() {
   const { language } = useLanguage();

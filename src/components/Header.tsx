@@ -26,7 +26,7 @@ const Header = () => {
             Planes
           </a>
           <a
-            href="https://videoremixespacks.com"
+            href="https://videoremixpack.com"
             className="font-sans text-sm text-muted-foreground transition-colors hover:text-primary"
           >
             Sitio Principal

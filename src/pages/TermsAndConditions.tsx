@@ -104,7 +104,7 @@ export default function TermsAndConditions() {
 
             <p className="mt-8 text-sm">
               <a
-                href="https://videoremixespacks.com/terms_and_conditions"
+                href="https://videoremixpack.com/terms_and_conditions"
                 target="_blank"
                 rel="noreferrer"
                 className="font-semibold text-primary underline-offset-2 hover:underline"

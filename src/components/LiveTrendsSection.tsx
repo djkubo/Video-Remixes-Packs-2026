@@ -120,8 +120,8 @@ const LiveTrendsSection = () => {
           </h2>
           <p className="mx-auto mt-4 max-w-3xl text-muted-foreground">
             {language === "es"
-              ? "Datos directos desde videoremixespacks.com (actualizados en tiempo real)."
-              : "Direct data from videoremixespacks.com (real-time updates)."}
+              ? "Datos directos desde videoremixpack.com (actualizados en tiempo real)."
+              : "Direct data from videoremixpack.com (real-time updates)."}
           </p>
           <p className="mt-2 text-xs text-muted-foreground/80">
             {language === "es" ? `Actualizado: ${updatedAt}` : `Updated: ${updatedAt}`}
