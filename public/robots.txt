@@ -1,5 +1,5 @@
-# robots.txt - VideoRemixesPacks
-# https://videoremixespacks.com
+# robots.txt - VideoRemixPack
+# https://videoremixpack.com
 
 User-agent: Googlebot
 Allow: /
@@ -34,7 +34,7 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://videoremixespacks.com/sitemap.xml
+Sitemap: https://videoremixpack.com/sitemap.xml
 
 # Host
-Host: https://videoremixespacks.com
+Host: https://videoremixpack.com
