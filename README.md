@@ -64,6 +64,8 @@ This project is built with:
 
 Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
 
+<!-- build: trigger lovable rebuild (2026-02-15) -->
+
 ## Supabase + Edge Functions (ManyChat)
 
 - This project uses Supabase Edge Functions:
