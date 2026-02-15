@@ -53,6 +53,13 @@ const PRODUCTS: Record<ProductKey, ProductConfig> = {
     shippingPreference: "NO_SHIPPING",
   },
   djedits: {
+    name: "Curso DJ Edits",
+    description: "Aprende a crear tus propios DJ edits desde cero.",
+    defaultAmountCents: 4700,
+    envAmountKey: "PAYPAL_DJEDITS_AMOUNT_CENTS",
+    shippingPreference: "NO_SHIPPING",
+  },
+  djedits: {
     name: "Curso DJ Edits (Pago unico)",
     description: "Curso paso a paso para crear DJ edits desde cero.",
     defaultAmountCents: 7000,

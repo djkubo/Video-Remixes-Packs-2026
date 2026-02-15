@@ -92,6 +92,13 @@ const PRODUCTS: Record<ProductKey, ProductConfig> = {
   },
   djedits: {
     mode: "payment",
+    name: "Curso DJ Edits",
+    description: "Aprende a crear tus propios DJ edits desde cero.",
+    defaultAmountCents: 4700,
+    envAmountKey: "STRIPE_DJEDITS_AMOUNT_CENTS",
+  },
+  djedits: {
+    mode: "payment",
     name: "Curso DJ Edits (Pago unico)",
     description: "Curso paso a paso para crear DJ edits desde cero.",
     defaultAmountCents: 7000,
