@@ -159,8 +159,8 @@ const HeroSection = () => {
 
             <p className="mt-4 text-xs text-muted-foreground">
               {isSpanish
-                ? "Pagos seguros con Stripe y PayPal. Cancela cuando quieras."
-                : "Secure payments with Stripe and PayPal. Cancel anytime."}
+                ? "Pagos seguros con Stripe. Cancela cuando quieras."
+                : "Secure payments with Stripe. Cancel anytime."}
             </p>
           </motion.div>
 

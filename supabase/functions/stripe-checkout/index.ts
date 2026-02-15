@@ -86,7 +86,12 @@ function getSourcePageFromRequest(req: Request): string | null {
   if (!referer) return null;
   try {
     const u = new URL(referer);
-    if (u.hostname !== "videoremixpack.com" && u.hostname !== "localhost" && u.hostname !== "127.0.0.1") {
+    if (
+      u.hostname !== "videoremixpack.com" &&
+      u.hostname !== "www.videoremixpack.com" &&
+      u.hostname !== "localhost" &&
+      u.hostname !== "127.0.0.1"
+    ) {
       return null;
     }
     return cleanSourcePage(u.pathname);
@@ -248,17 +253,12 @@ function isAllowedOrigin(origin: string): boolean {
     if (u.protocol !== "https:" && u.protocol !== "http:") return false;
 
     // Production domains
-    if (u.hostname === "videoremixpack.com") {
+    if (u.hostname === "videoremixpack.com" || u.hostname === "www.videoremixpack.com") {
       return true;
     }
 
     // Local dev
     if (u.hostname === "localhost" || u.hostname === "127.0.0.1") return true;
-
-    // Lovable preview domains
-    if (u.hostname.endsWith(".lovableproject.com") || u.hostname.endsWith(".lovable.app")) {
-      return true;
-    }
 
     return false;
   } catch {

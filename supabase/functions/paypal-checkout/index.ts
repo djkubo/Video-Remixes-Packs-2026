@@ -208,15 +208,11 @@ function isAllowedOrigin(origin: string): boolean {
     const u = new URL(origin);
     if (u.protocol !== "https:" && u.protocol !== "http:") return false;
 
-    if (u.hostname === "videoremixpack.com") {
+    if (u.hostname === "videoremixpack.com" || u.hostname === "www.videoremixpack.com") {
       return true;
     }
 
     if (u.hostname === "localhost" || u.hostname === "127.0.0.1") return true;
-
-    if (u.hostname.endsWith(".lovableproject.com") || u.hostname.endsWith(".lovable.app")) {
-      return true;
-    }
 
     return false;
   } catch {

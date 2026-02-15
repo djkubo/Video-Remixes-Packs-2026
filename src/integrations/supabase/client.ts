@@ -23,6 +23,9 @@ const HOSTNAME_FALLBACKS: Record<
   "videoremixpack.com": {
     ...DEFAULT_PUBLIC_SUPABASE,
   },
+  "www.videoremixpack.com": {
+    ...DEFAULT_PUBLIC_SUPABASE,
+  },
 };
 
 function isLocalhostHostname(hostname: string): boolean {
@@ -41,19 +44,14 @@ function getFallbackForHostname(
 ): { projectId: string; anonKey: string; url?: string } | undefined {
   if (!hostname) return undefined;
 
-  const direct = HOSTNAME_FALLBACKS[hostname];
+  const key = hostname.toLowerCase();
+  const direct = HOSTNAME_FALLBACKS[key];
   if (direct) return direct;
 
-  // Lovable preview domains frequently use random subdomains. Use the default
-  // public config so previews don't crash with "Supabase URL is required".
-  const lower = hostname.toLowerCase();
-  if (lower.endsWith(".lovableproject.com") || lower.endsWith(".lovable.app")) {
-    return DEFAULT_PUBLIC_SUPABASE;
-  }
-
-  if (!isLocalhostHostname(hostname)) {
-    return DEFAULT_PUBLIC_SUPABASE;
-  }
+  // IMPORTANT:
+  // Do not fallback on other hostnames. This prevents accidental reuse of the
+  // production Supabase project from other domains.
+  if (isLocalhostHostname(key)) return undefined;
 
   return undefined;
 }
