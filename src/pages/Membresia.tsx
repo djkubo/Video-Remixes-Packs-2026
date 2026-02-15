@@ -433,7 +433,7 @@ export default function Membresia() {
           tags: planTags,
           funnel_step: "lead_submit",
           source_page: sourcePage,
-          experiment_assignments: experimentAssignments,
+          experiment_assignments: experimentAssignments as unknown as import("@/integrations/supabase/types").Json[],
           intent_plan: selectedPlan,
         };
 
@@ -445,13 +445,13 @@ export default function Membresia() {
           consent_marketing_at: consentMarketing ? new Date().toISOString() : null,
         };
 
-        let { error: insertError } = await supabase.from("leads").insert(leadWithConsent);
+        let { error: insertError } = await supabase.from("leads").insert([leadWithConsent]);
         // If the DB migration hasn't been applied yet, avoid breaking lead capture.
         if (insertError && /consent_(transactional|marketing)/i.test(insertError.message)) {
           if (import.meta.env.DEV) {
             console.warn("Leads consent columns missing. Retrying insert without consent fields.");
           }
-          ({ error: insertError } = await supabase.from("leads").insert(leadBase));
+          ({ error: insertError } = await supabase.from("leads").insert([leadBase]));
         }
 
         if (insertError) throw insertError;
