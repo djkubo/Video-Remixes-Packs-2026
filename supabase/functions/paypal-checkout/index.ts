@@ -531,27 +531,51 @@ Deno.serve(async (req) => {
       });
     }
 
+    const orderStatusRaw = typeof orderInfo.json.status === "string" ? orderInfo.json.status : "";
+    const orderStatus = orderStatusRaw.trim().toUpperCase();
+    const alreadyCompleted = orderStatus === "COMPLETED";
+
     // Enforce US-only shipping for physical products (USBs) BEFORE capturing payment.
+    // If the order is already completed, we cannot block capture; mark for manual follow-up instead.
+    let shippingCountry = "";
+    let shippingAllowed = true;
     if (parsedProduct && isShippingProduct(parsedProduct)) {
-      const shippingCountry = getOrderShippingCountryCode(orderInfo.json);
+      shippingCountry = getOrderShippingCountryCode(orderInfo.json);
 
       if (!shippingCountry) {
-        return new Response(
-          JSON.stringify({
-            ok: true,
-            completed: false,
-            code: "SHIPPING_ADDRESS_REQUIRED",
-            message: "Shipping address is required for this product",
-          }),
-          {
-            status: 200,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
+        shippingAllowed = false;
+        // Best-effort: mark lead for manual follow-up when order is already completed.
+        if (alreadyCompleted) {
+          try {
+            const { data: lead } = await supabaseAdmin
+              .from("leads")
+              .select("tags")
+              .eq("id", leadId)
+              .maybeSingle();
+            const nextTags = mergeTags(lead?.tags, ["needs_shipping"]);
+            await supabaseAdmin.from("leads").update({ tags: nextTags }).eq("id", leadId);
+          } catch {
+            // ignore
           }
-        );
-      }
+        }
+        if (!alreadyCompleted) {
+          return new Response(
+            JSON.stringify({
+              ok: true,
+              completed: false,
+              code: "SHIPPING_ADDRESS_REQUIRED",
+              message: "Shipping address is required for this product",
+            }),
+            {
+              status: 200,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            }
+          );
+        }
+      } else if (shippingCountry !== "US") {
+        shippingAllowed = false;
 
-      if (shippingCountry !== "US") {
-        // Best-effort: mark lead for manual follow-up (do not treat as "paid").
+        // Best-effort: mark lead for manual follow-up.
         try {
           const { data: lead } = await supabaseAdmin
             .from("leads")
@@ -564,40 +588,62 @@ Deno.serve(async (req) => {
           // ignore
         }
 
-        return new Response(
-          JSON.stringify({
-            ok: true,
-            completed: false,
-            code: "SHIPPING_COUNTRY_NOT_ALLOWED",
-            allowedCountries: ["US"],
-            country: shippingCountry,
-          }),
-          {
-            status: 200,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
-        );
+        if (!alreadyCompleted) {
+          return new Response(
+            JSON.stringify({
+              ok: true,
+              completed: false,
+              code: "SHIPPING_COUNTRY_NOT_ALLOWED",
+              allowedCountries: ["US"],
+              country: shippingCountry,
+            }),
+            {
+              status: 200,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            }
+          );
+        }
       }
     }
 
-    const captureInfo = await paypalFetchJson({
-      baseUrl,
-      token: accessToken,
-      method: "POST",
-      path: `/v2/checkout/orders/${encodeURIComponent(orderId)}/capture`,
-      body: {},
-    });
+    let status = orderStatusRaw;
+    let completed = alreadyCompleted;
 
-    if (!captureInfo.ok) {
-      console.error("[PayPal] Capture failed");
-      return new Response(JSON.stringify({ error: "PayPal capture failed" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    if (!alreadyCompleted) {
+      const captureInfo = await paypalFetchJson({
+        baseUrl,
+        token: accessToken,
+        method: "POST",
+        path: `/v2/checkout/orders/${encodeURIComponent(orderId)}/capture`,
+        body: {},
       });
-    }
 
-    const status = typeof captureInfo.json.status === "string" ? captureInfo.json.status : "";
-    const completed = status.toUpperCase() === "COMPLETED";
+      if (!captureInfo.ok) {
+        // If the order was captured by another flow (e.g. webhook), treat this as success.
+        const refreshed = await paypalFetchJson({
+          baseUrl,
+          token: accessToken,
+          method: "GET",
+          path: `/v2/checkout/orders/${encodeURIComponent(orderId)}`,
+        });
+
+        const refreshedStatusRaw = typeof refreshed.json.status === "string" ? refreshed.json.status : "";
+        const refreshedCompleted = refreshedStatusRaw.trim().toUpperCase() === "COMPLETED";
+        if (!refreshed.ok || !refreshedCompleted) {
+          console.error("[PayPal] Capture failed");
+          return new Response(JSON.stringify({ error: "PayPal capture failed" }), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        status = refreshedStatusRaw;
+        completed = true;
+      } else {
+        status = typeof captureInfo.json.status === "string" ? captureInfo.json.status : "";
+        completed = status.toUpperCase() === "COMPLETED";
+      }
+    }
 
     // Track successful payment in DB (best-effort).
     let shippo: { ok: boolean; labelUrl?: string; trackingNumber?: string } | undefined;
@@ -613,7 +659,7 @@ Deno.serve(async (req) => {
         const baseTags = mergeTags(lead?.tags, ["paid_paypal"]);
 
         // Auto-create a Shippo label for physical products (USBs) if Shippo is configured.
-        if (parsedProduct && isShippingProduct(parsedProduct)) {
+        if (shippingAllowed && parsedProduct && isShippingProduct(parsedProduct)) {
           const alreadyHasLabel =
             baseTags.includes("shippo_label_created") || baseTags.includes("shippo_label");
 
