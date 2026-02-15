@@ -72,7 +72,7 @@ export default function DemosSection() {
 
         const nextTracks: DemoTrack[] = (data ?? [])
           .filter(
-            (row): row is { id: string; title: string; artist: string; file_url: string } =>
+            (row): row is { id: string; title: string; artist: string; file_url: string; genre: string } =>
               Boolean(row?.id) &&
               typeof row.title === "string" &&
               typeof row.artist === "string" &&

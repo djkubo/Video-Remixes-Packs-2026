@@ -197,10 +197,6 @@ export type Database = {
       }
       leads: {
         Row: {
-          consent_marketing: boolean | null
-          consent_marketing_at: string | null
-          consent_transactional: boolean | null
-          consent_transactional_at: string | null
           country_code: string | null
           country_name: string | null
           created_at: string
@@ -228,10 +224,6 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          consent_marketing?: boolean | null
-          consent_marketing_at?: string | null
-          consent_transactional?: boolean | null
-          consent_transactional_at?: string | null
           country_code?: string | null
           country_name?: string | null
           created_at?: string
@@ -259,10 +251,6 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          consent_marketing?: boolean | null
-          consent_marketing_at?: string | null
-          consent_transactional?: boolean | null
-          consent_transactional_at?: string | null
           country_code?: string | null
           country_name?: string | null
           created_at?: string

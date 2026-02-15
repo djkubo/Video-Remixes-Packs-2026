@@ -519,7 +519,7 @@ export const useAnalytics = () => {
       event_data: {
         ...data,
         ...standardPayload,
-      } as Json,
+      } as unknown as Json,
       page_path: pagePath,
     });
 

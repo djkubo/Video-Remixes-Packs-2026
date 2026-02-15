@@ -233,8 +233,8 @@ const LiveTrendsSection = () => {
                       <span className="text-xs font-bold text-primary">#{index + 1}</span>
                       <p className="truncate font-medium">{getFolderLabel(item)}</p>
                       <span className="text-right text-xs text-muted-foreground">
-                        {(item as { downloadCount?: number }).downloadCount
-                          ? `${(item as { downloadCount: number }).downloadCount}x`
+                        {(item as unknown as { downloadCount?: number }).downloadCount
+                          ? `${(item as unknown as { downloadCount: number }).downloadCount}x`
                           : ""}
                       </span>
                     </div>

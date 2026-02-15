@@ -178,9 +178,13 @@ function isAllowedOrigin(origin: string): boolean {
     if (u.protocol !== "https:" && u.protocol !== "http:") return false;
 
     // Production domains
-    if (u.hostname === "videoremixpack.com" || u.hostname === "www.videoremixpack.com") {
-      return true;
-    }
+    const allowedHosts = [
+      "videoremixespacks.com",
+      "www.videoremixespacks.com",
+      "videoremixpack.com",
+      "www.videoremixpack.com",
+    ];
+    if (allowedHosts.includes(u.hostname)) return true;
 
     // Local dev
     if (u.hostname === "localhost" || u.hostname === "127.0.0.1") return true;
@@ -211,7 +215,7 @@ function getSafeSiteOrigin(req: Request): string {
   }
 
   // Safe default (prevents open redirects).
-  return "https://videoremixpack.com";
+  return "https://videoremixespacks.com";
 }
 
 function getRedirectPaths(product: ProductKey): { successPath: string; cancelPath: string } {

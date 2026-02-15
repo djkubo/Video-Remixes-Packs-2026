@@ -20,7 +20,8 @@ export default function HlsVideo({ src, poster, className }: HlsVideoProps) {
     }
 
     let cancelled = false;
-    let hls: { destroy: () => void } | null = null;
+    // deno-lint-ignore no-explicit-any
+    let hls: any = null;
 
     const setup = async () => {
       try {

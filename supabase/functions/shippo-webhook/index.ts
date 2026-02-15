@@ -96,17 +96,8 @@ function mergeTags(existing: unknown, add: string[]): string[] {
   return Array.from(set).slice(0, 30);
 }
 
-type SupabaseUpdateLike = {
-  eq: (column: string, value: string) => Promise<unknown>;
-};
-
-type SupabaseFromLike = {
-  update: (values: Record<string, unknown>) => SupabaseUpdateLike;
-};
-
-type SupabaseAdminLike = {
-  from: (table: string) => SupabaseFromLike;
-};
+// deno-lint-ignore no-explicit-any
+type SupabaseAdminLike = any;
 
 function extractLeadIdFromMetadata(value: unknown): string | null {
   if (!value) return null;
