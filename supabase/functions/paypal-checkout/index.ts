@@ -257,6 +257,7 @@ function getRedirectPaths(product: ProductKey): { successPath: string; cancelPat
       return { successPath: "/djedits/gracias", cancelPath: "/djedits" };
     case "plan_1tb_mensual":
     case "plan_2tb_anual":
+    case "plan_1tb_trimestral":
       return {
         successPath: `/membresia/gracias?plan=${encodeURIComponent(product)}`,
         cancelPath: `/membresia?plan=${encodeURIComponent(product)}`,
