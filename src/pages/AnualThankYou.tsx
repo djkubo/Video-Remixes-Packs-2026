@@ -90,6 +90,14 @@ export default function AnualThankYou() {
     (hasStripeSession && stripeVerifyState === "success") ||
     (hasPayPalOrder && paypalCaptureState === "success");
 
+  const isProcessing =
+    (hasStripeSession && stripeVerifyState === "processing") ||
+    (hasPayPalOrder && paypalCaptureState === "processing");
+
+  const hasError =
+    (hasStripeSession && stripeVerifyState === "error") ||
+    (hasPayPalOrder && paypalCaptureState === "error");
+
   return (
     <main className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
@@ -109,7 +117,21 @@ export default function AnualThankYou() {
           </motion.div>
 
           <h1 className="text-3xl md:text-4xl font-bold mb-4">
-            {language === "es" ? "¡Listo!" : "All set!"}
+            {paidConfirmed
+              ? language === "es"
+                ? "¡Pago confirmado!"
+                : "Payment confirmed!"
+              : isProcessing
+                ? language === "es"
+                  ? "Confirmando pago..."
+                  : "Confirming payment..."
+                : hasError
+                  ? language === "es"
+                    ? "Pago pendiente"
+                    : "Payment pending"
+                  : language === "es"
+                    ? "¡Listo!"
+                    : "All set!"}
           </h1>
 
           <p className="text-lg text-muted-foreground mb-8">

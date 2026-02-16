@@ -11,7 +11,7 @@ import { useAnalytics } from "@/hooks/useAnalytics";
 import { useDataLayer } from "@/hooks/useDataLayer";
 import { useEngagementTracking } from "@/hooks/useEngagementTracking";
 
-const PLAN_URL = "https://videoremixpack.com/plan";
+const PLAN_URL = "/plan";
 
 export default function Index() {
   const { trackEvent } = useAnalytics();

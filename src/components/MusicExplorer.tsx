@@ -16,14 +16,8 @@ import {
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDataLayer } from "@/hooks/useDataLayer";
 import { useAnalytics } from "@/hooks/useAnalytics";
-import {
-  extractBpm,
-  extractGenreFromPath,
-  fetchGenresSelect,
-  fetchLastWeeks,
-  formatDuration,
-  type ProductionFile,
-} from "@/lib/productionApi";
+import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 
 type ExplorerTrack = {
   id: string;
@@ -41,22 +35,31 @@ type MusicExplorerProps = {
 
 type ExplorerDataSource = "live" | "cache" | "fallback";
 
-function toTrack(file: ProductionFile, index: number): ExplorerTrack {
-  const titleFromName = file.name.replace(/\.[^/.]+$/, "");
-  const title = file.title?.trim() || titleFromName;
-  const artistFromName = file.name.includes(" - ") ? file.name.split(" - ")[0]?.trim() : "";
-  const artist = file.artist?.trim() || artistFromName || "VideoRemixesPack";
-  const genreFromList = file.genre?.[0]?.trim();
-  const genre = genreFromList || extractGenreFromPath(file.path) || "Sin género";
+type SupabaseTrackRow = Database["public"]["Tables"]["tracks"]["Row"];
+
+function formatDurationFromSeconds(seconds?: number | null): string {
+  if (!seconds || Number.isNaN(seconds)) return "--:--";
+  const total = Math.max(0, Math.floor(seconds));
+  const mins = Math.floor(total / 60);
+  const secs = total % 60;
+  return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+}
+
+function toExplorerTrack(row: SupabaseTrackRow): ExplorerTrack {
+  const title = row.title?.trim() || "Untitled";
+  const artist = row.artist?.trim() || "VideoRemixesPack";
+  const genre = (row.genre || "").trim() || "General";
+  const durationFormatted =
+    (row.duration_formatted || "").trim() || formatDurationFromSeconds(row.duration_seconds);
 
   return {
-    id: file.id || file.path || `${title}-${index}`,
+    id: row.id,
     title,
     artist,
     genre,
-    durationFormatted: formatDuration(file.duration),
-    bpm: extractBpm(file.name) ?? extractBpm(file.title),
-    path: file.path || "",
+    durationFormatted,
+    bpm: row.bpm ?? null,
+    path: row.file_path?.trim() || row.file_url?.trim() || "",
   };
 }
 
@@ -183,7 +186,7 @@ const MusicExplorer = ({ compact = false }: MusicExplorerProps) => {
   const [selectedTrack, setSelectedTrack] = useState<ExplorerTrack | null>(null);
 
   useEffect(() => {
-    const controller = new AbortController();
+    let cancelled = false;
     const startedAt = typeof performance !== "undefined" ? performance.now() : Date.now();
 
     const cached = typeof window !== "undefined" ? readExplorerCache() : null;
@@ -206,24 +209,19 @@ const MusicExplorer = ({ compact = false }: MusicExplorerProps) => {
       setError(null);
 
       try {
-        const [genresResult, weeksResult] = await Promise.allSettled([
-          fetchGenresSelect(controller.signal),
-          fetchLastWeeks(controller.signal),
-        ]);
+        const limit = isCompactPreview ? 220 : 800;
+        const { data, error: supabaseError } = await supabase
+          .from("tracks")
+          .select(
+            "id,title,artist,genre,bpm,duration_formatted,duration_seconds,file_path,file_url,created_at"
+          )
+          .eq("is_visible", true)
+          .order("created_at", { ascending: false })
+          .limit(limit);
 
-        const genresFromApi =
-          genresResult.status === "fulfilled"
-            ? genresResult.value.data
-                .map((item) => item.name?.trim())
-                .filter((name): name is string => Boolean(name))
-            : [];
+        if (supabaseError) throw supabaseError;
 
-        const tracksFromApi =
-          weeksResult.status === "fulfilled"
-            ? weeksResult.value
-                .flatMap((week) => week.files || [])
-                .map((file, index) => toTrack(file, index))
-            : [];
+        const tracksFromApi = (data || []).map((row) => toExplorerTrack(row as SupabaseTrackRow));
 
         const dedupedTracks = Array.from(
           new Map(tracksFromApi.map((track) => [track.id, track])).values(),
@@ -231,7 +229,6 @@ const MusicExplorer = ({ compact = false }: MusicExplorerProps) => {
 
         const dedupedGenres = Array.from(
           new Set([
-            ...genresFromApi,
             ...dedupedTracks.map((track) => track.genre).filter(Boolean),
           ]),
         ).sort((a, b) => a.localeCompare(b));
@@ -240,6 +237,7 @@ const MusicExplorer = ({ compact = false }: MusicExplorerProps) => {
           throw new Error("No se pudo cargar contenido de producción");
         }
 
+        if (cancelled) return;
         setKnownGenres(dedupedGenres);
         setAllTracks(dedupedTracks);
         setDataSource("live");
@@ -256,6 +254,7 @@ const MusicExplorer = ({ compact = false }: MusicExplorerProps) => {
         trackEvent("explorer_load", {
           ok: true,
           source: "live",
+          provider: "supabase",
           route: location.pathname,
           compact: isCompactPreview,
           genres_count: dedupedGenres.length,
@@ -268,6 +267,7 @@ const MusicExplorer = ({ compact = false }: MusicExplorerProps) => {
         const rawMessage =
           loadError instanceof Error ? loadError.message : String(loadError);
 
+        if (cancelled) return;
         if (cacheUsable) {
           setDataSource("cache");
           setError(
@@ -293,6 +293,7 @@ const MusicExplorer = ({ compact = false }: MusicExplorerProps) => {
         trackEvent("explorer_load", {
           ok: false,
           source: cacheUsable ? "cache" : "fallback",
+          provider: "supabase",
           route: location.pathname,
           compact: isCompactPreview,
           cache_present: cacheUsable,
@@ -307,7 +308,9 @@ const MusicExplorer = ({ compact = false }: MusicExplorerProps) => {
 
     void loadData();
 
-    return () => controller.abort();
+    return () => {
+      cancelled = true;
+    };
   }, [isCompactPreview, language, location.pathname, reloadKey, trackEvent]);
 
   useEffect(() => {
@@ -408,8 +411,8 @@ const MusicExplorer = ({ compact = false }: MusicExplorerProps) => {
           <p className={`mx-auto text-muted-foreground ${isCompactPreview ? "max-w-2xl text-sm md:text-base" : "max-w-3xl"}`}>
             {isGenresRoute
               ? language === "es"
-                ? "Listado actualizado desde la API de producción. Selecciona un género para ver ejemplos recientes."
-                : "Live list from the production API. Select a genre to view recent examples."
+                ? "Listado actualizado del catálogo en vivo. Selecciona un género para ver ejemplos recientes."
+                : "Live list from the catalog. Select a genre to view recent examples."
               : isCompactPreview
                 ? language === "es"
                   ? "Muestra real y simplificada del contenido actualizado. Para búsqueda avanzada usa el explorador completo."

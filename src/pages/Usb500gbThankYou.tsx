@@ -115,6 +115,14 @@ export default function Usb500gbThankYou() {
   const shippingBlocked =
     hasPayPalOrder && paypalCaptureState === "shipping_not_allowed";
 
+  const isProcessing =
+    (hasStripeSession && stripeVerifyState === "processing") ||
+    (hasPayPalOrder && paypalCaptureState === "processing");
+
+  const hasError =
+    (hasStripeSession && stripeVerifyState === "error") ||
+    (hasPayPalOrder && paypalCaptureState === "error");
+
   const trackingNumber =
     shippoInfo && typeof shippoInfo === "object" ? shippoInfo.trackingNumber : undefined;
   const labelUrl =
@@ -151,9 +159,21 @@ export default function Usb500gbThankYou() {
               ? language === "es"
                 ? "Atención"
                 : "Action needed"
-              : language === "es"
-                ? "¡Listo!"
-                : "All set!"}
+              : paidConfirmed
+                ? language === "es"
+                  ? "¡Pago confirmado!"
+                  : "Payment confirmed!"
+                : isProcessing
+                  ? language === "es"
+                    ? "Confirmando pago..."
+                    : "Confirming payment..."
+                  : hasError
+                    ? language === "es"
+                      ? "Pago pendiente"
+                      : "Payment pending"
+                    : language === "es"
+                      ? "¡Listo!"
+                      : "All set!"}
           </h1>
 
           <p className="text-lg text-muted-foreground mb-8">

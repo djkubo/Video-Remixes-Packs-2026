@@ -8,6 +8,8 @@ type FooterProps = {
 };
 
 export default function Footer({ whatsappJoinUrl, onCtaClick }: FooterProps) {
+  const isInternal = whatsappJoinUrl.startsWith("/");
+
   return (
     <footer>
       <div className="border-t border-[#5E5E5E] bg-[#111111]/30 px-4 py-16 text-center">
@@ -20,10 +22,17 @@ export default function Footer({ whatsappJoinUrl, onCtaClick }: FooterProps) {
             className="min-h-[56px] w-full bg-[#AA0202] px-6 font-bebas text-2xl uppercase tracking-wide text-[#EFEFEF] shadow-lg hover:bg-[#8A0101]"
             onClick={onCtaClick}
           >
-            <a href={whatsappJoinUrl} target="_blank" rel="noopener noreferrer">
-              <MessageCircle />
-              INICIAR MI PRUEBA DE 7 DÍAS
-            </a>
+            {isInternal ? (
+              <Link to={whatsappJoinUrl}>
+                <MessageCircle />
+                INICIAR MI PRUEBA DE 7 DÍAS
+              </Link>
+            ) : (
+              <a href={whatsappJoinUrl} target="_blank" rel="noopener noreferrer">
+                <MessageCircle />
+                INICIAR MI PRUEBA DE 7 DÍAS
+              </a>
+            )}
           </Button>
         </div>
       </div>

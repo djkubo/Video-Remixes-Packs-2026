@@ -1,4 +1,5 @@
 import { MessageCircle } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 type HeroCommunitySectionProps = {
@@ -12,6 +13,8 @@ export default function HeroCommunitySection({
   onPrimaryCtaClick,
   onSecondaryCtaClick,
 }: HeroCommunitySectionProps) {
+  const isInternal = whatsappGroupUrl.startsWith("/");
+
   return (
     <section className="relative overflow-hidden bg-[#070707] px-4 pb-10 pt-12 md:pb-14 md:pt-16">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(170,2,2,0.24),transparent_46%),radial-gradient(circle_at_10%_0%,rgba(239,239,239,0.06),transparent_40%)]" />
@@ -34,10 +37,17 @@ export default function HeroCommunitySection({
             className="min-h-[56px] w-full bg-[#AA0202] px-6 font-bebas text-2xl uppercase tracking-wide text-[#EFEFEF] shadow-lg hover:bg-[#8A0101] md:w-auto"
             onClick={onPrimaryCtaClick}
           >
-            <a href={whatsappGroupUrl} target="_blank" rel="noopener noreferrer">
-              <MessageCircle />
-              INICIAR PRUEBA DE 7 DÍAS (100GB)
-            </a>
+            {isInternal ? (
+              <Link to={whatsappGroupUrl}>
+                <MessageCircle />
+                INICIAR PRUEBA DE 7 DÍAS (100GB)
+              </Link>
+            ) : (
+              <a href={whatsappGroupUrl} target="_blank" rel="noopener noreferrer">
+                <MessageCircle />
+                INICIAR PRUEBA DE 7 DÍAS (100GB)
+              </a>
+            )}
           </Button>
 
           <Button

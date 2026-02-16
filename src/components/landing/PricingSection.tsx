@@ -1,4 +1,5 @@
 import { CheckCircle2 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 type PricingSectionProps = {
@@ -47,9 +48,9 @@ export default function PricingSection({ checkoutUrl }: PricingSectionProps) {
                 variant="outline"
                 className="min-h-[56px] w-full border-[#AA0202] bg-transparent font-bebas text-xl uppercase tracking-wide text-[#EFEFEF] hover:bg-[#AA0202]/15 hover:text-[#EFEFEF]"
               >
-                <a href={monthlyUrl} target="_blank" rel="noopener noreferrer">
+                <Link to={monthlyUrl}>
                   ELEGIR PLAN MENSUAL
-                </a>
+                </Link>
               </Button>
             </div>
           </article>
@@ -84,9 +85,9 @@ export default function PricingSection({ checkoutUrl }: PricingSectionProps) {
                 asChild
                 className="min-h-[56px] w-full bg-[#111111] border border-[#AA0202] font-bebas text-2xl uppercase tracking-wide text-[#EFEFEF] hover:bg-[#AA0202]/15"
               >
-                <a href={quarterlyUrl} target="_blank" rel="noopener noreferrer">
+                <Link to={quarterlyUrl}>
                   EMPEZAR TRIMESTRAL
-                </a>
+                </Link>
               </Button>
             </div>
           </article>
@@ -125,9 +126,9 @@ export default function PricingSection({ checkoutUrl }: PricingSectionProps) {
                 asChild
                 className="min-h-[56px] w-full bg-[#AA0202] font-bebas text-2xl uppercase tracking-wide text-[#EFEFEF] hover:bg-[#8A0101]"
               >
-                <a href={annualUrl} target="_blank" rel="noopener noreferrer">
+                <Link to={annualUrl}>
                   HAZTE ELITE
-                </a>
+                </Link>
               </Button>
               <p className="mt-3 text-center font-sans text-xs text-muted-foreground">
                 Ahorras $225 en comparación al plan mensual.
