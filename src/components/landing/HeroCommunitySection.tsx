@@ -1,12 +1,48 @@
-import { MessageCircle } from "lucide-react";
+import { Zap, Users, Disc3, Music } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useEffect, useRef, useState } from "react";
 
 type HeroCommunitySectionProps = {
   whatsappGroupUrl: string;
   onPrimaryCtaClick?: () => void;
   onSecondaryCtaClick?: () => void;
 };
+
+function AnimatedCounter({ target, suffix = "" }: { target: number; suffix?: string }) {
+  const [count, setCount] = useState(0);
+  const ref = useRef<HTMLSpanElement>(null);
+  const animated = useRef(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !animated.current) {
+          animated.current = true;
+          const duration = 1800;
+          const start = performance.now();
+          const step = (now: number) => {
+            const elapsed = now - start;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            setCount(Math.round(target * eased));
+            if (progress < 1) requestAnimationFrame(step);
+          };
+          requestAnimationFrame(step);
+        }
+      },
+      { threshold: 0.3 }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [target]);
+
+  return (
+    <span ref={ref} className="tabular-nums">
+      {count.toLocaleString()}{suffix}
+    </span>
+  );
+}
 
 export default function HeroCommunitySection({
   whatsappGroupUrl,
@@ -39,12 +75,12 @@ export default function HeroCommunitySection({
           >
             {isInternal ? (
               <Link to={whatsappGroupUrl}>
-                <MessageCircle />
+                <Zap className="h-5 w-5" />
                 INICIAR PRUEBA DE 7 DÍAS (100GB)
               </Link>
             ) : (
               <a href={whatsappGroupUrl} target="_blank" rel="noopener noreferrer">
-                <MessageCircle />
+                <Zap className="h-5 w-5" />
                 INICIAR PRUEBA DE 7 DÍAS (100GB)
               </a>
             )}
@@ -58,6 +94,33 @@ export default function HeroCommunitySection({
           >
             <a href="#demos">VER DEMOS Y PRECIOS</a>
           </Button>
+        </div>
+
+        {/* Social proof stats bar */}
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-6 md:gap-10">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Users className="h-4 w-4 text-[#AA0202]" />
+            <span className="font-bebas text-xl text-[#EFEFEF]">
+              <AnimatedCounter target={4800} suffix="+" />
+            </span>
+            <span className="font-sans text-xs uppercase tracking-wide">DJs activos</span>
+          </div>
+          <div className="hidden h-4 w-px bg-[#5E5E5E] md:block" />
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Disc3 className="h-4 w-4 text-[#AA0202]" />
+            <span className="font-bebas text-xl text-[#EFEFEF]">
+              <AnimatedCounter target={150000} suffix="+" />
+            </span>
+            <span className="font-sans text-xs uppercase tracking-wide">archivos</span>
+          </div>
+          <div className="hidden h-4 w-px bg-[#5E5E5E] md:block" />
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Music className="h-4 w-4 text-[#AA0202]" />
+            <span className="font-bebas text-xl text-[#EFEFEF]">
+              <AnimatedCounter target={30} suffix="+" />
+            </span>
+            <span className="font-sans text-xs uppercase tracking-wide">géneros</span>
+          </div>
         </div>
       </div>
     </section>

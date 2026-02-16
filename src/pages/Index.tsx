@@ -3,6 +3,7 @@ import LandingLayout from "@/components/landing/LandingLayout";
 import HeroCommunitySection from "@/components/landing/HeroCommunitySection";
 import HowItWorksSection from "@/components/landing/HowItWorksSection";
 import DemosSection from "@/components/landing/DemosSection";
+import CountdownBanner from "@/components/landing/CountdownBanner";
 import PricingSection from "@/components/landing/PricingSection";
 import SocialProofSection from "@/components/landing/SocialProofSection";
 import FaqSection from "@/components/landing/FaqSection";
@@ -44,6 +45,7 @@ export default function Index() {
       />
       <HowItWorksSection />
       <DemosSection />
+      <CountdownBanner />
       <PricingSection checkoutUrl={PLAN_URL} />
       <SocialProofSection />
       <FaqSection />

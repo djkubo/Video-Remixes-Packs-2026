@@ -1,4 +1,4 @@
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, ArrowRight, Crown } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
@@ -19,7 +19,21 @@ export default function PricingSection({ checkoutUrl }: PricingSectionProps) {
   return (
     <section className="bg-[#070707] px-4 pb-16">
       <div className="mx-auto max-w-6xl">
-        <div className="mt-16 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-stretch">
+        {/* Value anchor */}
+        <div className="mb-10 text-center">
+          <p className="font-sans text-sm text-muted-foreground">
+            Suscribirte a BPMSupreme + DJCity + Beatjunkies por separado =
+          </p>
+          <p className="mt-1 font-bebas text-3xl text-[#5E5E5E] line-through decoration-[#AA0202] md:text-4xl">
+            $500+ USD / MES
+          </p>
+          <p className="mt-2 font-bebas text-xl uppercase text-[#EFEFEF] md:text-2xl">
+            Con VRP obtienes TODO desde <span className="text-[#AA0202]">$16.25/mes</span>
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-stretch">
+          {/* Monthly */}
           <article className="rounded-2xl border border-[#5E5E5E] bg-[#111111] p-6">
             <div>
               <p className="font-bebas text-3xl uppercase tracking-wide text-[#EFEFEF]">
@@ -55,6 +69,7 @@ export default function PricingSection({ checkoutUrl }: PricingSectionProps) {
             </div>
           </article>
 
+          {/* Quarterly */}
           <article className="rounded-2xl border border-[#5E5E5E] bg-[#111111] p-6">
             <div>
               <p className="font-bebas text-3xl uppercase tracking-wide text-[#EFEFEF]">
@@ -62,7 +77,7 @@ export default function PricingSection({ checkoutUrl }: PricingSectionProps) {
               </p>
               <p className="mt-1 font-bebas text-5xl uppercase text-[#EFEFEF]">$90USD/3m</p>
               <p className="mt-2 font-sans text-sm font-semibold text-[#AA0202]">
-                Equivale a $30 / mes
+                Equivale a $30 / mes — Ahorras $15
               </p>
             </div>
 
@@ -92,18 +107,23 @@ export default function PricingSection({ checkoutUrl }: PricingSectionProps) {
             </div>
           </article>
 
-          <article className="relative rounded-2xl border-2 border-[#AA0202] bg-[#111111] p-6 lg:scale-105">
-            <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#AA0202] px-4 py-1 font-bebas text-xs uppercase tracking-wide text-[#EFEFEF]">
-              LA ELECCIÓN DEL DJ EMPRESARIO
+          {/* Annual / Elite — RECOMMENDED */}
+          <article className="relative rounded-2xl border-2 border-[#AA0202] bg-[#111111] p-6 lg:scale-105 shadow-[0_0_60px_rgba(170,2,2,0.2)]">
+            <span className="absolute -top-4 left-1/2 -translate-x-1/2 inline-flex items-center gap-1.5 rounded-full bg-[#AA0202] px-5 py-1.5 font-bebas text-sm uppercase tracking-wide text-[#EFEFEF] shadow-lg">
+              <Crown className="h-4 w-4" />
+              RECOMENDADO — LA ELECCIÓN DEL DJ PRO
             </span>
 
-            <div className="mt-2">
+            <div className="mt-3">
               <p className="font-bebas text-3xl uppercase tracking-wide text-[#EFEFEF]">
                 Plan 2 TB / Mes – 195 Anual
               </p>
-              <p className="mt-1 font-bebas text-5xl uppercase text-[#EFEFEF]">$195USD/a</p>
+              <div className="mt-1 flex items-baseline gap-3">
+                <p className="font-bebas text-5xl uppercase text-[#EFEFEF]">$195USD/a</p>
+                <p className="font-bebas text-2xl text-[#5E5E5E] line-through">$420</p>
+              </div>
               <p className="mt-2 font-sans text-sm font-semibold text-[#AA0202]">
-                Equivale a solo $16.25 / mes
+                Equivale a solo $16.25 / mes — ¡53% de descuento!
               </p>
             </div>
 
@@ -113,6 +133,7 @@ export default function PricingSection({ checkoutUrl }: PricingSectionProps) {
                 "trial 7 días $0",
                 "Pago único deducible de impuestos",
                 "Cero límites de velocidad.",
+                "Acceso prioritario a música nueva",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2 font-sans text-sm text-[#EFEFEF]">
                   <CheckCircle2 className="mt-0.5 h-5 w-5 text-[#AA0202]" />
@@ -124,14 +145,15 @@ export default function PricingSection({ checkoutUrl }: PricingSectionProps) {
             <div className="mt-6">
               <Button
                 asChild
-                className="min-h-[56px] w-full bg-[#AA0202] font-bebas text-2xl uppercase tracking-wide text-[#EFEFEF] hover:bg-[#8A0101]"
+                className="min-h-[56px] w-full bg-[#AA0202] font-bebas text-2xl uppercase tracking-wide text-[#EFEFEF] hover:bg-[#8A0101] shadow-[0_10px_30px_rgba(170,2,2,0.35)]"
               >
                 <Link to={annualUrl}>
+                  <ArrowRight className="h-5 w-5" />
                   HAZTE ELITE
                 </Link>
               </Button>
               <p className="mt-3 text-center font-sans text-xs text-muted-foreground">
-                Ahorras $225 en comparación al plan mensual.
+                Ahorras $225 vs plan mensual · Garantía 7 días
               </p>
             </div>
           </article>
