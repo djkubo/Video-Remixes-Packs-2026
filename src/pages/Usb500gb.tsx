@@ -21,6 +21,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { useToast } from "@/hooks/use-toast";
 import logoWhite from "@/assets/logo-white.png";
+import usb500Photo from "@/assets/usb500-sandisk.png";
 import { createBestCheckoutUrl, type CheckoutProvider } from "@/lib/checkout";
 
 /* ─── constants ─── */
@@ -265,19 +266,17 @@ export default function Usb500gb() {
           </div>
 
           <div className="mt-10 grid gap-8 md:grid-cols-2 md:items-start">
-            {/* Enhanced product visual */}
+            {/* Product photo */}
             <div className="rounded-2xl border border-[#5E5E5E] bg-[#111111] p-5">
-              <div className="relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-gradient-to-br from-[#AA0202]/25 via-[#070707] to-[#070707]">
-                <div className="absolute inset-0 opacity-70">
+              <div className="relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-gradient-to-br from-[#AA0202]/15 via-[#070707] to-[#070707]">
+                <div className="absolute inset-0 opacity-60">
                   <div className="absolute -left-10 top-16 h-48 w-48 rounded-full bg-[#AA0202]/20 blur-3xl" />
                   <div className="absolute -right-12 bottom-8 h-64 w-64 rounded-full bg-[#AA0202]/10 blur-3xl" />
                 </div>
                 <div className="relative flex h-full flex-col items-center justify-center p-6 text-center">
-                  {/* Glowing USB icon */}
-                  <div className="float-glow inline-flex h-24 w-24 items-center justify-center rounded-2xl border border-[#AA0202]/30 bg-[#111111]/60 shadow-[0_0_30px_rgba(170,2,2,0.3)]">
-                    <Usb className="h-12 w-12 text-[#AA0202]" />
-                  </div>
-                  <p className="mt-6 text-sm text-zinc-400">USB Definitiva</p>
+                  {/* Real product photo */}
+                  <img src={usb500Photo} alt="USB 500 GB SanDisk" className="float-glow h-auto w-3/4 max-w-[280px] drop-shadow-[0_20px_40px_rgba(170,2,2,0.25)] md:w-2/3" />
+                  <p className="mt-5 text-sm text-zinc-400">USB Definitiva</p>
                   <p className="font-bebas text-5xl uppercase tracking-wide md:text-6xl">500 GB</p>
 
                   {/* Specs inside product card */}
