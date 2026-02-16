@@ -74,8 +74,8 @@ const App = () => {
                       <Route path="/usb128" element={<Usb128 />} />
                       <Route path="/usb128/gracias" element={<Usb128ThankYou />} />
 
-                      <Route path="/usb-500gb" element={<Usb500gb />} />
-                      <Route path="/usb-500gb/gracias" element={<Usb500gbThankYou />} />
+                      <Route path="/usb500" element={<Usb500gb />} />
+                      <Route path="/usb500/gracias" element={<Usb500gbThankYou />} />
 
                       <Route path="/anual" element={<Anual />} />
                       <Route path="/anual/gracias" element={<AnualThankYou />} />

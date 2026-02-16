@@ -83,7 +83,7 @@ const getSessionId = (): string => {
 // Capture and persist UTM parameters
 const getUTMParams = (): UTMParams => {
   const key = "vrp_utm_params";
-  
+
   // Check if we have UTM params in current URL
   const urlParams = new URLSearchParams(window.location.search);
   const currentUTM: UTMParams = {
@@ -93,13 +93,13 @@ const getUTMParams = (): UTMParams => {
     utm_term: urlParams.get("utm_term"),
     utm_content: urlParams.get("utm_content"),
   };
-  
+
   // If we have new UTM params, save them
   if (currentUTM.utm_source) {
     sessionStorage.setItem(key, JSON.stringify(currentUTM));
     return currentUTM;
   }
-  
+
   // Otherwise, try to get from session storage (persists during session)
   const stored = sessionStorage.getItem(key);
   if (stored) {
@@ -109,17 +109,17 @@ const getUTMParams = (): UTMParams => {
       return currentUTM;
     }
   }
-  
+
   // Try to detect source from referrer if no UTM params
   const referrer = document.referrer;
   if (referrer) {
     const ref = new URL(referrer);
     const host = ref.hostname.toLowerCase();
-    
+
     // Map common referrers to sources
     let detectedSource: string | null = null;
     let detectedMedium: string | null = null;
-    
+
     if (host.includes("facebook.com") || host.includes("fb.com")) {
       detectedSource = "facebook";
       detectedMedium = "social";
@@ -154,7 +154,7 @@ const getUTMParams = (): UTMParams => {
       detectedSource = host.replace("www.", "");
       detectedMedium = "referral";
     }
-    
+
     if (detectedSource) {
       const autoUTM: UTMParams = {
         utm_source: detectedSource,
@@ -167,7 +167,7 @@ const getUTMParams = (): UTMParams => {
       return autoUTM;
     }
   }
-  
+
   // Default: direct traffic
   return {
     utm_source: "direct",
@@ -231,7 +231,7 @@ function detectLanguage(): "es" | "en" {
 function inferFunnelStepFromPath(pathname: string): string {
   if (pathname === "/" || pathname === "/trends") return "home";
   if (pathname === "/membresia" || pathname === "/plan" || pathname === "/anual") return "pricing";
-  if (pathname === "/gratis" || pathname === "/usb128" || pathname === "/usb-500gb") return "lead_capture";
+  if (pathname === "/gratis" || pathname === "/usb128" || pathname === "/usb500") return "lead_capture";
   if (pathname === "/explorer" || pathname === "/genres") return "catalog";
   if (pathname === "/help") return "support";
   if (pathname === "/login") return "login";
@@ -351,7 +351,7 @@ export const useAnalytics = () => {
     if (isDisabled.current) return;
     if (isProcessing.current || eventQueue.current.length === 0) return;
     if (Date.now() < nextAttemptAtMs.current) return;
-    
+
     isProcessing.current = true;
     const events = [...eventQueue.current];
     eventQueue.current = [];
@@ -360,7 +360,7 @@ export const useAnalytics = () => {
       const records = events.map(buildRecord);
 
       const { error } = await supabase.from("analytics_events").insert(records);
-      
+
       if (error) {
         if (shouldDisableAnalyticsForError(error)) {
           disableAnalytics("insert_forbidden");
@@ -449,7 +449,7 @@ export const useAnalytics = () => {
   useEffect(() => {
     if (isDisabled.current) return;
     const interval = setInterval(processQueue, 2000);
-    
+
     // Best-effort flush when the document is being hidden (close, nav, tab switch).
     const flushPending = () => {
       if (eventQueue.current.length === 0) return;
@@ -466,7 +466,7 @@ export const useAnalytics = () => {
 
     window.addEventListener("pagehide", flushPending);
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    
+
     return () => {
       clearInterval(interval);
       window.removeEventListener("pagehide", flushPending);
