@@ -30,26 +30,51 @@
     <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     
-    <!-- Open Graph / Facebook -->
+    <!-- Open Graph / Facebook — dynamic per-page -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://videoremixpack.com" />
-    <meta property="og:title" content="VideoRemixesPack" />
-    <meta property="og:description" content="Packs de video y música listos para DJs y eventos." />
-    <meta property="og:image" content="https://videoremixpack.com/og-image.png" />
+    <meta property="og:url" content="https://videoremixpack.com" id="og-url" />
+    <meta property="og:title" content="VideoRemixesPack" id="og-title" />
+    <meta property="og:description" content="Packs de video y música listos para DJs y eventos." id="og-desc" />
+    <meta property="og:image" content="https://videoremixpack.com/og-image.png" id="og-image" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="VideoRemixesPack" />
+    <meta property="og:image:alt" content="VideoRemixesPack" id="og-image-alt" />
     <meta property="og:site_name" content="VideoRemixesPack" />
     <meta property="og:locale" content="es_MX" />
     <meta property="og:locale:alternate" content="es_ES" />
     <meta property="og:locale:alternate" content="en_US" />
-    
+
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:url" content="https://videoremixpack.com" />
-    <meta name="twitter:title" content="VideoRemixesPack" />
-    <meta name="twitter:description" content="Packs de video y música listos para DJs y eventos." />
-    <meta name="twitter:image" content="https://videoremixpack.com/og-image.png" />
+    <meta name="twitter:url" content="https://videoremixpack.com" id="tw-url" />
+    <meta name="twitter:title" content="VideoRemixesPack" id="tw-title" />
+    <meta name="twitter:description" content="Packs de video y música listos para DJs y eventos." id="tw-desc" />
+    <meta name="twitter:image" content="https://videoremixpack.com/og-image.png" id="tw-image" />
+
+    <!-- Per-page OG override (synchronous, before crawlers snapshot DOM) -->
+    <script>
+    (function(){
+      var p=location.pathname.replace(/\/+$/,"").toLowerCase();
+      var b="https://videoremixpack.com";
+      var m={
+        "/usb500":{t:"USB 500 GB \u2013 50,000+ Remixes & Edits | $197",d:"La colecci\u00f3n definitiva para DJs: +50,000 canciones organizadas por g\u00e9nero en USB SanDisk 500GB. Pago \u00fanico.",i:b+"/og-usb500.png"},
+        "/usb-500gb":{t:"USB 500 GB \u2013 50,000+ Remixes & Edits | $197",d:"La colecci\u00f3n definitiva para DJs: +50,000 canciones organizadas por g\u00e9nero en USB SanDisk 500GB. Pago \u00fanico.",i:b+"/og-usb500.png"},
+        "/usb128":{t:"USB 128 GB \u2013 Miles de Remixes para DJs",d:"Tu primera USB profesional con miles de remixes y edits listos para mezclar.",i:b+"/og-image.png"},
+        "/membresia":{t:"Membres\u00eda PRO DJ \u2013 Acceso FTP Ilimitado",d:"Descarga masiva v\u00eda FTP: +50,000 archivos de m\u00fasica y video Clean. Desde $35/mes.",i:b+"/og-image.png"},
+        "/anual":{t:"Plan Anual DJ \u2013 2TB de M\u00fasica & Video",d:"Acceso completo por un a\u00f1o: 2TB de remixes, edits y video.",i:b+"/og-image.png"},
+        "/djedits":{t:"DJ Edits \u2013 Intros, Outros & Transiciones",d:"Edits profesionales listos para tu set.",i:b+"/og-image.png"},
+        "/gratis":{t:"Pack Gratis \u2013 Descarga Remixes de Muestra",d:"Prueba gratis y comprueba la calidad de VideoRemixesPack.",i:b+"/og-image.png"}
+      };
+      var c=m[p];
+      if(c){
+        var u=b+p;
+        var s=function(id,v){document.getElementById(id).setAttribute("content",v)};
+        s("og-url",u);s("og-title",c.t);s("og-desc",c.d);s("og-image",c.i);s("og-image-alt",c.t);
+        s("tw-url",u);s("tw-title",c.t);s("tw-desc",c.d);s("tw-image",c.i);
+        document.title=c.t;
+      }
+    })();
+    </script>
     
     <!-- Additional SEO -->
     <meta name="theme-color" content="#AA0202" />
