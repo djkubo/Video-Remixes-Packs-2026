@@ -1,15 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { AlertTriangle, ArrowLeft, CheckCircle2, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useDataLayer } from "@/hooks/useDataLayer";
 
 type ShippoInfo = { ok: boolean; labelUrl?: string; trackingNumber?: string } | null;
 
 export default function Usb500gbThankYou() {
   const { language } = useLanguage();
+  const { trackPurchase } = useDataLayer();
+  const hasFiredPurchase = useRef(false);
   const [params] = useSearchParams();
   const stripeSessionId = params.get("session_id");
   const paypalOrderId = params.get("token");
@@ -129,6 +132,14 @@ export default function Usb500gbThankYou() {
     shippoInfo && typeof shippoInfo === "object" ? shippoInfo.labelUrl : undefined;
   const paymentRef = stripeSessionId || paypalOrderId || null;
   const paymentProvider = stripeSessionId ? "Stripe" : paypalOrderId ? "PayPal" : null;
+
+  /* ─── GTM purchase event (fires once when payment is confirmed) ─── */
+  useEffect(() => {
+    if (paidConfirmed && !hasFiredPurchase.current) {
+      hasFiredPurchase.current = true;
+      trackPurchase(197, "USD", paymentRef || undefined);
+    }
+  }, [paidConfirmed, trackPurchase, paymentRef]);
 
   return (
     <main className="min-h-screen bg-[#070707] flex items-center justify-center p-4">

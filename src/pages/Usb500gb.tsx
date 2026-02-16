@@ -19,6 +19,8 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAnalytics } from "@/hooks/useAnalytics";
+import { useDataLayer } from "@/hooks/useDataLayer";
+import { useEngagementTracking } from "@/hooks/useEngagementTracking";
 import { useToast } from "@/hooks/use-toast";
 import logoWhite from "@/assets/logo-white.png";
 import usb500Photo from "@/assets/usb500-sandisk.png";
@@ -31,6 +33,8 @@ const SONGS = "50,000+";
 export default function Usb500gb() {
   const { language } = useLanguage();
   const { trackEvent } = useAnalytics();
+  const { trackViewContent, trackBeginCheckout } = useDataLayer();
+  useEngagementTracking();
   const { toast } = useToast();
   const navigate = useNavigate();
   const isSpanish = language === "es";
@@ -54,7 +58,15 @@ export default function Usb500gb() {
     document.title = isSpanish
       ? "USB 500 GB – La Colección Definitiva para DJs"
       : "USB 500 GB – The Ultimate DJ Collection";
-  }, [isSpanish]);
+
+    /* GTM: view_item → maps to Meta Pixel ViewContent + GA4 view_item */
+    trackViewContent({
+      item_id: "usb_500gb",
+      item_name: "USB 500GB DJ Collection",
+      price: PRICE,
+      currency: "USD",
+    });
+  }, [isSpanish, trackViewContent]);
 
   /* ─── checkout logic ─── */
   const startExpressCheckout = useCallback(
@@ -67,6 +79,15 @@ export default function Usb500gb() {
       trackEvent("checkout_redirect", {
         cta_id: ctaId, plan_id: "usb_500gb", provider: prefer,
         status: "starting", funnel_step: "checkout_handoff", is_retry: isRetry,
+      });
+
+      /* GTM: begin_checkout → maps to Meta Pixel InitiateCheckout */
+      trackBeginCheckout({
+        item_id: "usb_500gb",
+        item_name: "USB 500GB DJ Collection",
+        price: PRICE,
+        currency: "USD",
+        cta_id: ctaId,
       });
 
       let redirected = false;
