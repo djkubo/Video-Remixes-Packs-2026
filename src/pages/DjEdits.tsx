@@ -20,8 +20,8 @@ import { Badge } from "@/components/ui/badge";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { useToast } from "@/hooks/use-toast";
 import HlsVideo from "@/components/HlsVideo";
-import djEditsPoster from "@/assets/dj-edits-poster.jpg";
-import logoWhite from "@/assets/logo-white.png";
+import djEditsPoster from "@/assets/dj-edits-poster.webp";
+import logoWhite from "@/assets/logo-white.webp";
 import { createBestCheckoutUrl, type CheckoutProvider } from "@/lib/checkout";
 
 const PREVIEW_HLS_URL =

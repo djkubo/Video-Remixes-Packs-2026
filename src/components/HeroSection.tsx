@@ -7,7 +7,7 @@ import { useDataLayer } from "@/hooks/useDataLayer";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { isExperimentEnabled } from "@/lib/croFlags";
 import { getExperimentAssignment } from "@/lib/experiments";
-import logoWhite from "@/assets/logo-white.png";
+import logoWhite from "@/assets/logo-white.webp";
 
 const HeroSection = () => {
   const { language } = useLanguage();

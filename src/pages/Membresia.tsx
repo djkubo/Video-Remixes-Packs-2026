@@ -27,7 +27,7 @@ import { useAnalytics } from "@/hooks/useAnalytics";
 import { isExperimentEnabled } from "@/lib/croFlags";
 import { getExperimentAssignment } from "@/lib/experiments";
 import { cn } from "@/lib/utils";
-import logoWhite from "@/assets/logo-white.png";
+import logoWhite from "@/assets/logo-white.webp";
 import { createStripeCheckoutUrl } from "@/lib/checkout";
 
 type PlanId = "plan_1tb_mensual" | "plan_1tb_trimestral" | "plan_2tb_anual";

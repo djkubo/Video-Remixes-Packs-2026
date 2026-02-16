@@ -22,8 +22,8 @@ import { useAnalytics } from "@/hooks/useAnalytics";
 import { useDataLayer } from "@/hooks/useDataLayer";
 import { useEngagementTracking } from "@/hooks/useEngagementTracking";
 import { useToast } from "@/hooks/use-toast";
-import logoWhite from "@/assets/logo-white.png";
-import usb500Photo from "@/assets/usb500-sandisk.png";
+import logoWhite from "@/assets/logo-white.webp";
+import usb500Photo from "@/assets/usb500-sandisk.webp";
 import { createBestCheckoutUrl, type CheckoutProvider } from "@/lib/checkout";
 import LeadCaptureModal from "@/components/LeadCaptureModal";
 

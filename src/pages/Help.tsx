@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 
 import { useLanguage } from "@/contexts/LanguageContext";
-import logoWhite from "@/assets/logo-white.png";
+import logoWhite from "@/assets/logo-white.webp";
 
 type FaqItem = {
   question: { es: string; en: string };

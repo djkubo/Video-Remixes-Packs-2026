@@ -31,7 +31,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { useDataLayer } from "@/hooks/useDataLayer";
-import logoWhite from "@/assets/logo-white.png";
+import logoWhite from "@/assets/logo-white.webp";
 import { countryNameFromCode, detectCountryCodeFromTimezone } from "@/lib/country";
 
 type CountryData = {

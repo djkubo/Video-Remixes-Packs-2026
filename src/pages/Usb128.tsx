@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
 import { createBestCheckoutUrl, type CheckoutProvider } from "@/lib/checkout";
-import usbSamsungBarPlus from "@/assets/usb128-samsung-bar-plus.jpg";
+import usbSamsungBarPlus from "@/assets/usb128-samsung-bar-plus.webp";
 import WhatsAppProof, { type WhatsAppProofMessage } from "@/components/WhatsAppProof";
 
 const BUY_ANCHOR_ID = "usb128-comprar";

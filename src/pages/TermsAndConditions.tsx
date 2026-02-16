@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 import SettingsToggle from "@/components/SettingsToggle";
 import { useLanguage } from "@/contexts/LanguageContext";
-import logoWhite from "@/assets/logo-white.png";
+import logoWhite from "@/assets/logo-white.webp";
 
 type Section = {
   title: string;

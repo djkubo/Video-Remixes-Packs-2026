@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import AppErrorBoundary from "@/components/AppErrorBoundary";
+import PageLoader from "@/components/PageLoader";
 import RouteMenu from "@/components/RouteMenu";
 
 const queryClient = new QueryClient();
@@ -49,15 +50,7 @@ const App = () => {
                 <Sonner />
                 <BrowserRouter>
                   <RouteMenu />
-                  <Suspense
-                    fallback={
-                      <div className="brand-frame min-h-screen bg-background flex items-center justify-center p-6">
-                        <div className="glass-card px-6 py-4 text-sm text-muted-foreground">
-                          Cargando...
-                        </div>
-                      </div>
-                    }
-                  >
+                  <Suspense fallback={<PageLoader />}>
                     <Routes>
                       <Route path="/" element={<Index />} />
                       {/* Production route aliases */}

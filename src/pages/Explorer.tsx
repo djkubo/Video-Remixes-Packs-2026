@@ -5,7 +5,7 @@ import MusicExplorer from "@/components/MusicExplorer";
 import PersistentBottomPlayer from "@/components/landing/PersistentBottomPlayer";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
-import logoWhite from "@/assets/logo-white.png";
+import logoWhite from "@/assets/logo-white.webp";
 
 export default function Explorer() {
   const { language } = useLanguage();

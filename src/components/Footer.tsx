@@ -1,6 +1,6 @@
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Facebook, Instagram, Mail, MessageCircle } from "lucide-react";
-import logoWhite from "@/assets/logo-white.png";
+import logoWhite from "@/assets/logo-white.webp";
 
 const Footer = () => {
   const { t } = useLanguage();

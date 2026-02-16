@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/accordion";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { useToast } from "@/hooks/use-toast";
-import logoWhite from "@/assets/logo-white.png";
+import logoWhite from "@/assets/logo-white.webp";
 import { createBestCheckoutUrl, type CheckoutProvider } from "@/lib/checkout";
 
 export default function Anual() {
