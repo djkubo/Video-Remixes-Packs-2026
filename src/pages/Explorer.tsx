@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Headphones, Zap } from "lucide-react";
 import MusicExplorer from "@/components/MusicExplorer";
+import PersistentBottomPlayer from "@/components/landing/PersistentBottomPlayer";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -44,7 +45,7 @@ export default function Explorer() {
   }, [isGenresRoute, language]);
 
   return (
-    <main className="brand-frame min-h-screen bg-background">
+    <main className="brand-frame min-h-screen bg-background pb-[calc(env(safe-area-inset-bottom)+6.5rem)]">
       <section className="relative overflow-hidden">
         <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#1a1a1a] via-[#AA0202] to-[#1a1a1a]" />
 
@@ -89,6 +90,7 @@ export default function Explorer() {
       </section>
 
       <MusicExplorer />
+      <PersistentBottomPlayer />
     </main>
   );
 }

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Download, Filter, Folder, Loader2, Music2, Search, Sparkles } from "lucide-react";
+import { Download, Filter, Folder, Loader2, Music2, Play, Search, Sparkles } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import {
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDataLayer } from "@/hooks/useDataLayer";
 import { useAnalytics } from "@/hooks/useAnalytics";
+import { useAudioStore } from "@/store/useAudioStore";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -27,6 +28,7 @@ type ExplorerTrack = {
   durationFormatted: string;
   bpm: number | null;
   path: string;
+  previewUrl?: string | null;
 };
 
 type MusicExplorerProps = {
@@ -59,7 +61,8 @@ function toExplorerTrack(row: SupabaseTrackRow): ExplorerTrack {
     genre,
     durationFormatted,
     bpm: row.bpm ?? null,
-    path: row.file_path?.trim() || row.file_url?.trim() || "",
+    path: row.file_path?.trim() || "",
+    previewUrl: row.file_url?.trim() || null,
   };
 }
 
@@ -115,6 +118,7 @@ const FALLBACK_TRACKS: ExplorerTrack[] = [
     durationFormatted: "03:12",
     bpm: 94,
     path: "/DEMO/Reggaetón/DJ Demo - Baila Baila (Intro Edit).mp3",
+    previewUrl: null,
   },
   {
     id: "demo-2",
@@ -124,6 +128,7 @@ const FALLBACK_TRACKS: ExplorerTrack[] = [
     durationFormatted: "02:58",
     bpm: 100,
     path: "/DEMO/Cumbia/DJ Demo - Cumbia Power (DJ Tool).mp3",
+    previewUrl: null,
   },
   {
     id: "demo-3",
@@ -133,6 +138,7 @@ const FALLBACK_TRACKS: ExplorerTrack[] = [
     durationFormatted: "03:45",
     bpm: 92,
     path: "/DEMO/Salsa/DJ Demo - Salsa Pa' La Pista (Clean).mp3",
+    previewUrl: null,
   },
   {
     id: "demo-4",
@@ -142,6 +148,7 @@ const FALLBACK_TRACKS: ExplorerTrack[] = [
     durationFormatted: "03:08",
     bpm: 128,
     path: "/DEMO/Bachata/DJ Demo - Bachata Night (Transition).mp3",
+    previewUrl: null,
   },
   {
     id: "demo-5",
@@ -151,6 +158,7 @@ const FALLBACK_TRACKS: ExplorerTrack[] = [
     durationFormatted: "03:22",
     bpm: 96,
     path: "/DEMO/Regional/DJ Demo - Norteno Mix (Short Edit).mp3",
+    previewUrl: null,
   },
   {
     id: "demo-6",
@@ -160,6 +168,7 @@ const FALLBACK_TRACKS: ExplorerTrack[] = [
     durationFormatted: "02:41",
     bpm: 102,
     path: "/DEMO/Dembow/DJ Demo - Dembow Heat (Quick Intro).mp3",
+    previewUrl: null,
   },
 ];
 
@@ -167,6 +176,7 @@ const MusicExplorer = ({ compact = false }: MusicExplorerProps) => {
   const { t, language } = useLanguage();
   const { trackClick } = useDataLayer();
   const { trackEvent } = useAnalytics();
+  const playTrack = useAudioStore((s) => s.playTrack);
   const location = useLocation();
 
   const isGenresRoute = location.pathname === "/genres";
@@ -366,6 +376,31 @@ const MusicExplorer = ({ compact = false }: MusicExplorerProps) => {
   const handleDownloadClick = (track: ExplorerTrack) => {
     setSelectedTrack(track);
     setShowModal(true);
+  };
+
+  const handlePlayClick = (track: ExplorerTrack) => {
+    if (!track.previewUrl) {
+      trackEvent("explorer_preview_missing", {
+        route: location.pathname,
+        track_id: track.id,
+        track_genre: track.genre,
+      });
+      handleDownloadClick(track);
+      return;
+    }
+
+    playTrack({
+      id: `explorer-${track.id}`,
+      title: `${track.artist} - ${track.title}`,
+      genre: track.genre,
+      src: track.previewUrl,
+    });
+
+    trackEvent("explorer_preview_play", {
+      route: location.pathname,
+      track_id: track.id,
+      track_genre: track.genre,
+    });
   };
 
   const retryLoad = () => {
@@ -611,7 +646,7 @@ const MusicExplorer = ({ compact = false }: MusicExplorerProps) => {
                         <div className="min-w-0">
                           <button
                             type="button"
-                            onClick={() => handleDownloadClick(track)}
+                            onClick={() => handlePlayClick(track)}
                             className="truncate text-left text-sm font-semibold text-foreground transition-colors hover:text-primary"
                           >
                             {track.title}
@@ -626,18 +661,32 @@ const MusicExplorer = ({ compact = false }: MusicExplorerProps) => {
                           </div>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => handleDownloadClick(track)}
-                          aria-label={
-                            language === "es"
-                              ? `Ver como descargar: ${track.title}`
-                              : `See how to download: ${track.title}`
-                          }
-                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-primary/40 bg-background text-primary transition-all hover:bg-primary hover:text-primary-foreground"
-                        >
-                          <Download className="h-4 w-4" />
-                        </button>
+                        <div className="flex shrink-0 flex-col gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handlePlayClick(track)}
+                            aria-label={
+                              language === "es"
+                                ? `Reproducir preview: ${track.title}`
+                                : `Play preview: ${track.title}`
+                            }
+                            className="flex h-9 w-9 items-center justify-center rounded-lg border border-border/70 bg-background text-foreground transition-all hover:border-primary/40 hover:text-primary"
+                          >
+                            <Play className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadClick(track)}
+                            aria-label={
+                              language === "es"
+                                ? `Desbloquear descarga: ${track.title}`
+                                : `Unlock download: ${track.title}`
+                            }
+                            className="flex h-9 w-9 items-center justify-center rounded-lg border border-primary/40 bg-background text-primary transition-all hover:bg-primary hover:text-primary-foreground"
+                          >
+                            <Download className="h-4 w-4" />
+                          </button>
+                        </div>
                       </article>
                     ))}
                   </div>
@@ -661,7 +710,7 @@ const MusicExplorer = ({ compact = false }: MusicExplorerProps) => {
                           <div className="col-span-6 md:col-span-4">
                             <button
                               type="button"
-                              onClick={() => handleDownloadClick(track)}
+                              onClick={() => handlePlayClick(track)}
                               className="text-left font-medium text-foreground transition-colors hover:text-primary"
                             >
                               {track.title}
@@ -685,11 +734,23 @@ const MusicExplorer = ({ compact = false }: MusicExplorerProps) => {
                             )}
                             <button
                               type="button"
+                              onClick={() => handlePlayClick(track)}
+                              aria-label={
+                                language === "es"
+                                  ? `Reproducir preview: ${track.title}`
+                                  : `Play preview: ${track.title}`
+                              }
+                              className="flex h-9 w-9 items-center justify-center rounded-lg border border-border/70 bg-background text-foreground transition-all hover:border-primary/40 hover:text-primary"
+                            >
+                              <Play className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
                               onClick={() => handleDownloadClick(track)}
                               aria-label={
                                 language === "es"
-                                  ? `Ver como descargar: ${track.title}`
-                                  : `See how to download: ${track.title}`
+                                  ? `Desbloquear descarga: ${track.title}`
+                                  : `Unlock download: ${track.title}`
                               }
                               className="flex h-9 w-9 items-center justify-center rounded-lg border border-primary/40 bg-background text-primary transition-all hover:bg-primary hover:text-primary-foreground"
                             >
