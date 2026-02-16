@@ -25,6 +25,7 @@ import { useToast } from "@/hooks/use-toast";
 import logoWhite from "@/assets/logo-white.png";
 import usb500Photo from "@/assets/usb500-sandisk.png";
 import { createBestCheckoutUrl, type CheckoutProvider } from "@/lib/checkout";
+import LeadCaptureModal from "@/components/LeadCaptureModal";
 
 /* ─── constants ─── */
 const PRICE = 197;
@@ -42,6 +43,8 @@ export default function Usb500gb() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [lastAttempt, setLastAttempt] = useState<{ ctaId: string; prefer: CheckoutProvider } | null>(null);
+  const [showLeadModal, setShowLeadModal] = useState(false);
+  const [pendingCta, setPendingCta] = useState<{ ctaId: string; prefer: CheckoutProvider } | null>(null);
 
   /* live purchase ticker */
   const [tickerIdx, setTickerIdx] = useState(0);
@@ -68,9 +71,9 @@ export default function Usb500gb() {
     });
   }, [isSpanish, trackViewContent]);
 
-  /* ─── checkout logic ─── */
+  /* ─── checkout logic (now receives leadId from modal) ─── */
   const startExpressCheckout = useCallback(
-    async (ctaId: string, prefer: CheckoutProvider, isRetry = false) => {
+    async (ctaId: string, prefer: CheckoutProvider, leadId: string, isRetry = false) => {
       if (isSubmitting) return;
       setIsSubmitting(true);
       setCheckoutError(null);
@@ -92,7 +95,6 @@ export default function Usb500gb() {
 
       let redirected = false;
       try {
-        const leadId = crypto.randomUUID();
         const { provider, url } = await createBestCheckoutUrl({
           leadId, product: "usb_500gb", sourcePage: window.location.pathname, prefer,
         });
@@ -150,19 +152,39 @@ export default function Usb500gb() {
     [isSubmitting, isSpanish, toast, trackEvent]
   );
 
+  /* ─── CTA handlers: show modal first ─── */
   const openOrder = useCallback(
-    (ctaId: string) => { void startExpressCheckout(ctaId, "stripe"); },
-    [startExpressCheckout]
+    (ctaId: string) => {
+      setPendingCta({ ctaId, prefer: "stripe" });
+      setShowLeadModal(true);
+    },
+    []
   );
 
   const openOrderPayPal = useCallback(
-    (ctaId: string) => { void startExpressCheckout(ctaId, "paypal"); },
-    [startExpressCheckout]
+    (ctaId: string) => {
+      setPendingCta({ ctaId, prefer: "paypal" });
+      setShowLeadModal(true);
+    },
+    []
+  );
+
+  /* after lead captured → proceed to checkout */
+  const handleLeadCaptured = useCallback(
+    (leadId: string) => {
+      setShowLeadModal(false);
+      if (pendingCta) {
+        void startExpressCheckout(pendingCta.ctaId, pendingCta.prefer, leadId);
+      }
+    },
+    [pendingCta, startExpressCheckout]
   );
 
   const retryCheckout = useCallback(() => {
     if (!lastAttempt) return;
-    void startExpressCheckout(lastAttempt.ctaId, lastAttempt.prefer, true);
+    /* retries use a new leadId since the lead was already captured */
+    const retryLeadId = crypto.randomUUID();
+    void startExpressCheckout(lastAttempt.ctaId, lastAttempt.prefer, retryLeadId, true);
   }, [lastAttempt, startExpressCheckout]);
 
   const renderCheckoutFeedback = useCallback(
@@ -769,6 +791,16 @@ export default function Usb500gb() {
         </Button>
         {renderCheckoutFeedback("usb500gb_sticky")}
       </div>
+
+      {/* ── Lead Capture Modal ── */}
+      <LeadCaptureModal
+        isOpen={showLeadModal}
+        onClose={() => setShowLeadModal(false)}
+        onLeadCaptured={handleLeadCaptured}
+        isSpanish={isSpanish}
+        product="usb_500gb"
+        price={PRICE}
+      />
     </main>
   );
 }
