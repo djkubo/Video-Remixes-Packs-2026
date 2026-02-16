@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.shippo-webhook]
 verify_jwt = false
+
+[functions.check-abandoned-carts]
+verify_jwt = false
