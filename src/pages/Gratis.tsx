@@ -77,7 +77,7 @@ export default function Gratis() {
   });
 
   const [formData, setFormData] = useState({
-    firstName: `", lastName: "`, email: `", phone: "`,
+    firstName: "", lastName: "", email: "", phone: "",
   });
 
   const [consentTransactional, setConsentTransactional] = useState(false);
