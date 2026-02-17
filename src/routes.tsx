@@ -1,6 +1,12 @@
 import { lazy } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import type { RouteObject } from "react-router-dom";
+
+/** Redirect preserving query params & hash */
+function RedirectTo({ path }: { path: string }) {
+    const { search, hash } = useLocation();
+    return <Navigate to={`${path}${search}${hash}`} replace />;
+}
 
 /* ── Lazy page imports ─────────────────────────────────── */
 
@@ -69,19 +75,19 @@ const aliasRoutes: RouteObject[] = [
     { path: "/genres", element: <Explorer /> },
 
     // Legacy hyphenated USB URL
-    { path: "/usb-500gb", element: <Navigate to="/usb500" replace /> },
-    { path: "/usb-500gb/gracias", element: <Navigate to="/usb500/gracias" replace /> },
+    { path: "/usb-500gb", element: <RedirectTo path="/usb500" /> },
+    { path: "/usb-500gb/gracias", element: <RedirectTo path="/usb500/gracias" /> },
 
     // Uppercase marketing URLs → redirect to canonical
-    { path: "/ANUAL", element: <Navigate to="/anual" replace /> },
-    { path: "/ANUAL/gracias", element: <Navigate to="/anual/gracias" replace /> },
-    { path: "/MEMBRESIA", element: <Navigate to="/membresia" replace /> },
-    { path: "/MEMBRESIA/gracias", element: <Navigate to="/membresia/gracias" replace /> },
-    { path: "/DJEDITS", element: <Navigate to="/djedits" replace /> },
-    { path: "/DJEDITS/gracias", element: <Navigate to="/djedits/gracias" replace /> },
+    { path: "/ANUAL", element: <RedirectTo path="/anual" /> },
+    { path: "/ANUAL/gracias", element: <RedirectTo path="/anual/gracias" /> },
+    { path: "/MEMBRESIA", element: <RedirectTo path="/membresia" /> },
+    { path: "/MEMBRESIA/gracias", element: <RedirectTo path="/membresia/gracias" /> },
+    { path: "/DJEDITS", element: <RedirectTo path="/djedits" /> },
+    { path: "/DJEDITS/gracias", element: <RedirectTo path="/djedits/gracias" /> },
 
     // Short alias
-    { path: "/plan", element: <Navigate to="/membresia" replace /> },
+    { path: "/plan", element: <RedirectTo path="/membresia" /> },
 ];
 
 /* ── Catch-all ─────────────────────────────────────────── */
