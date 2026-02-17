@@ -44,13 +44,16 @@ export type Database = {
           event_data: Json | null
           event_name: string
           experiment_assignments: Json | null
+          fbclid: string | null
           funnel_step: string | null
+          gclid: string | null
           id: string
           language: string | null
           page_path: string | null
           plan_id: string | null
           referrer: string | null
           session_id: string | null
+          ttclid: string | null
           user_agent: string | null
           utm_campaign: string | null
           utm_content: string | null
@@ -67,13 +70,16 @@ export type Database = {
           event_data?: Json | null
           event_name: string
           experiment_assignments?: Json | null
+          fbclid?: string | null
           funnel_step?: string | null
+          gclid?: string | null
           id?: string
           language?: string | null
           page_path?: string | null
           plan_id?: string | null
           referrer?: string | null
           session_id?: string | null
+          ttclid?: string | null
           user_agent?: string | null
           utm_campaign?: string | null
           utm_content?: string | null
@@ -90,13 +96,16 @@ export type Database = {
           event_data?: Json | null
           event_name?: string
           experiment_assignments?: Json | null
+          fbclid?: string | null
           funnel_step?: string | null
+          gclid?: string | null
           id?: string
           language?: string | null
           page_path?: string | null
           plan_id?: string | null
           referrer?: string | null
           session_id?: string | null
+          ttclid?: string | null
           user_agent?: string | null
           utm_campaign?: string | null
           utm_content?: string | null
