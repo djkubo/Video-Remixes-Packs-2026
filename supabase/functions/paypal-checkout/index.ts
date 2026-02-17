@@ -250,7 +250,7 @@ function getRedirectPaths(product: ProductKey): { successPath: string; cancelPat
     case "usb128":
       return { successPath: "/usb128/gracias", cancelPath: "/usb128" };
     case "usb_500gb":
-      return { successPath: "/usb-500gb/gracias", cancelPath: "/usb-500gb" };
+      return { successPath: "/usb500/gracias", cancelPath: "/usb500" };
     case "anual":
       return { successPath: "/anual/gracias", cancelPath: "/anual" };
     case "djedits":
