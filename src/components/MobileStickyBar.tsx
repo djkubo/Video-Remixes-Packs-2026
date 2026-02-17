@@ -35,10 +35,10 @@ const MobileStickyBar = () => {
         >
           {/* Top fade */}
           <div className="h-4 bg-gradient-to-t from-background to-transparent" />
-          
+
           {/* Sticky CTA bar tuned for both light and dark themes */}
           <div
-           className="flex items-center justify-between gap-3 border-t border-[#5E5E5E] bg-[#111111]/98 px-4 py-3 backdrop-blur-xl shadow-[0_-10px_22px_rgba(15,23,42,0.14)]"
+            className="flex items-center justify-between gap-3 border-t border-[#5E5E5E] bg-[#111111]/98 px-4 py-3 backdrop-blur-xl shadow-[0_-10px_22px_rgba(15,23,42,0.14)]"
           >
             <div className="flex items-center gap-2 min-w-0">
               <img
@@ -55,8 +55,9 @@ const MobileStickyBar = () => {
               size="sm"
               className="btn-primary-glow h-11 gap-2 px-5 font-bold text-sm flex-shrink-0"
             >
-              <Link
-                to="/plan"
+              <a
+                href="https://videoremixespacks.com/plan"
+                rel="noopener noreferrer"
                 onClick={() =>
                   trackEvent("click", {
                     button_text: t("cta.button"),
@@ -69,10 +70,10 @@ const MobileStickyBar = () => {
               >
                 <Zap className="h-4 w-4" />
                 {t("cta.button")}
-              </Link>
+              </a>
             </Button>
           </div>
-          
+
           {/* Safe area for iOS */}
           <div className="h-[env(safe-area-inset-bottom)] bg-[#111111]" />
         </motion.div>

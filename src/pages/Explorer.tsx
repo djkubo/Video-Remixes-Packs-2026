@@ -57,10 +57,10 @@ export default function Explorer() {
             </Link>
 
             <Button asChild className="btn-primary-glow h-11 gap-2 px-5 font-black">
-              <Link to="/plan">
+              <a href="https://videoremixespacks.com/plan" rel="noopener noreferrer">
                 <Zap className="h-4 w-4" />
                 {language === "es" ? "Ver planes" : "View plans"}
-              </Link>
+              </a>
             </Button>
           </div>
 

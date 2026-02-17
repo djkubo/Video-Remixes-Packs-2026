@@ -35,10 +35,10 @@ const GuaranteeSection = () => {
               size="lg"
               className="btn-primary-glow group h-12 px-7 text-sm font-bold md:text-base"
             >
-              <Link to="/plan">
+              <a href="https://videoremixespacks.com/plan" rel="noopener noreferrer">
                 {t("cta.button")}
                 <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
-              </Link>
+              </a>
             </Button>
           </div>
         </motion.div>

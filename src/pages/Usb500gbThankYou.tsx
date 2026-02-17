@@ -256,7 +256,7 @@ export default function Usb500gbThankYou() {
           {paidConfirmed ? (
             <div className="grid gap-3 mb-8">
               <Button asChild className="btn-primary-glow h-12 w-full text-base font-bold">
-                <Link to="/plan">Membresía para actualizaciones semanales/mensuales</Link>
+                <a href="https://videoremixespacks.com/plan" rel="noopener noreferrer">Membresía para actualizaciones semanales/mensuales</a>
               </Button>
             </div>
           ) : null}

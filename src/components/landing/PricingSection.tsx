@@ -62,9 +62,9 @@ export default function PricingSection({ checkoutUrl }: PricingSectionProps) {
                 variant="outline"
                 className="min-h-[56px] w-full border-[#AA0202] bg-transparent font-bebas text-xl uppercase tracking-wide text-[#EFEFEF] hover:bg-[#AA0202]/15 hover:text-[#EFEFEF]"
               >
-                <Link to={monthlyUrl}>
+                <a href={monthlyUrl} rel="noopener noreferrer">
                   ELEGIR PLAN MENSUAL
-                </Link>
+                </a>
               </Button>
             </div>
           </article>
@@ -100,9 +100,9 @@ export default function PricingSection({ checkoutUrl }: PricingSectionProps) {
                 asChild
                 className="min-h-[56px] w-full bg-[#111111] border border-[#AA0202] font-bebas text-2xl uppercase tracking-wide text-[#EFEFEF] hover:bg-[#AA0202]/15"
               >
-                <Link to={quarterlyUrl}>
+                <a href={quarterlyUrl} rel="noopener noreferrer">
                   EMPEZAR TRIMESTRAL
-                </Link>
+                </a>
               </Button>
             </div>
           </article>
@@ -147,10 +147,10 @@ export default function PricingSection({ checkoutUrl }: PricingSectionProps) {
                 asChild
                 className="min-h-[56px] w-full bg-[#AA0202] font-bebas text-2xl uppercase tracking-wide text-[#EFEFEF] hover:bg-[#8A0101] shadow-[0_10px_30px_rgba(170,2,2,0.35)]"
               >
-                <Link to={annualUrl}>
+                <a href={annualUrl} rel="noopener noreferrer">
                   <ArrowRight className="h-5 w-5" />
                   HAZTE ELITE
-                </Link>
+                </a>
               </Button>
               <p className="mt-3 text-center font-sans text-xs text-zinc-400">
                 Ahorras $225 vs plan mensual · Garantía 7 días
