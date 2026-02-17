@@ -38,12 +38,7 @@ const MobileStickyBar = () => {
           
           {/* Sticky CTA bar tuned for both light and dark themes */}
           <div
-            className={cn(
-              "flex items-center justify-between gap-3 border-t px-4 py-3 backdrop-blur-xl",
-              theme === "dark"
-                ? "border-white/10 bg-background/90 shadow-[0_-6px_24px_rgba(0,0,0,0.45)]"
-                : "border-[#5E5E5E] bg-[#111111]/98 shadow-[0_-10px_22px_rgba(15,23,42,0.14)]"
-            )}
+           className="flex items-center justify-between gap-3 border-t border-[#5E5E5E] bg-[#111111]/98 px-4 py-3 backdrop-blur-xl shadow-[0_-10px_22px_rgba(15,23,42,0.14)]"
           >
             <div className="flex items-center gap-2 min-w-0">
               <img
