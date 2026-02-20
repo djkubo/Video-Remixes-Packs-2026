@@ -212,12 +212,18 @@ async function sendWithBrevo(args: {
   return { messageId, response: json };
 }
 
+// Cron-job token – must match the value in cron.job
+const CRON_WORKER_TOKEN = "vrp-email-worker-2026-s3cur3";
+
 function isAuthorized(req: Request, workerToken: string | null, serviceRoleKey: string): boolean {
   const authHeader = req.headers.get("authorization");
   const workerHeader = req.headers.get("x-email-worker-token");
 
-  if (workerToken && workerHeader && workerHeader === workerToken) {
-    return true;
+  // Check x-email-worker-token against env secret OR hardcoded cron token
+  if (workerHeader) {
+    if ((workerToken && workerHeader === workerToken) || workerHeader === CRON_WORKER_TOKEN) {
+      return true;
+    }
   }
 
   if (authHeader && authHeader.startsWith("Bearer ")) {
